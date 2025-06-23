@@ -2,6 +2,7 @@
 {% block title %}Create Interest Group Proposal{% endblock %}
 
 {% block links %}
+<link rel="stylesheet" href="../static/css/form.css">
 <script src="https://cdn.jsdelivr.net/npm/@yaireo/tagify"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.css">
 {% endblock %}
@@ -9,9 +10,9 @@
 {% block content %}
 {% from "includes/form_helper.html" import render_field %}
 
-<h1 class="display-4">Create Interest Group Proposal</h1>
-
 <form method="post" action="">
+    <h1 class="display-6 text-center">Create Interest Group Proposal</h1>
+
     <div class="input-group mt-4 mb-4">
         <span class="input-group-text">{{ form.name.label }}</span>
         {{ form.name(class="form-control", placeholder="Enter your proposed group name") }}
