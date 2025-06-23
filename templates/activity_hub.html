@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% block title %}Activity Hub{% endblock %}
+
+{% block styles %}
+<style>
+    body {
+        background-color: #A5DEF2;
+    }
+
+    .card-body small {
+        color: #5BAEB7;
+        font-weight: bold;
+    }
+
+    .btn-primary {
+        background-color: #1E80C1;
+        color: #FFFFFF;
+        border: none;
+    }
+
+    .btn-primary:hover {
+        background-color: #414C6B;
+        color: #FFFFFF;
+    }
+</style>
+{% endblock %}
+
+{% block navbar %}
+<div class="container d-flex justify-content-between align-items-center my-4">
+    <form class="d-flex w-75">
+        <input class="form-control me-2" type="search" placeholder="Search activities..." aria-label="Search">
+    </form>
+    <a href="/" class="btn btn-primary">Start your own interest group!</a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row row-cols-1 row-cols-md-3 g-4 bg-#A5DEF2">
+    {% for activity in activities %}
+    <div class="col">
+        <div class="card h-100 shadow-sm">
+            <img src="{{ activity.image }}" class="card-img-top" alt="{{ activity.name }}">
+            <div class="card-body">
+                <small class="text-muted">{{ activity.category }}</small>
+                <h5 class="card-title">{{ activity.name }}</h5>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}
