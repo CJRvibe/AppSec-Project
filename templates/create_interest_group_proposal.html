@@ -13,32 +13,45 @@
 
 <form method="post" action="">
     <div class="input-group mt-4 mb-4">
-        <span class="input-group-text">Group Name</span>
+        <span class="input-group-text">{{ form.name.label }}</span>
         {{ form.name(class="form-control", placeholder="Enter your proposed group name") }}
     </div>
 
     <div class="input-group mb-4">
-        <span class="input-group-text">Group Topic</span>
+        <span class="input-group-text">{{ form.topic.label }}</span>
         {{ form.topic(class="form-control", placeholder="Enter your proposed group topic") }}
     </div>
 
     <div class="input-group mb-4">
-        <span class="input-group-text">Group Topic</span>
+        <span class="input-group-text">{{ form.description.label }}</span>
         {{ form.description(class="form-control", placeholder="Enter your proposed group description") }}
     </div>
 
     <div class="input-group mb-4">
-        <span class="input-group-text">Group Topic</span>
+        <span class="input-group-text">{{ form.activity_occurence.label }}</span>
         {{ form.activity_occurence(class="form-control", placeholder="State the activity occurence") }}
     </div>
 
     <div class="input-group mb-4">
-        <span class="input-group-text">Elaboration</span>
+        <span class="input-group-text">{{ form.max_size.label }}</span>
+        {{ form.max_size(class="form-control", placeholder="Give the maximum group size") }}
+    </div>
+
+    <div class="input-group mb-4">
+        <span class="input-group-text">{{ form.join_type.label }}</span>
+        {% for subfield in form.join_type %}
+            {{ subfield(class="btn-check") }} 
+            {{ subfield.label(class="btn btn-outline-primary") }} 
+        {% endfor %}
+    </div>
+
+    <div class="input-group mb-4">
+        <span class="input-group-text">{{ form.reason.label }}</span>
         {{ form.reason(class="form-control", placeholder="Give an elaboration to why you want to start this interest group") }}
     </div>
 
     <div class="input-group mb-4">
-        <span class="input-group-text">Group Tags</span>
+        <span class="input-group-text">{{ form.tags.label }}</span>
         {{ form.tags(class="form-control", placeholder="Enter relevant group tags") }}
     </div>
 
