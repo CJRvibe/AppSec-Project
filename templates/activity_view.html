@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block title %}{{ activity.name }}{% endblock %}
+
+{% block content %}
+<div class="mt-5">
+    <h2>{{ activity.name }}</h2>
+    <img src="{{ url_for('static', filename=activity.image) }}" alt="{{ activity.name }}" class="img-fluid my-3 rounded shadow">
+    <p class="lead">{{ activity.desc }}</p>
+    <a href="/activity-hub" class="btn btn-secondary">← Back to Activities</a>
+</div>
+{% endblock %}

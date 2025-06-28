@@ -1,4 +1,4 @@
-from flask import Flask, render_template, redirect, url_for, request
+from flask import Flask, render_template, redirect, url_for, request, abort
 from forms import InterestGroupProposalForm
 
 app = Flask(__name__)
@@ -7,13 +7,21 @@ app = Flask(__name__)
 def index():
     return render_template("home.html")
 
+#test data
+activities = [
+    {"id": 1, "category": "Music & Vocal", "name": "Karaoke", "image": "img/karaoke.jpg", "desc": "Sing your heart out in a private karaoke room!"}
+]
+
 @app.route('/activity-hub')
 def activity_hub():
-    activities = [
-        {"category": "Music & Vocal", "name": "Karaoke", "image": "/static/img/karaoke.jpg"}
-    ]
-    return render_template('/activity_hub.html', activities=activities)
+    return render_template('activity_hub.html', activities=activities)
 
+@app.route("/activity-view/<int:activity_id>")
+def activity_view(activity_id):
+    activity = next((a for a in activities if a["id"] == activity_id), None)
+    if activity is None:
+        abort(404)
+    return render_template("activity_view.html", activity=activity)
 
 @app.route("/createInterestGroupProposal", methods=["GET", "POST"])
 def create_group_proposal():

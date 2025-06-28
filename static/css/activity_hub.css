@@ -1,0 +1,19 @@
+.hehheha {
+    background-color: #A5DEF2 !important;
+}
+
+.card-body small {
+    color: #5BAEB7;
+    font-weight: bold;
+}
+
+.btn-primary {
+    background-color: #1E80C1;
+    color: #FFFFFF;
+    border: none;
+}
+
+.btn-primary:hover {
+    background-color: #414C6B;
+    color: #FFFFFF;
+}
