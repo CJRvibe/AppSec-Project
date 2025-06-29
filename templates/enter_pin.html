@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container d-flex justify-content-center align-items-center vh-100 bg-light">
+    <div class="card shadow p-4 text-center" style="max-width: 400px; border-radius: 10px;">
+        <h3 class="fw-bold text-dark">Enter PIN</h3>
+        <p class="text-muted">Please enter the PIN sent to your email</p>
+        <form method="POST" action="/verify_pin">
+            <div class="d-flex justify-content-center gap-2 mb-4">
+                <input type="text" class="form-control text-center fs-4 fw-bold border rounded" maxlength="1" oninput="moveToNext(this, 'pin2')" id="pin1" name="pin1" required style="width: 50px; height: 50px;">
+                <input type="text" class="form-control text-center fs-4 fw-bold border rounded" maxlength="1" oninput="moveToNext(this, 'pin3')" id="pin2" name="pin2" required style="width: 50px; height: 50px;">
+                <input type="text" class="form-control text-center fs-4 fw-bold border rounded" maxlength="1" oninput="moveToNext(this, 'pin4')" id="pin3" name="pin3" required style="width: 50px; height: 50px;">
+                <input type="text" class="form-control text-center fs-4 fw-bold border rounded" maxlength="1" oninput="moveToNext(this, 'pin5')" id="pin4" name="pin4" required style="width: 50px; height: 50px;">
+                <input type="text" class="form-control text-center fs-4 fw-bold border rounded" maxlength="1" oninput="moveToNext(this, 'pin6')" id="pin5" name="pin5" required style="width: 50px; height: 50px;">
+                <input type="text" class="form-control text-center fs-4 fw-bold border rounded" maxlength="1" id="pin6" name="pin6" required style="width: 50px; height: 50px;">
+            </div>
+            <button type="submit" class="btn w-100 text-white" style="background-color: #1E80C1;">Submit</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    function moveToNext(current, nextId) {
+        if (current.value.length === 1) {
+            document.getElementById(nextId)?.focus();
+        }
+    }
+</script>
+{% endblock %}
