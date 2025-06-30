@@ -9,14 +9,23 @@ def index():
 
 #test data
 activities = [
-    {"id": 1, "category": "Music & Vocal", "name": "Karaoke", "image": "img/karaoke.jpg", "desc": "Sing your heart out in a private karaoke room!"}
+    {
+        "id": 1,
+        "category": "Music & Vocal",
+        "name": "Karaoke",
+        "image": "img/karaoke.jpg",
+        "desc": "Sing your heart out in a private karaoke room!",
+        "timings": "Fridays 7PM - 9PM",
+        "min_age": 16,
+        "requirements": "Must love music and have noise tolerance. No prior singing experience required!",
+    },
 ]
 
-@app.route('/activity-hub')
+@app.route('/activityHub')
 def activity_hub():
     return render_template('activity_hub.html', activities=activities)
 
-@app.route("/activity-view/<int:activity_id>")
+@app.route("/activityView/<int:activity_id>")
 def activity_view(activity_id):
     activity = next((a for a in activities if a["id"] == activity_id), None)
     if activity is None:

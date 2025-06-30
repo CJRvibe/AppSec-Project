@@ -3,8 +3,13 @@
 }
 
 .card-body small {
-    color: #5BAEB7;
+    color: #414C6B;
     font-weight: bold;
+}
+
+.card {
+    background-color: #A5DEF2;
+    box-shadow: 1px;
 }
 
 .btn-primary {
