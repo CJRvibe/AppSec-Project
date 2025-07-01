@@ -19,7 +19,7 @@
     {% for activity in activities %}
     <div class="col">
         <a href="{{ url_for('activity_view', activity_id=activity.id) }}" class="text-decoration-none">
-            <div class="card h-100 shadow-sm">
+            <div class="card h-100 shadow">
                 <img src="{{ url_for('static', filename=activity.image) }}" class="card-img-top">
                 <div class="card-body">
                     <small>{{ activity.category }}</small>
