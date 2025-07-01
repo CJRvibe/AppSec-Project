@@ -1,5 +1,5 @@
 from flask import Flask, render_template, redirect, url_for, request
-from forms import InterestGroupProposalForm
+from forms import InterestGroupProposalForm, ActivityProposalForm
 
 app = Flask(__name__)
 
@@ -42,6 +42,19 @@ def create_group_proposal():
     if request.method == "POST" and proposal_form.validate():
         return redirect(url_for("index"))
     return render_template("create_interest_group_proposal.html", form=proposal_form)
+
+
+@app.route("/create-interest-group-activity-proposal", methods=["GET", "POST"])
+def create_activity_proposal():
+    proposal_form = ActivityProposalForm(request.form)
+    if request.method == "POST" and proposal_form.validate():
+        return redirect(url_for("index"))
+    return render_template("create_group_activity.html", form=proposal_form)
+
+
+@app.route("/test-discussion")
+def discussion_forum():
+    return render_template("group_discussion.html")
 
 
 if __name__ == "__main__":
