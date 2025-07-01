@@ -31,5 +31,10 @@ def create_activity_proposal():
     return render_template("create_group_activity.html", form=proposal_form)
 
 
+@app.route("/test-discussion")
+def discussion_forum():
+    return render_template("group_discussion.html")
+
+
 if __name__ == "__main__":
     app.run()

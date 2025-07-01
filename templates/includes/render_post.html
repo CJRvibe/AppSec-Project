@@ -1,0 +1,13 @@
+{% macro render_post(title, description, username) %}
+<div class="flex gap-4 bg-white px-4 py-3">
+    <div
+    class="bg-center bg-no-repeat aspect-square bg-cover rounded-full h-[70px] w-fit"
+    style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCtZugBu0_IZ_91agtRv3mUmo4soX8vgmeQgJQK3xL_V6BRIs7qjn0UJHRxe6qjnagVG5_VxNjWQVGuKfPPIkn4MUNCUYgaStqUAyJDCVk6IBPmorU74MPEdm2RUIZmxrUsxWwxNMAsBIsKjmXfLTTAvlHOBSdxjS8eWra8_WsfeIfkgECgA-Qz_IOon8FIDYIL9Lo4c3aw1dkaQgjkHPuvT7eqnWsLthjUZaQQ6sDCUMT4WOOMig-poJmDlvUY5D9OhwsPNr0g2hf2");'
+    ></div>
+    <div class="flex flex-1 flex-col justify-center">
+    <p class="text-[#171212] text-base font-medium leading-normal">{{ title }}</p>
+    <p class="text-[#82686a] text-sm font-normal leading-normal">{{ description }}</p>
+    <p class="text-[#82686a] text-sm font-normal leading-normal">Posted by {{ username }}</p>
+    </div>
+</div>
+{% endmacro %}
