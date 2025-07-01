@@ -7,6 +7,27 @@ app = Flask(__name__)
 def index():
     return render_template("home.html")
 
+@app.route('/login')
+def login():
+    return render_template('login.html')
+
+@app.route('/signUp')
+def register():
+    return render_template('sign_up.html')
+
+@app.route('/forgetPassword')
+def forget_password():
+    return render_template('forget_password.html')
+
+@app.route('/enterPin')
+def enter_pin():
+    return render_template('enter_pin.html')
+
+@app.route('/changePassword')
+def change_password():
+    return render_template('change_password.html')
+
+
 @app.route('/activity-hub')
 def activity_hub():
     activities = [
