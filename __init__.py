@@ -65,7 +65,7 @@ groups = [
 def explore_groups():
     return render_template('explore_groups.html', groups=groups)
 
-@app.route("/group_home/<int:group_id>")
+@app.route("/groupHome/<int:group_id>")
 def group_home(group_id):
     group = next((a for a in groups if a["id"] == group_id), None)
     if group is None:
