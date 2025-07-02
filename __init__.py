@@ -18,7 +18,7 @@ def index():
     return render_template("home.html")
 
 #test data
-activities = [
+groups = [
     {
         "id": 1,
         "category": "Music & Vocal",
@@ -61,16 +61,16 @@ activities = [
     },
 ]
 
-@app.route('/activityHub')
-def activity_hub():
-    return render_template('activity_hub.html', activities=activities)
+@app.route('/exploreGroups')
+def explore_groups():
+    return render_template('explore_groups.html', groups=groups)
 
-@app.route("/activityView/<int:activity_id>")
-def activity_view(activity_id):
-    activity = next((a for a in activities if a["id"] == activity_id), None)
-    if activity is None:
+@app.route("/group_home/<int:group_id>")
+def group_home(group_id):
+    group = next((a for a in groups if a["id"] == group_id), None)
+    if group is None:
         abort(404)
-    return render_template("activity_view.html", activity=activity)
+    return render_template("group_home.html", group=group)
 
 @app.route("/createInterestGroupProposal", methods=["GET", "POST"])
 def create_group_proposal():
