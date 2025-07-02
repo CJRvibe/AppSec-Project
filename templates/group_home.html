@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}{{ group.name }}{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <!-- Left: Image Section -->
+        <div class="col-md-5">
+            <h2 class="mb-3">{{ group.name }}</h2>
+            <img src="{{ url_for('static', filename=group.image) }}" alt="{{ group.name }}" class="img-fluid rounded shadow">
+        </div>
+
+        <!-- Right: Details Section -->
+        <div class="col-md-7 d-flex flex-column justify-content-between">
+            <div>
+                <h4>About</h4>
+                <p>{{ group.desc }}</p>
+
+                <h5 class="mt-4">Group Timings</h5>
+                <p>{{ group.timings }}</p>
+
+                <h5 class="mt-4">Requirements</h5>
+                <ul>
+                    <li>Minimum Age: {{ group.min_age }}</li>
+                    <li>Other: {{ group.requirements }}</li>
+                </ul>
+            </div>
+
+            <!-- Bottom Buttons -->
+            <div class="d-flex justify-content-between mt-4">
+                <a href="/exploreGroups" class="btn btn-secondary">← Back to Explore Groups</a>
+                <a href="#" class="btn btn-primary">Register</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
