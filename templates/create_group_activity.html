@@ -19,18 +19,18 @@
     </div>
 
     <div class="input-group mb-4">
-        <span class="input-group-text">{{ form.category.label }}</span>
-        {{ form.category(class="form-control", placeholder="Enter your activity category") }}
-    </div>
-
-    <div class="input-group mb-4">
         <span class="input-group-text">{{ form.description.label }}</span>
         {{ form.description(class="form-control", placeholder="Enter your activity description") }}
     </div>
 
     <div class="input-group mb-4">
-        <span class="input-group-text">{{ form.date.label }}</span>
-        {{ form.date(class="form-control", placeholder="Enter activity date") }}
+        <span class="input-group-text">{{ form.start_datetime.label }}</span>
+        {{ form.start_datetime(class="form-control", placeholder="Enter activity start date") }}
+    </div>
+
+    <div class="input-group mb-4">
+        <span class="input-group-text">{{ form.end_datetime.label }}</span>
+        {{ form.end_datetime(class="form-control", placeholder="Enter activity end date") }}
     </div>
 
     <div class="input-group mb-4">

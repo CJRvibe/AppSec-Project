@@ -3,8 +3,6 @@
 
 {% block links %}
 <link rel="stylesheet" href="../static/css/form.css">
-<script src="https://cdn.jsdelivr.net/npm/@yaireo/tagify"></script>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.css">
 {% endblock %}
 
 {% block content %}
@@ -27,12 +25,7 @@
         <span class="input-group-text">{{ form.description.label }}</span>
         {{ form.description(class="form-control", placeholder="Enter your proposed group description") }}
     </div>
-
-    <div class="input-group mb-4">
-        <span class="input-group-text">{{ form.activity_occurence.label }}</span>
-        {{ form.activity_occurence(class="form-control", placeholder="State the activity occurence") }}
-    </div>
-
+    
     <div class="input-group mb-4">
         <span class="input-group-text">{{ form.max_size.label }}</span>
         {{ form.max_size(class="form-control", placeholder="Give the maximum group size") }}
@@ -47,23 +40,15 @@
     </div>
 
     <div class="input-group mb-4">
+        <span class="input-group-text">{{ form.activity_occurence.label }}</span>
+        {{ form.activity_occurence(class="form-control", placeholder="State the activity occurence") }}
+    </div>
+
+    <div class="input-group mb-4">
         <span class="input-group-text">{{ form.reason.label }}</span>
         {{ form.reason(class="form-control", placeholder="Give an elaboration to why you want to start this interest group") }}
     </div>
 
-    <div class="input-group mb-4">
-        <span class="input-group-text">{{ form.tags.label }}</span>
-        {{ form.tags(class="form-control", placeholder="Enter relevant group tags") }}
-    </div>
-
     <input type="submit" value="Submit" class="btn btn-primary">
 </form>
-{% endblock %}
-
-{% block scripts %}
-<script>
-    // Turn the input into a tag editor
-    var input = document.querySelector('textarea[name=tags]');
-    new Tagify(input);
-</script>
 {% endblock %}
