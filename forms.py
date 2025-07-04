@@ -37,8 +37,8 @@ class InterestGroupProposalForm(Form):
 class ActivityProposalForm(Form):
     name = StringField("Activity Name", [validators.DataRequired(), validators.length(min=1,max=50)])
     description = StringField("Activity Description", [validators.DataRequired(), validators.length(min=1, max=200)])
-    start_datetime = DateTimeField("Activity Start Date", [validators.DataRequired()])
-    end_datetime = DateTimeField("Activity End Date", [validators.DataRequired()])
+    start_datetime = DateTimeField("Activity Start Date", [validators.DataRequired()], format="%Y-%m-%d %H:%M")
+    end_datetime = DateTimeField("Activity End Date", [validators.DataRequired()], format="%Y-%m-%d %H:%M")
     max_size = IntegerField("Max Group Size", [validators.DataRequired(), validators.NumberRange(min=1, max=50)])
     funds = IntegerField("Fund Request", [validators.DataRequired(), validators.NumberRange(min=50, max=1000)])
     location = SelectField("Location", [validators.DataRequired()], choices=CC_LOCATION, default="")

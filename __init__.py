@@ -112,7 +112,7 @@ def create_group_proposal():
     return render_template("create_interest_group_proposal.html", form=proposal_form)
 
 
-@app.route("/create-interest-group-activity-proposal", methods=["GET", "POST"])
+@app.route("/createInterestGroupActivityProposal", methods=["GET", "POST"])
 def create_activity_proposal():
     proposal_form = ActivityProposalForm(request.form)
     if request.method == "POST" and proposal_form.validate():
