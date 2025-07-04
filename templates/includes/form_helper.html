@@ -8,3 +8,10 @@
     {% endif %}
 {% endmacro %}
 
+{% macro invalid_feedback(message) %}
+<div class="invalid-feedback">{{ message }}</div>
+{% endmacro %}
+
+{% macro valid_feedback(message) %}
+<div class="valid-feedback">{{ message }}</div>
+{% endmacro %}

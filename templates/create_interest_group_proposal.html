@@ -6,29 +6,33 @@
 {% endblock %}
 
 {% block content %}
-{% from "includes/form_helper.html" import render_field %}
+{% from "includes/form_helper.html" import render_field, valid_feedback, invalid_feedback %}
 
-<form method="post" action="">
+<form method="post" class="needs-validation" novalidate>
     <h1 class="display-6 text-center">Create Interest Group Proposal</h1>
 
     <div class="input-group mt-4 mb-4">
         <span class="input-group-text">{{ form.name.label }}</span>
         {{ form.name(class="form-control", placeholder="Enter your proposed group name") }}
+        {{ invalid_feedback("Enter a group name") }}
     </div>
 
     <div class="input-group mb-4">
         <span class="input-group-text">{{ form.topic.label }}</span>
         {{ form.topic(class="form-control", placeholder="Enter your proposed group topic") }}
+        {{ invalid_feedback("Enter a proposed topic") }}
     </div>
 
     <div class="input-group mb-4">
         <span class="input-group-text">{{ form.description.label }}</span>
         {{ form.description(class="form-control", placeholder="Enter your proposed group description") }}
+        {{ invalid_feedback("Enter a a proposed description") }}
     </div>
     
     <div class="input-group mb-4">
         <span class="input-group-text">{{ form.max_size.label }}</span>
-        {{ form.max_size(class="form-control", placeholder="Give the maximum group size") }}
+        {{ form.max_size(class="form-control", placeholder="Give the maximum group size between 10 and 100") }}
+        {{ invalid_feedback("Enter a a maximum size between 10 and 100") }}
     </div>
 
     <div class="input-group mb-4">
@@ -37,18 +41,25 @@
             {{ subfield(class="btn-check") }} 
             {{ subfield.label(class="btn btn-outline-primary") }} 
         {% endfor %}
+        {{ invalid_feedback("This field is required") }}
     </div>
 
     <div class="input-group mb-4">
         <span class="input-group-text">{{ form.activity_occurence.label }}</span>
         {{ form.activity_occurence(class="form-control", placeholder="State the activity occurence") }}
+        {{ invalid_feedback("This field is required") }}
     </div>
 
     <div class="input-group mb-4">
         <span class="input-group-text">{{ form.reason.label }}</span>
         {{ form.reason(class="form-control", placeholder="Give an elaboration to why you want to start this interest group") }}
+        {{ invalid_feedback("Enter a proposal reason with no less than 1000 characters") }}
     </div>
 
     <input type="submit" value="Submit" class="btn btn-primary">
 </form>
+{% endblock %}
+
+{% block scripts %}
+<script src="../static/scripts/form_validation.js"></script>
 {% endblock %}
