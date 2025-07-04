@@ -16,36 +16,43 @@
     <div class="input-group mt-4 mb-4">
         <span class="input-group-text">{{ form.name.label }}</span>
         {{ form.name(class="form-control", placeholder="Enter the activity name") }}
+        {{ invalid_feedback("Enter an activity name") }}
     </div>
 
     <div class="input-group mb-4">
         <span class="input-group-text">{{ form.description.label }}</span>
         {{ form.description(class="form-control", placeholder="Enter your activity description") }}
+        {{ invalid_feedback("Enter a description no less than 200 characters") }}
     </div>
 
     <div class="input-group mb-4">
         <span class="input-group-text">{{ form.start_datetime.label }}</span>
         {{ form.start_datetime(class="form-control", placeholder="Enter activity start date", id="start_datetime") }}
+        {{ invalid_feedback("Select your start date and time") }}
     </div>
 
     <div class="input-group mb-4">
         <span class="input-group-text">{{ form.end_datetime.label }}</span>
         {{ form.end_datetime(class="form-control", placeholder="Enter activity end date", id="end_datetime") }}
+        {{ invalid_feedback("Select your end date and time") }}
     </div>
 
     <div class="input-group mb-4">
         <span class="input-group-text">{{ form.max_size.label }}</span>
         {{ form.max_size(class="form-control", placeholder="Give the maximum group size") }}
+        {{ invalid_feedback("Enter a number between 10 and 50") }}
     </div>
 
     <div class="input-group mb-4">
         <span class="input-group-text">{{ form.funds.label }}</span>
         {{ form.funds(class="form-control", placeholder="Enter amount of funds you would like to request") }}
+        {{ invalid_feedback("Enter an amount between 0 to 1000") }}
     </div>
 
     <div class="input-group mb-4">
         <span class="input-group-text">{{ form.location.label }}</span>
         {{ form.location(class="form-control", placeholder="Enter location of the activity") }}
+        {{ invalid_feedback("Select an activity location") }}
     </div>
 
     <div class="input-group mb-4">
@@ -69,6 +76,7 @@
     var input = document.querySelector('textarea[name=tags]');
     new Tagify(input);
 </script>
+<script src="../static/scripts/form_validation.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script>
     const start_datetime = flatpickr("#start_datetime", {
