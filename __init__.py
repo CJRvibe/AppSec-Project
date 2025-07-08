@@ -1,5 +1,3 @@
-import os
-import mysql.connector
 import dotenv
 from flask import Flask, render_template, redirect, url_for, request, abort
 from forms import InterestGroupProposalForm, ActivityProposalForm
