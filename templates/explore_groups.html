@@ -6,6 +6,7 @@
 {% endblock %}
 
 {% block navbar %}
+{% include "includes/elderly_navbar.html" %}
 <div class="container d-flex justify-content-between align-items-center my-4 background">
     <form class="d-flex w-75">
         <input class="form-control me-2" type="search" placeholder="Search for groups..." aria-label="Search">
@@ -15,15 +16,16 @@
 {% endblock %}
 
 {% block content %}
-<div class="row row-cols-1 row-cols-md-3 g-4 bg-#A5DEF2 background">
+<div class="row row-cols-1 row-cols-md-3 g-4 background">
     {% for group in groups %}
     <div class="col">
         <a href="{{ url_for('group_home', group_id=group.id) }}" class="text-decoration-none">
             <div class="card h-100 shadow">
-                <img src="{{ url_for('static', filename=group.image) }}" class="card-img-top">
-                <div class="card-body">
-                    <small>{{ group.category }}</small>
-                    <h5>{{ group.name }}</h5>
+                <img src="{{ url_for('static', filename=group.image) }}" 
+                     class="card-img-top uniform-img" alt="Group Image">
+                <div class="card-body d-flex flex-column justify-content-end small-info">
+                    <small class="text-muted">{{ group.category }}</small>
+                    <h5 class="mb-0">{{ group.name }}</h5>
                 </div>
             </div>
         </a>
