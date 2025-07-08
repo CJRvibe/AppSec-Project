@@ -3,22 +3,17 @@ import mysql.connector
 import dotenv
 from flask import Flask, render_template, redirect, url_for, request, abort
 from forms import InterestGroupProposalForm, ActivityProposalForm
+import db
 from werkzeug.utils import secure_filename
+
+dotenv.load_dotenv()
 
 UPLOAD_FOLDER = 'static/uploads'
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-
-dotenv.load_dotenv()
-
-connection = mysql.connector.connect(
-    host=os.getenv("SQL_HOST"),
-    user=os.getenv("SQL_USER"),
-    password=os.getenv("SQL_PASSWORD"),
-    database="social_sage_db"
-)
+app.teardown_appcontext(db.close_db)
 
 def allowed_file(filename):
     return '.' in filename and \
@@ -112,7 +107,7 @@ def create_group_proposal():
     return render_template("create_interest_group_proposal.html", form=proposal_form)
 
 
-@app.route("/create-interest-group-activity-proposal", methods=["GET", "POST"])
+@app.route("/createInterestGroupActivityProposal", methods=["GET", "POST"])
 def create_activity_proposal():
     proposal_form = ActivityProposalForm(request.form)
     if request.method == "POST" and proposal_form.validate():
