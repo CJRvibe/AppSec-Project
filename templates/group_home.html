@@ -2,37 +2,68 @@
 
 {% block title %}{{ group.name }}{% endblock %}
 
+{% block navbar %}
+{% include "includes/elderly_navbar.html" %}
+{% endblock %}
+
 {% block content %}
-<div class="container mt-5">
-    <div class="row">
-        <!-- Left: Image Section -->
-        <div class="col-md-5">
-            <h2 class="mb-3">{{ group.name }}</h2>
-            <img src="{{ url_for('static', filename=group.image) }}" alt="{{ group.name }}" class="img-fluid rounded shadow">
+<div class="container mt-4">
+
+    <div class="d-flex align-items-center mb-3">
+        <img src="{{ url_for('static', filename=group.image) }}" class="rounded" style="width: 100px; height: 100px; object-fit: cover;">
+        <div class="ms-3">
+            <h2 class="mb-0">{{ group.name }}</h2>
+            <p class="text-muted">By {{ group.owner or 'Group Admin' }}</p>
         </div>
+    </div>
 
-        <!-- Right: Details Section -->
-        <div class="col-md-7 d-flex flex-column justify-content-between">
-            <div>
-                <h4>About</h4>
-                <p>{{ group.desc }}</p>
+    <p class="lead">{{ group.description }}</p>
+    <p class="text-muted">Est. {{ group.established or "2023" }}</p>
 
-                <h5 class="mt-4">Group Timings</h5>
-                <p>{{ group.timings }}</p>
+    <div class="d-flex justify-content-center border-bottom mb-4">
+        <button class="btn btn-link text-decoration-none me-3 {% if view == 'activities' %}fw-bold border-bottom border-2{% else %}text-muted{% endif %}"
+                onclick="switchView('activities')">Activities</button>
+        <button class="btn btn-link text-decoration-none {% if view == 'forum' %}fw-bold border-bottom border-2{% else %}text-muted{% endif %}"
+                onclick="switchView('forum')">Forum</button>
+    </div>
 
-                <h5 class="mt-4">Requirements</h5>
-                <ul>
-                    <li>Minimum Age: {{ group.min_age }}</li>
-                    <li>Other: {{ group.requirements }}</li>
-                </ul>
+
+    <div id="activities-section" class="{% if view != 'activities' %}d-none{% endif %}">
+        <div class="row row-cols-1 row-cols-md-3 g-4">
+            {% for activity in group.activities %}
+            <div class="col">
+                <a href="{{ url_for('view_group_activity', group_id=group.id, activity_id=activity.id) }}" class="text-decoration-none text-dark">
+                    <div class="card h-100 shadow">
+                        <img src="{{ url_for('static', filename=activity.image) }}" class="card-img-top" alt="{{ activity.name }}">
+                        <div class="card-body">
+                            <small class="text-muted">{{ activity.category }}</small>
+                            <h5 class="card-title">{{ activity.name }}</h5>
+                        </div>
+                    </div>
+                </a>
             </div>
+            {% endfor %}
+        </div>
+    </div>
 
-            <!-- Bottom Buttons -->
-            <div class="d-flex justify-content-between mt-4">
-                <a href="/exploreGroups" class="btn btn-secondary">← Back to Explore Groups</a>
-                <a href="#" class="btn btn-primary">Register</a>
+    <div id="forum-section" class="{% if view != 'forum' %}d-none{% endif %}">
+        <div class="card">
+            <div class="card-body">
+                <h5>Group Forum</h5>
+                <p>🛠 Forum coming soon! Here, members will be able to post, comment, and discuss topics.</p>
             </div>
         </div>
     </div>
+
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function switchView(view) {
+        const url = new URL(window.location.href);
+        url.searchParams.set('view', view);
+        window.location.href = url.toString();
+    }
+</script>
 {% endblock %}

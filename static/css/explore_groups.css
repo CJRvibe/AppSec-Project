@@ -21,3 +21,13 @@
     background-color: #414C6B;
     color: #FFFFFF;
 }
+.uniform-img {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+}
+
+.small-info {
+    height: 60px;
+    padding: 0.5rem 1rem;
+}
