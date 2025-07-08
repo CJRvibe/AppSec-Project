@@ -99,7 +99,7 @@ def create_group_proposal():
     proposal_form = InterestGroupProposalForm(request.form)
     if request.method == "POST" and proposal_form.validate():
         return redirect(url_for("index"))
-    return render_template("create_interest_group_proposal.html", form=proposal_form)
+    return render_template("volunteer/create_interest_group_proposal.html", form=proposal_form)
 
 
 @app.route("/createInterestGroupActivityProposal", methods=["GET", "POST"])
@@ -107,7 +107,7 @@ def create_activity_proposal():
     proposal_form = ActivityProposalForm(request.form)
     if request.method == "POST" and proposal_form.validate():
         return redirect(url_for("index"))
-    return render_template("create_group_activity.html", form=proposal_form)
+    return render_template("volunteer/create_group_activity.html", form=proposal_form)
 
 
 @app.route("/test-discussion")

@@ -2,9 +2,13 @@
 {% block title %}Create Interest Group Activity Proposal{% endblock %}
 
 {% block links %}
-<link rel="stylesheet" href="../static/css/form.css">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/form.css') }}">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.css">
+{% endblock %}
+
+{% block navbar %}
+{% include "includes/volunteer_navbar.html" %}
 {% endblock %}
 
 {% block content %}
@@ -77,7 +81,7 @@
     var input = document.querySelector('textarea[name=tags]');
     new Tagify(input);
 </script>
-<script src="../static/scripts/form_validation.js"></script>
+<script src="{{ url_for('static', filename='scripts/form_validation.js') }}"></script>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script>
     const start_datetime = flatpickr("#start_datetime", {
