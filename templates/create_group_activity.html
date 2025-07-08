@@ -8,9 +8,10 @@
 {% endblock %}
 
 {% block content %}
-{% from "includes/form_helper.html" import render_field %}
+{% from "includes/form_helper.html" import render_field, invalid_feedback %}
 
-<form method="post" action="">
+<!-- Disable autocomplete next time -->
+<form method="post" class="needs-validation" novalidate>
     <h1 class="display-6 text-center">Create Interest Group Activity Proposal</h1>
 
     <div class="input-group mt-4 mb-4">
