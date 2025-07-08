@@ -15,11 +15,6 @@ app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.teardown_appcontext(db.close_db)
 
-#test connection
-cursor = connection.cursor()
-cursor.execute("SELECT * FROM activity_location")
-print(cursor.fetchall())
-
 def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
