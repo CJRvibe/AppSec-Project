@@ -294,6 +294,21 @@ CREATE TABLE IF NOT EXISTS `social_sage_db`.`interest_activity_proposals` (
     ON UPDATE NO ACTION)
 ENGINE = InnoDB;
 
+CREATE TABLE user_role (
+    role_id TINYINT(1) PRIMARY KEY,
+    user_role VARCHAR(40) NOT NULL
+);
+
+CREATE TABLE users (
+    user_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    first_name VARCHAR(50) NOT NULL,
+    last_name VARCHAR(50) NOT NULL,
+    email VARCHAR(50) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    user_role TINYINT(1),
+    FOREIGN KEY (user_role) REFERENCES user_role(role_id)
+);
+
 
 SET SQL_MODE=@OLD_SQL_MODE;
 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;

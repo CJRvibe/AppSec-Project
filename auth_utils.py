@@ -1,10 +1,6 @@
-import os
 import mysql.connector
-from flask import g, current_app
-import sqlite3 
 from werkzeug.security import generate_password_hash, check_password_hash
-
-# ------------------ SQLITE LOGIC ------------------
+import os
 
 def get_db_connection():
     conn = mysql.connector.connect(
@@ -43,46 +39,3 @@ def verify_user(email, password):
         return user
     else:
         return None
-
-# ------------------ MYSQL LOGIC ------------------
-
-def get_db():
-    if "db" not in g:
-        connection = mysql.connector.connect(
-            host=os.getenv("SQL_HOST"),
-            user=os.getenv("SQL_USER"),
-            password=os.getenv("SQL_PASSWORD"),
-            database="social_sage_db"
-        )
-        g.db = connection
-    return g.db
-
-def close_db(e=None):
-    db = g.pop('db', None)
-    if db is not None:
-        db.close()
-
-# ------------------ USER IMAGE UPLOAD (for profile) ------------------
-
-def update_user_profile_image(user_id, filename):
-    """
-    Updates the user's profile image filename in the database.
-    Works for SQLite version.
-    """
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute(
-        "UPDATE users SET profile_image = ? WHERE user_id = ?",
-        (filename, user_id)
-    )
-    conn.commit()
-    conn.close()
-
-def get_user_by_id(user_id):
-    conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM users WHERE user_id = %s", (user_id,))
-    user = cursor.fetchone()
-    cursor.close()
-    conn.close()
-    return user

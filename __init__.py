@@ -1,8 +1,9 @@
 import os
 import mysql.connector
 import dotenv
-from flask import Flask, render_template, redirect, url_for, request, abort
+from flask import Flask, render_template, redirect, url_for, request, abort, session, flash
 from forms import InterestGroupProposalForm, ActivityProposalForm
+from auth_utils import insert_user, verify_user
 import db
 from werkzeug.utils import secure_filename
 
@@ -12,6 +13,7 @@ UPLOAD_FOLDER = 'static/uploads'
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
 app = Flask(__name__)
+app.secret_key = "your_secret_key"  # Replace with your actual secret key
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.teardown_appcontext(db.close_db)
 
@@ -23,13 +25,48 @@ def allowed_file(filename):
 def index():
     return render_template("home.html")
 
-@app.route('/login')
-def login():
-    return render_template('login.html')
+@app.route('/signUp', methods=['GET', 'POST'])
+def sign_up():
+    if request.method == 'POST':
+        first_name = request.form.get('first_name')
+        last_name = request.form.get('last_name')
+        email = request.form.get('email')
+        password = request.form.get('password')
+        confirm = request.form.get('confirm_password')
+        role = request.form.get('role')
 
-@app.route('/signUp')
-def register():
+        if role == "volunteer":
+            user_role = 1
+        elif role == "elderly":
+            user_role = 2
+        else:
+            flash("Invalid role.", "danger")
+            return render_template('sign_up.html')
+
+        if password != confirm:
+            flash('Passwords do not match.', 'danger')
+            return render_template('sign_up.html')
+
+        if insert_user(first_name, last_name, email, password, user_role):
+            return redirect(url_for('login'))  # <-- Fix here
+        else:
+            flash('Email already exists or database error.', 'danger')
+            return render_template('sign_up.html')
     return render_template('sign_up.html')
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        email = request.form.get('email')
+        password = request.form.get('password')
+        user = verify_user(email, password)
+        if user:
+            session['user_id'] = user['user_id']
+            # Redirect to explore_groups after successful login
+            return redirect(url_for('explore_groups'))
+        else:
+            flash('Invalid credentials.', 'danger')
+    return render_template('login.html')
 
 @app.route('/forgetPassword')
 def forget_password():
@@ -42,6 +79,22 @@ def enter_pin():
 @app.route('/changePassword')
 def change_password():
     return render_template('change_password.html')
+
+@app.route('/userProfile')
+def user_profile():
+    # You need to get the user info, e.g., from session or database
+    user_id = session.get('user_id')
+    if not user_id:
+        # Redirect to login if not logged in
+        return redirect(url_for('login'))
+    
+    user = db.get_user_by_id(user_id)  # You need to implement this function to get user dict from DB
+
+    return render_template('user_profile.html', user=user)  # <-- Pass user to template!
+
+@app.route('/calendar')
+def calendar():
+    return render_template('calendar.html')
 
 
 #test data
