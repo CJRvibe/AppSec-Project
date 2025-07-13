@@ -1,10 +1,8 @@
 import os
 import mysql.connector
 from flask import g, current_app
-import sqlite3 
 from werkzeug.security import generate_password_hash, check_password_hash
 
-# ------------------ SQLITE LOGIC ------------------
 
 def get_db_connection():
     conn = mysql.connector.connect(
@@ -44,8 +42,6 @@ def verify_user(email, password):
     else:
         return None
 
-# ------------------ MYSQL LOGIC ------------------
-
 def get_db():
     if "db" not in g:
         connection = mysql.connector.connect(
@@ -61,8 +57,6 @@ def close_db(e=None):
     db = g.pop('db', None)
     if db is not None:
         db.close()
-
-# ------------------ USER IMAGE UPLOAD (for profile) ------------------
 
 def update_user_profile_image(user_id, filename):
     """
