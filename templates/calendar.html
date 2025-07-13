@@ -19,6 +19,7 @@
                         {% for row in week_grid %}
                             <tr>
                                 <td><strong>{{ timeslots[loop.index0] }}</strong></td>
+                                {% for cell in row %}
                                     <td>{{ cell }}</td>
                                 {% endfor %}
                             </tr>
