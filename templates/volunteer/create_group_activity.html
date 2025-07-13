@@ -2,15 +2,20 @@
 {% block title %}Create Interest Group Activity Proposal{% endblock %}
 
 {% block links %}
-<link rel="stylesheet" href="../static/css/form.css">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/form.css') }}">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.css">
 {% endblock %}
 
-{% block content %}
-{% from "includes/form_helper.html" import render_field %}
+{% block navbar %}
+{% include "includes/volunteer_navbar.html" %}
+{% endblock %}
 
-<form method="post" action="">
+{% block content %}
+{% from "includes/form_helper.html" import render_field, invalid_feedback %}
+
+<!-- Disable autocomplete next time -->
+<form method="post" class="needs-validation" novalidate>
     <h1 class="display-6 text-center">Create Interest Group Activity Proposal</h1>
 
     <div class="input-group mt-4 mb-4">
@@ -76,7 +81,7 @@
     var input = document.querySelector('textarea[name=tags]');
     new Tagify(input);
 </script>
-<script src="../static/scripts/form_validation.js"></script>
+<script src="{{ url_for('static', filename='scripts/form_validation.js') }}"></script>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script>
     const start_datetime = flatpickr("#start_datetime", {
