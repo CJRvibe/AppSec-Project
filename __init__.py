@@ -1,4 +1,5 @@
 import dotenv
+import json
 from flask import Flask, render_template, redirect, url_for, request, abort
 from forms import InterestGroupProposalForm, ActivityProposalForm
 import db
@@ -94,16 +95,41 @@ def view_group_activity(group_id, activity_id):
 
 @app.route("/createInterestGroupProposal", methods=["GET", "POST"])
 def create_group_proposal():
+    # mMUST GET OWNER ID
     proposal_form = InterestGroupProposalForm(request.form)
     if request.method == "POST" and proposal_form.validate():
+        db.add_group_proposal(
+            proposal_form.name.data,
+            proposal_form.topic.data,
+            proposal_form.description.data,
+            proposal_form.max_size.data,
+            proposal_form.join_type.data,
+            proposal_form.activity_occurence.data,
+            proposal_form.reason.data
+        )
         return redirect(url_for("index"))
     return render_template("volunteer/create_interest_group_proposal.html", form=proposal_form)
 
 
-@app.route("/createInterestGroupActivityProposal", methods=["GET", "POST"])
+@app.route("/createActivityProposal", methods=["GET", "POST"])
 def create_activity_proposal():
+    # CHANGE TO GET ACTIVITY_ID
     proposal_form = ActivityProposalForm(request.form)
     if request.method == "POST" and proposal_form.validate():
+        decoded_tags = json.loads(proposal_form.tags.data)
+        tags = [tag["value"] for tag in decoded_tags]
+        db.add_activity_proposal(
+            proposal_form.name.data,
+            proposal_form.description.data,
+            proposal_form.start_datetime.data,
+            proposal_form.end_datetime.data,
+            proposal_form.max_size.data,
+            proposal_form.funds.data,
+            proposal_form.location.data,
+            tags,
+            proposal_form.remarks.data
+        )
+        print("succesffully added activity proposal")
         return redirect(url_for("index"))
     return render_template("volunteer/create_group_activity.html", form=proposal_form)
 

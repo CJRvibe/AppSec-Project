@@ -8,7 +8,6 @@ def get_activity_location():
     cursor.execute("SELECT * FROM activity_location")
     result = cursor.fetchall()
     result.insert(0, ("", "Select"))
-    print(result)
     connection.close()
     return result
 
@@ -18,13 +17,12 @@ def get_activity_occurence():
     cursor.execute("SELECT * FROM activity_occurences")
     result = cursor.fetchall()
     result.insert(0, ("", "Select"))
-    print(result)
     connection.close()
     return result
 
 JOIN_TYPE = [
     (1, "Public"),
-    (2, "Private")
+    (0, "Private")
 ]
 
 class InterestGroupProposalForm(Form):
