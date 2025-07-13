@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container d-flex justify-content-center align-items-center vh-100 bg-light">
+    <div class="card shadow p-4 w-100" style="max-width: 900px; border-radius: 10px;">
+        <div class="card-body">
+            <h3 class="text-center text-dark mb-4">Weekly Calendar</h3>
+
+            <div class="table-responsive">
+                <table class="table table-bordered text-center align-middle">
+                    <thead class="table-primary">
+                        <tr>
+                            <th style="color: #1E80C1;">Time</th>
+                            {% for day in days %}
+                                <th style="color: #1E80C1;">{{ day }}</th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in week_grid %}
+                            <tr>
+                                <td><strong>{{ timeslots[loop.index0] }}</strong></td>
+                                    <td>{{ cell }}</td>
+                                {% endfor %}
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <form method="get" class="d-flex justify-content-center align-items-center gap-3 mt-3">
+                <button name="prev" value="1" class="btn btn-outline-primary" type="submit">&larr; Prev</button>
+                <span class="fw-bold">{{ month_name }} {{ year }}</span>
+                <button name="next" value="1" class="btn btn-outline-primary" type="submit">Next &rarr;</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

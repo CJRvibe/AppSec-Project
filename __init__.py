@@ -5,6 +5,7 @@ from flask import Flask, render_template, redirect, url_for, request, abort, ses
 from forms import InterestGroupProposalForm, ActivityProposalForm
 import db
 from werkzeug.utils import secure_filename
+from datetime import datetime, timedelta
 
 dotenv.load_dotenv()
 
@@ -95,10 +96,36 @@ def user_profile():
 
 @app.route('/calendar')
 def calendar():
-    return render_template('calendar.html')
+    start_hour = 8
+    end_hour = 20
+    days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+    timeslots = [f"{h:02d}:00" for h in range(start_hour, end_hour)]
+    
+    activities = {
+        (1, "09:00"): "Yoga Class",        
+        (2, "14:00"): "Medical Checkup",   
+        (4, "18:00"): "Cooking Workshop",  
+        (5, "10:00"): "Art Therapy",       
+    }
+    
+    week_grid = []
+    for hour in timeslots:
+        row = []
+        for day_index in range(7):
+            activity = activities.get((day_index, hour), "")
+            row.append(activity)
+        week_grid.append(row)
+    
+    return render_template(
+        'calendar.html',
+        week_grid=week_grid,
+        timeslots=timeslots,
+        days=days,
+        month_name="July",
+        year=2025,
+    )
 
 
-#test data
 
 groups = [
     {
