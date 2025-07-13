@@ -3,6 +3,7 @@ import json
 from flask import Flask, render_template, redirect, url_for, request, abort
 from forms import InterestGroupProposalForm, ActivityProposalForm
 import db
+import admin
 from werkzeug.utils import secure_filename
 
 dotenv.load_dotenv()
@@ -12,6 +13,7 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.register_blueprint(admin.admin, url_prefix="/admin")
 app.teardown_appcontext(db.close_db)
 
 def allowed_file(filename):

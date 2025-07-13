@@ -75,3 +75,18 @@ def add_activity_proposal(name, description, start_datetime, end_datetime, max_s
     cursor.execute(main_statement, main_values)
     add_activity_tags(connection.cursor(), cursor.lastrowid, tags)
     connection.commit()
+
+
+def get_group_proposals():
+    connection = get_db()
+    cursor = connection.cursor()
+    statement = """
+    SELECT ig.group_id, ig.name, ig.topic, ig.description, ig.max_size, ig.is_public, ac.title
+    FROM interest_group ig
+    INNER JOIN interest_group_proposals igp ON ig.group_id = igp.group_id
+    INNER JOIN activity_occurences ac ON ig.activity_occurence_id = ac.activity_occurence_id
+    WHERE ig.status_id = 1;
+    """
+
+    cursor.execute(statement)
+    return cursor.fetchall()
