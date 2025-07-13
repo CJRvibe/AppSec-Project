@@ -1,4 +1,4 @@
-from wtforms import Form, StringField, IntegerField, RadioField, SelectField, DateField, DateTimeField, TextAreaField, validators
+from wtforms import Form, StringField, IntegerField, RadioField, SelectField, DateField, DateTimeField, TextAreaField, validators, PasswordField
 
 ACTIVITY_OCCURENCE = [
     ("", "Select"),
@@ -44,3 +44,40 @@ class ActivityProposalForm(Form):
     location = SelectField("Location", [validators.DataRequired()], choices=CC_LOCATION, default="")
     tags = TextAreaField("Group Tags", [validators.length(min=1, max=300), validators.Optional()])
     remarks = TextAreaField("Additional remarks", [validators.Optional(), validators.length(min=1, max=300)])
+
+class LoginForm(Form):
+    email = StringField("Email", [
+        validators.DataRequired(message="Email is required."),
+        validators.Email(message="Please enter a valid email address."),
+        validators.Length(max=120)
+    ])
+    password = PasswordField("Password", [
+        validators.DataRequired(message="Password is required."),
+        validators.Length(min=8, max=128, message="Password must be at least 8 characters.")
+    ])
+
+class SignUpForm(Form):
+    first_name = StringField("First Name", [
+        validators.DataRequired(message="First name is required."),
+        validators.Length(min=1, max=50)
+    ])
+    last_name = StringField("Last Name", [
+        validators.DataRequired(message="Last name is required."),
+        validators.Length(min=1, max=50)
+    ])
+    email = StringField("Email", [
+        validators.DataRequired(message="Email is required."),
+        validators.Email(message="Please enter a valid email address."),
+        validators.Length(max=120)
+    ])
+    password = PasswordField("Password", [
+        validators.DataRequired(message="Password is required."),
+        validators.Length(min=8, max=128, message="Password must be at least 8 characters.")
+    ])
+    confirm_password = PasswordField("Confirm Password", [
+        validators.DataRequired(message="Please confirm your password."),
+        validators.EqualTo('password', message="Passwords must match.")
+    ])
+    role = SelectField("Role", [
+        validators.DataRequired(message="Role is required.")
+    ], choices=[('volunteer', 'Volunteer'), ('elderly', 'Elderly')], default="")

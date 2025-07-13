@@ -102,10 +102,15 @@ def calendar():
     timeslots = [f"{h:02d}:00" for h in range(start_hour, end_hour)]
     
     activities = {
+        #sample activities waitinf for integation with database from lucas
+        (0, "08:00"): "Morning Walk",
         (1, "09:00"): "Yoga Class",        
-        (2, "14:00"): "Medical Checkup",   
+        (2, "14:00"): "Medical Checkup",
+        (3, "11:00"): "Gardening Club", 
+        (3, "15:00"): "Book Reading",
         (4, "18:00"): "Cooking Workshop",  
-        (5, "10:00"): "Art Therapy",       
+        (5, "10:00"): "Art Therapy",    
+        (6, "19:00"): "Movie Night",
     }
     
     week_grid = []
