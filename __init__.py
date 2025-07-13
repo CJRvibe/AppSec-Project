@@ -58,7 +58,7 @@ def login():
     if request.method == 'POST':
         email = request.form['email']
         password = request.form['password']
-        user = verify_user(email, password)
+        user = db.verify_user(email, password)
         if user:
             session['user_id'] = user['user_id']
             session['email'] = user['email']
@@ -67,6 +67,11 @@ def login():
         else:
             flash('Invalid credentials.', 'danger')
     return render_template('login.html')
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('login'))
 
 @app.route('/forgetPassword')
 def forget_password():
@@ -85,9 +90,7 @@ def user_profile():
     user_id = session.get('user_id')
     if not user_id:
         return redirect(url_for('login'))
-    
-    user = db.get_user_by_id(user_id) 
-
+    user = db.get_user_by_id(user_id)
     return render_template('user_profile.html', user=user)
 
 @app.route('/calendar')

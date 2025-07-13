@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container d-flex justify-content-center align-items-center vh-100 bg-light">
+    <div class="card shadow p-4" style="width: 400px; border-radius: 10px;">
+        <div class="card-body text-center">
+            <h3 class="fw-bold text-dark mb-3">User Profile</h3>
+            
+            {% if user %}
+                <ul class="list-group list-group-flush text-start">
+                    <li class="list-group-item">
+                        <strong style="color: #1E80C1;">First Name:</strong> {{ user.first_name }}
+                    </li>
+                    <li class="list-group-item">
+                        <strong style="color: #1E80C1;">Last Name:</strong> {{ user.last_name }}
+                    </li>
+                    <li class="list-group-item">
+                        <strong style="color: #1E80C1;">Email:</strong> {{ user.email }}
+                    </li>
+                    <li class="list-group-item">
+                        <strong style="color: #1E80C1;">Role:</strong> {{ user.user_role }}
+                    </li>
+                </ul>
+            {% else %}
+                <p class="text-danger">User not found.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

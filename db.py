@@ -58,24 +58,15 @@ def close_db(e=None):
     if db is not None:
         db.close()
 
-def update_user_profile_image(user_id, filename):
-    """
-    Updates the user's profile image filename in the database.
-    Works for SQLite version.
-    """
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute(
-        "UPDATE users SET profile_image = ? WHERE user_id = ?",
-        (filename, user_id)
-    )
-    conn.commit()
-    conn.close()
-
 def get_user_by_id(user_id):
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM users WHERE user_id = %s", (user_id,))
+    cursor.execute("""
+        SELECT u.first_name, u.last_name, u.email, r.user_role
+        FROM users u
+        LEFT JOIN user_role r ON u.user_role = r.role_id
+        WHERE u.user_id = %s
+    """, (user_id,))
     user = cursor.fetchone()
     cursor.close()
     conn.close()
