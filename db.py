@@ -3,18 +3,8 @@ import mysql.connector
 from flask import g, current_app
 from werkzeug.security import generate_password_hash, check_password_hash
 
-
-def get_db_connection():
-    conn = mysql.connector.connect(
-        host=os.getenv("SQL_HOST", "localhost"),
-        user=os.getenv("SQL_USER", "root"),
-        password=os.getenv("SQL_PASSWORD", ""),
-        database=os.getenv("SQL_DB", "social_sage_db")
-    )
-    return conn
-
 def insert_user(first_name, last_name, email, password, user_role):
-    conn = get_db_connection()
+    conn = get_db()
     cursor = conn.cursor(dictionary=True)
     hashed_pw = generate_password_hash(password)
     try:
@@ -31,7 +21,7 @@ def insert_user(first_name, last_name, email, password, user_role):
         conn.close()
 
 def verify_user(email, password):
-    conn = get_db_connection()
+    conn = get_db()
     cursor = conn.cursor(dictionary=True)
     cursor.execute("SELECT * FROM users WHERE email = %s", (email,))
     user = cursor.fetchone()
@@ -70,7 +60,7 @@ def close_db(exception=None):
         db.close()
 
 def get_user_by_id(user_id):
-    conn = get_db_connection()
+    conn = get_db()
     cursor = conn.cursor(dictionary=True)
     cursor.execute("""
         SELECT u.first_name, u.last_name, u.email, r.user_role
