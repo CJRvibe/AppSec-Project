@@ -178,3 +178,18 @@ def get_group_proposal(id: int):
 
     cursor.execute(statement, (id, ))
     return cursor.fetchone()
+
+
+def update_group_proposal(id, approved=False):
+    connection = get_db()
+    cursor = connection.cursor()
+    status = "approved" if approved else "rejected"
+
+    statement = """
+    UPDATE interest_group
+    SET status_id = (SELECT status_id FROM statuses WHERE title = %s)
+    WHERE group_id = %s;
+    """
+
+    cursor.execute(statement, (status, id))
+    connection.commit()

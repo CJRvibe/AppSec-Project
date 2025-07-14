@@ -20,3 +20,17 @@ def view_group_proposal(id):
     
     session["view_error"] = id
     return redirect(url_for(".manage_group_proposals"))
+
+
+@admin.route("/approveGroupProposal/<int:id>", methods=["POST"])
+def approve_group_proposal(id):
+    db.update_group_proposal(id, approved=True)
+    
+    return redirect(url_for(".manage_group_proposals"))
+
+
+@admin.route("/rejectGroupProposal/<int:id>", methods=["POST"])
+def reject_group_proposal(id):
+    db.update_group_proposal(id, approved=False)
+    
+    return redirect(url_for(".manage_group_proposals"))
