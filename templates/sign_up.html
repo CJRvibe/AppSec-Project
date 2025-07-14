@@ -6,15 +6,6 @@
             <form method="POST" action="{{ url_for('sign_up') }}">
                 <h2 class="card-title text-center text-dark">Sign Up</h2>
                 <p class="text-center text-muted">Create your account</p>
-
-                {% with messages = get_flashed_messages(with_categories=true) %}
-                    {% if messages %}
-                        {% for category, msg in messages %}
-                            <div class="mb-3 text-{{ 'danger' if category == 'danger' else category }}">{{ msg }}</div>
-                        {% endfor %}
-                    {% endif %}
-                {% endwith %}
-
                 <div class="mb-3">
                     <label for="first_name" class="form-label">First Name</label>
                     <input type="text" class="form-control" id="first_name" name="first_name" required>
@@ -43,6 +34,13 @@
                         <option value="elderly">Elderly</option>
                     </select>
                 </div>
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, msg in messages %}
+                            <div class="mb-3 text-{{ 'danger' if category == 'danger' else category }}">{{ msg }}</div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
                 <button type="submit" class="btn w-100 text-white" style="background-color: #1E80C1;">Sign Up</button>
                 <div class="mt-3 text-center">
                     <a href="/login" class="text-decoration-none" style="color: #1E80C1;">Already have an account? Sign In</a>

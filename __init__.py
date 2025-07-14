@@ -2,10 +2,11 @@ import os
 import mysql.connector
 import dotenv
 from flask import Flask, render_template, redirect, url_for, request, abort, session, flash
-from forms import InterestGroupProposalForm, ActivityProposalForm
+from forms import *
 import db
 from werkzeug.utils import secure_filename
 from datetime import datetime, timedelta
+from access_control import login_required, role_required
 
 dotenv.load_dotenv()
 
@@ -39,6 +40,8 @@ def sign_up():
             user_role = 1
         elif role == "elderly":
             user_role = 2
+        elif role == "admin":
+            user_role = 3
         else:
             flash("Invalid role.", "danger")
             return render_template('sign_up.html')
@@ -87,6 +90,8 @@ def change_password():
     return render_template('change_password.html')
 
 @app.route('/userProfile')
+@login_required
+@role_required('admin')
 def user_profile():
     user_id = session.get('user_id')
     if not user_id:
