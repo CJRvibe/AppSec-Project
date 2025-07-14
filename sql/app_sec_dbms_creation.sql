@@ -23,7 +23,8 @@ DROP TABLE IF EXISTS `social_sage_db`.`user_role` ;
 CREATE TABLE IF NOT EXISTS `social_sage_db`.`user_role` (
   `role_id` TINYINT(1) NOT NULL AUTO_INCREMENT,
   `user_role` VARCHAR(45) NOT NULL,
-  PRIMARY KEY (`role_id`))
+  PRIMARY KEY (`role_id`),
+  UNIQUE INDEX `user_role_UNIQUE` (`user_role` ASC) VISIBLE)
 ENGINE = InnoDB;
 
 
@@ -38,6 +39,7 @@ CREATE TABLE IF NOT EXISTS `social_sage_db`.`users` (
   `last_name` VARCHAR(50) NOT NULL,
   `email` VARCHAR(50) NOT NULL,
   `password` VARCHAR(255) NOT NULL,
+  `profile_pic` VARCHAR(255) NULL DEFAULT NULL,
   `user_role` TINYINT NOT NULL,
   PRIMARY KEY (`user_id`),
   INDEX `fk_user_role_idx` (`user_role` ASC) VISIBLE,
@@ -58,7 +60,8 @@ DROP TABLE IF EXISTS `social_sage_db`.`activity_occurences` ;
 CREATE TABLE IF NOT EXISTS `social_sage_db`.`activity_occurences` (
   `activity_occurence_id` INT NOT NULL AUTO_INCREMENT,
   `title` VARCHAR(50) NOT NULL,
-  PRIMARY KEY (`activity_occurence_id`))
+  PRIMARY KEY (`activity_occurence_id`),
+  UNIQUE INDEX `title_UNIQUE` (`title` ASC) VISIBLE)
 ENGINE = InnoDB;
 
 
@@ -70,7 +73,8 @@ DROP TABLE IF EXISTS `social_sage_db`.`statuses` ;
 CREATE TABLE IF NOT EXISTS `social_sage_db`.`statuses` (
   `status_id` TINYINT NOT NULL AUTO_INCREMENT,
   `title` VARCHAR(50) NOT NULL,
-  PRIMARY KEY (`status_id`))
+  PRIMARY KEY (`status_id`),
+  UNIQUE INDEX `title_UNIQUE` (`title` ASC) VISIBLE)
 ENGINE = InnoDB;
 
 
@@ -86,6 +90,7 @@ CREATE TABLE IF NOT EXISTS `social_sage_db`.`interest_group` (
   `description` VARCHAR(200) NOT NULL,
   `max_size` TINYINT NOT NULL,
   `is_public` TINYINT NOT NULL,
+  `picture` VARCHAR(255) NULL DEFAULT NULL,
   `activity_occurence_id` INT NOT NULL,
   `status_id` TINYINT NOT NULL,
   `owner` INT NOT NULL,
@@ -119,7 +124,8 @@ DROP TABLE IF EXISTS `social_sage_db`.`tags` ;
 CREATE TABLE IF NOT EXISTS `social_sage_db`.`tags` (
   `tag_id` INT NOT NULL AUTO_INCREMENT,
   `name` VARCHAR(50) NOT NULL,
-  PRIMARY KEY (`tag_id`))
+  PRIMARY KEY (`tag_id`),
+  UNIQUE INDEX `name_UNIQUE` (`name` ASC) VISIBLE)
 ENGINE = InnoDB;
 
 
@@ -195,7 +201,8 @@ DROP TABLE IF EXISTS `social_sage_db`.`activity_location` ;
 CREATE TABLE IF NOT EXISTS `social_sage_db`.`activity_location` (
   `location_code` VARCHAR(7) NOT NULL,
   `name` VARCHAR(50) NOT NULL,
-  PRIMARY KEY (`location_code`))
+  PRIMARY KEY (`location_code`),
+  UNIQUE INDEX `name_UNIQUE` (`name` ASC) VISIBLE)
 ENGINE = InnoDB;
 
 
@@ -214,6 +221,7 @@ CREATE TABLE IF NOT EXISTS `social_sage_db`.`interest_activity` (
   `funds` SMALLINT NOT NULL,
   `location_code` VARCHAR(7) NOT NULL,
   `remarks` VARCHAR(300) NULL DEFAULT NULL,
+  `picture` VARCHAR(200) NULL DEFAULT NULL,
   `status_id` TINYINT NOT NULL,
   `group_id` INT NOT NULL,
   PRIMARY KEY (`activity_id`),
@@ -274,23 +282,6 @@ CREATE TABLE IF NOT EXISTS `social_sage_db`.`interest_group_proposals` (
     FOREIGN KEY (`group_id`)
     REFERENCES `social_sage_db`.`interest_group` (`group_id`)
     ON DELETE CASCADE
-    ON UPDATE NO ACTION)
-ENGINE = InnoDB;
-
-
--- -----------------------------------------------------
--- Table `social_sage_db`.`interest_activity_proposals`
--- -----------------------------------------------------
-DROP TABLE IF EXISTS `social_sage_db`.`interest_activity_proposals` ;
-
-CREATE TABLE IF NOT EXISTS `social_sage_db`.`interest_activity_proposals` (
-  `activity_id` INT NOT NULL,
-  `description` VARCHAR(1000) NULL,
-  PRIMARY KEY (`activity_id`),
-  CONSTRAINT `fk_interest_activity_proposals_interest_activity1`
-    FOREIGN KEY (`activity_id`)
-    REFERENCES `social_sage_db`.`interest_activity` (`activity_id`)
-    ON DELETE NO ACTION
     ON UPDATE NO ACTION)
 ENGINE = InnoDB;
 
