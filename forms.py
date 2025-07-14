@@ -1,4 +1,4 @@
-from wtforms import Form, StringField, IntegerField, RadioField, SelectField, DateField, DateTimeField, TextAreaField, validators
+from wtforms import Form, StringField, IntegerField, RadioField, SelectField, DateField, DateTimeField, TextAreaField, validators, PasswordField
 from flask import current_app
 import db
 
@@ -53,6 +53,7 @@ class LoginForm(Form):
         validators.Length(max=120)
     ])
     password = PasswordField("Password", [
+        
         validators.DataRequired(message="Password is required."),
         validators.Length(min=8, max=128, message="Password must be at least 8 characters.")
     ])

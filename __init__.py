@@ -91,8 +91,6 @@ def change_password():
     return render_template('change_password.html')
 
 @app.route('/userProfile')
-@login_required
-@role_required('admin')
 def user_profile():
     user_id = session.get('user_id')
     if not user_id:
