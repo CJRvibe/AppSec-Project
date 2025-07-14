@@ -21,9 +21,6 @@ def allowed_file(filename):
 
 @app.route('/')
 def index():
-    #test
-    activity = db.get_interest_activity(1)
-    print(activity)
     return render_template("home.html")
 
 @app.route('/login')
