@@ -12,17 +12,20 @@ def get_db():
             database="social_sage_db"
         )
 
-def get_db_connection():
-    conn = mysql.connector.connect(
-        host=os.getenv("SQL_HOST", "localhost"),
-        user=os.getenv("SQL_USER", "root"),
-        password=os.getenv("SQL_PASSWORD", ""),
-        database=os.getenv("SQL_DB", "social_sage_db")
+    return g.db
+
+def open_db():
+    connection = mysql.connector.connect(
+        host=os.getenv("SQL_HOST"),
+        user=os.getenv("SQL_USER"),
+        password=os.getenv("SQL_PASSWORD"),
+        database="social_sage_db"
     )
-    return conn
+
+    return connection
 
 def insert_user(first_name, last_name, email, password, user_role):
-    conn = get_db_connection()
+    conn = get_db()
     cursor = conn.cursor(dictionary=True)
     hashed_pw = generate_password_hash(password)
     try:
@@ -39,7 +42,7 @@ def insert_user(first_name, last_name, email, password, user_role):
         conn.close()
 
 def verify_user(email, password):
-    conn = get_db_connection()
+    conn = get_db()
     cursor = conn.cursor(dictionary=True)
     cursor.execute("SELECT * FROM users WHERE email = %s", (email,))
     user = cursor.fetchone()
@@ -50,16 +53,6 @@ def verify_user(email, password):
     else:
         return None
 
-def open_db():
-    connection = mysql.connector.connect(
-        host=os.getenv("SQL_HOST"),
-        user=os.getenv("SQL_USER"),
-        password=os.getenv("SQL_PASSWORD"),
-        database="social_sage_db"
-    )
-
-    return connection
-
 def get_db():
     if "db" not in g:
         connection = mysql.connector.connect(
@@ -69,8 +62,6 @@ def get_db():
             database="social_sage_db"
         )
         g.db = connection
-    return g.db
-
 
 def close_db(exception=None):
     db = g.pop('db', None)
@@ -105,9 +96,8 @@ def get_activity_by_id(activity_id):
     cursor.execute(statement, (activity_id,))
     return cursor.fetchone()
 
-
 def get_user_by_id(user_id):
-    conn = get_db_connection()
+    conn = get_db()
     cursor = conn.cursor(dictionary=True)
     cursor.execute("""
         SELECT u.first_name, u.last_name, u.email, r.user_role
