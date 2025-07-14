@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block title %}Admin - Manage Group Proposals{% endblock %}
+
+{% block navbar %}
+{% include "includes/admin_navbar.html" %}
+{% endblock %}
+
+{% block content %}
+
+<table class="table table-hover table-striped text-center border">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Topic</th>
+            <th>Description</th>
+            <th>Max Size</th>
+            <th>Join Type</th>
+            <th>Activity Occurence</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for proposal in proposals %}
+        <tr>
+            <td>{{ proposal[0] }}</td>
+            <td>{{ proposal[1] }}</td>
+            <td>{{ proposal[2] }}</td>
+            <td>{{ proposal[3] }}</td>
+            <td>{{ proposal[4] }}</td>
+            <td>{{ proposal[5] }}</td>
+            <td>{{ proposal[6] }}</td>
+            <td></td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

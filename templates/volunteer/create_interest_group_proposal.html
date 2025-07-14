@@ -2,12 +2,17 @@
 {% block title %}Create Interest Group Proposal{% endblock %}
 
 {% block links %}
-<link rel="stylesheet" href="../static/css/form.css">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/form.css') }}">
+{% endblock %}
+
+{% block navbar %}
+{% include "includes/volunteer_navbar.html" %}
 {% endblock %}
 
 {% block content %}
 {% from "includes/form_helper.html" import render_field, valid_feedback, invalid_feedback %}
 
+<!-- disable autocomplete next time -->
 <form method="post" class="needs-validation" novalidate>
     <h1 class="display-6 text-center">Create Interest Group Proposal</h1>
 
@@ -61,5 +66,5 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="../static/scripts/form_validation.js"></script>
+<script src="{{ url_for('static', filename='scripts/form_validation.js') }}"></script>
 {% endblock %}
