@@ -9,43 +9,57 @@
 {% block content %}
 <div class="container mt-4">
 
+    <!-- Group Header -->
     <div class="d-flex align-items-center mb-3">
-        <img src="{{ url_for('static', filename=group.image) }}" class="rounded" style="width: 100px; height: 100px; object-fit: cover;">
+        <img src="{{ url_for('static', filename=group.image or 'img/default_group.jpg') }}"
+             class="rounded" style="width: 100px; height: 100px; object-fit: cover;">
         <div class="ms-3">
             <h2 class="mb-0">{{ group.name }}</h2>
             <p class="text-muted">By {{ group.owner or 'Group Admin' }}</p>
         </div>
     </div>
 
-    <p class="lead">{{ group.description }}</p>
+    <p class="lead">{{ group.description or 'No description provided.' }}</p>
     <p class="text-muted">Est. {{ group.established or "2023" }}</p>
 
-    <div class="d-flex justify-content-center border-bottom mb-4">
-        <button class="btn btn-link text-decoration-none me-3 {% if view == 'activities' %}fw-bold border-bottom border-2{% else %}text-muted{% endif %}"
+    <!-- Tab Selector -->
+    <div class="row border-bottom mb-4">
+    <div class="col-6 text-center">
+        <button class="btn btn-link w-100 text-decoration-none py-2 {% if view == 'activities' %}fw-bold border-bottom border-2 border-dark{% else %}text-muted{% endif %}"
                 onclick="switchView('activities')">Activities</button>
-        <button class="btn btn-link text-decoration-none {% if view == 'forum' %}fw-bold border-bottom border-2{% else %}text-muted{% endif %}"
+    </div>
+    <div class="col-6 text-center">
+        <button class="btn btn-link w-100 text-decoration-none py-2 {% if view == 'forum' %}fw-bold border-bottom border-2 border-dark{% else %}text-muted{% endif %}"
                 onclick="switchView('forum')">Forum</button>
     </div>
+</div>
 
-
+    <!-- Activities Section -->
     <div id="activities-section" class="{% if view != 'activities' %}d-none{% endif %}">
+        {% if activities %}
         <div class="row row-cols-1 row-cols-md-3 g-4">
-            {% for activity in group.activities %}
+            {% for activity in activities %}
+            {{ activity}}
             <div class="col">
-                <a href="{{ url_for('view_group_activity', group_id=group.id, activity_id=activity.id) }}" class="text-decoration-none text-dark">
+                <a href="{{ url_for('view_group_activity', group_id=group.group_id, activity_id=activity.activity_id) }}" class="text-decoration-none text-dark">
                     <div class="card h-100 shadow">
-                        <img src="{{ url_for('static', filename=activity.image) }}" class="card-img-top" alt="{{ activity.name }}">
+                        <img src="{{ url_for('static', filename=activity.image or 'img/default_activity.jpg') }}"
+                             class="card-img-top" alt="{{ activity.name }}">
                         <div class="card-body">
-                            <small class="text-muted">{{ activity.category }}</small>
-                            <h5 class="card-title">{{ activity.name }}</h5>
+                            <small class="text-muted">{{ activity["category"] }}</small>
+                            <h5 class="card-title">{{ activity["name"] }}</h5>
                         </div>
                     </div>
                 </a>
             </div>
             {% endfor %}
         </div>
+        {% else %}
+        <p class="text-muted">No activities available for this group.</p>
+        {% endif %}
     </div>
 
+    <!-- Forum Section -->
     <div id="forum-section" class="{% if view != 'forum' %}d-none{% endif %}">
         <div class="card">
             <div class="card-body">
