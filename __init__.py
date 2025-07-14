@@ -3,6 +3,7 @@ import json
 from flask import Flask, render_template, redirect, url_for, request, abort, session, flash
 from forms import *
 import db
+import config
 import admin
 from werkzeug.utils import secure_filename
 from datetime import datetime, timedelta
@@ -10,13 +11,12 @@ from access_control import login_required, role_required
 
 dotenv.load_dotenv()
 
-UPLOAD_FOLDER = 'static/uploads'
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
 app = Flask(__name__)
-app.secret_key = "your_secret_key"  
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-app.config["TEMPLATES_AUTO_RELOAD"] = True
+app.config.from_object(config.DevelopmentConfig)
+app.config["SECRET_KEY"] = "your_secret_key"  
+
 app.register_blueprint(admin.admin, url_prefix="/admin")
 app.teardown_appcontext(db.close_db)
 
