@@ -16,6 +16,7 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 app = Flask(__name__)
 app.secret_key = "your_secret_key"  
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config["TEMPLATES_AUTO_RELOAD"] = True
 app.register_blueprint(admin.admin, url_prefix="/admin")
 app.teardown_appcontext(db.close_db)
 

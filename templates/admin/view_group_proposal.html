@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+{% block title %}Admin - View Group Proposal{% endblock %}
+
+{% block navbar %}
+{% include "includes/admin_navbar.html" %}
+{% endblock %}
+
+{% block content %}
+
+<h1 class="display-5">View Group Proposal {{ proposal.name }}</h1>
+
+<table class="table table-hover table-striped text-center table-bordered my-4">
+    <thead>
+        <tr>
+            <th>Description</th>
+            <th>Value</th>
+        </tr>
+    </thead>
+    <tbody>
+
+        <tr>
+            <td>ID</td>
+            <td>{{ proposal.get("group_id") }}</td>
+        </tr>
+        <tr>
+            <td>Name</td>
+            <td>{{ proposal.get("name") }}</td>
+        </tr>
+        <tr>
+            <td>Topic</td>
+            <td>{{ proposal.get("topic") }}</td>
+        </tr>
+        <tr>
+            <td>Description</td>
+            <td>{{ proposal.get("description") }}</td>
+        </tr>
+        <tr>
+            <td>Max Size</td>
+            <td>{{ proposal.get("max_size") }}</td>
+        </tr>
+        <tr>
+            <td>Join Type</td>
+
+            {% if proposal.get("is_public") == 1 %}
+            <td>Public</td>
+            {% else %}
+            <td>Private</td>
+            {% endif %}
+        </tr>
+        <tr>
+            <td>Activity Occurence</td>
+            <td>{{ proposal.get("occurence") }}</td>
+        </tr>
+        <tr>
+            <td>Status</td>
+            <td>{{ proposal.get("status") }}</td>
+        </tr>
+        <tr>
+            <td>Owner Email</td>
+            <td>{{ proposal.get("email") }}</td>
+        </tr>
+        <tr>
+            <td>Proposal Reason</td>
+            <td>{{ proposal.get("reason") }}</td>
+        </tr>
+    </tbody>
+</table>
+
+<div class="mb-2">
+    <div class="d-flex flex-row-reverse">
+        <form method="POST">
+            <button class="btn btn-success" formaction="#">Accept</button>
+            <button class="btn btn-danger" formaction="#">Reject</button>
+        </form>
+    </div>
+</div>
+{% endblock %}
