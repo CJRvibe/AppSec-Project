@@ -25,6 +25,9 @@ def allowed_file(filename):
 
 @app.route('/')
 def index():
+    #test
+    activity = db.get_interest_activity(1)
+    print(activity)
     return render_template("home.html")
 
 @app.route('/signUp', methods=['GET', 'POST'])
@@ -162,28 +165,38 @@ groups = [
 
 @app.route('/exploreGroups')
 def explore_groups():
+    groups = db.get_all_groups()
+    print(groups)
     return render_template('explore_groups.html', groups=groups)
 
 @app.route('/groupHome/<int:group_id>')
 def group_home(group_id):
     view = request.args.get('view', 'activities')
-    group = next((g for g in groups if g["id"] == group_id), None)
-    if group is None:
+
+    group = db.get_group_by_id(group_id)
+    if not group:
         abort(404)
-    return render_template("group_home.html", group=group, view=view)
+
+    print(group_id)
+
+    activities = db.get_activities_by_group_id(group_id)
+    print(activities)
+    group["activities"] = activities
+    print(group)
+    return render_template("group_home.html", group=group, view=view, activities=activities)
+
 
 @app.route('/group/<int:group_id>/activity/<int:activity_id>')
 def view_group_activity(group_id, activity_id):
-    group = next((g for g in groups if g["id"] == group_id), None)
-    if group is None:
+    group = db.get_group_by_id(group_id)
+    if not group:
         abort(404)
 
-    activity = next((a for a in group.get("activities", []) if a["id"] == activity_id), None)
-    if activity is None:
+    activity = db.get_activity_by_id(activity_id)
+    if not activity or activity['group_id'] != group_id:
         abort(404)
 
     return render_template('activity.html', activity=activity, group=group)
-
 @app.route("/createInterestGroupProposal", methods=["GET", "POST"])
 def create_group_proposal():
     # mMUST GET OWNER ID
