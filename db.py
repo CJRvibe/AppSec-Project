@@ -19,19 +19,6 @@ def close_db(e=None):
     if db is not None:
         db.close()
 
-#test
-def get_interest_activity(variable1):
-    connection = get_db()
-    cursor = connection.cursor()
-    statement = """
-    SELECT *
-    FROM interest_activity
-    """
-    cursor.execute(statement) # or just write the statement here
-    result = cursor.fetchall()
-    return result
-
-
 def get_all_groups():
     connection = get_db()
     cursor = connection.cursor(dictionary=True)
