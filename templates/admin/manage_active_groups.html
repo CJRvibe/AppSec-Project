@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Admin - Manage Group Proposals{% endblock %}
+{% block title %}Admin - Manage Active{% endblock %}
 
 {% block navbar %}
 {% include "includes/admin_navbar.html" %}
@@ -16,10 +16,10 @@
 
 <ul class="nav nav-tabs nav-justified py-2">
     <li class="nav-item">
-        <a class="nav-link" href="{{url_for('admin.manage_active_groups')}}">Active Groups</a>
+        <a class="nav-link active disabled" href="">Active Groups</a>
     </li>
     <li class="nav-item">
-        <a class="nav-link active disabled" href="">Group Proposals</a>
+        <a class="nav-link" href="{{url_for('admin.manage_group_proposals')}}">Group Proposals</a>
     </li>
     <li class="nav-item">
         <a class="nav-link" href="">Rejected Groups</a>
@@ -40,22 +40,22 @@
         </tr>
     </thead>
     <tbody>
-        {% for proposal in proposals %}
+        {% for group in groups %}
         <tr>
-            <td>{{ proposal.get("group_id") }}</td>
-            <td>{{ proposal.get("name") }}</td>
-            <td>{{ proposal.get("topic") }}</td>
-            <td>{{ proposal.get("description") }}</td>
-            <td>{{ proposal.get("max_size") }}</td>
+            <td>{{ group.get("group_id") }}</td>
+            <td>{{ group.get("name") }}</td>
+            <td>{{ group.get("topic") }}</td>
+            <td>{{ group.get("description") }}</td>
+            <td>{{ group.get("max_size") }}</td>
 
-            {% if proposal.get("is_public") == 1 %}
+            {% if group.get("is_public") == 1 %}
             <td>Public</td>
             {% else %}
             <td>Private</td>
             {% endif %}
 
-            <td>{{ proposal.get("occurence") }}</td>
-            <td><a href="{{ url_for('admin.view_group_proposal', id=proposal.get('group_id')) }}" class="btn btn-info">View</a></td>
+            <td>{{ group.get("occurence") }}</td>
+            <td><a href="" class="btn btn-info">View</a></td>
         </tr>
         {% endfor %}
     </tbody>

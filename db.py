@@ -193,3 +193,19 @@ def update_group_proposal(id, approved=False):
 
     cursor.execute(statement, (status, id))
     connection.commit()
+
+
+def get_active_groups():
+    connection = get_db()
+    cursor = connection.cursor(dictionary=True)
+
+    statement = """
+    SELECT ig.group_id, ig.name, ig.topic, ig.description, ig.max_size, ig.is_public, ac.title occurence
+    FROM interest_group ig
+    INNER JOIN interest_group_proposals igp ON ig.group_id = igp.group_id
+    INNER JOIN activity_occurences ac ON ig.activity_occurence_id = ac.activity_occurence_id
+    WHERE ig.status_id = 2;
+    """
+
+    cursor.execute(statement)
+    return cursor.fetchall()
