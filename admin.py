@@ -18,6 +18,13 @@ def manage_active_groups():
     return render_template("admin/manage_active_groups.html", groups=groups)
 
 
+@admin.route("/manageRejectGroups")
+def manage_reject_groups():
+    groups = db.get_reject_groups()
+    
+    return render_template("admin/manage_reject_groups.html", groups=groups)
+
+
 @admin.route("/viewGroupProposal/<int:id>")
 def view_group_proposal(id):
     proposal = db.get_group_proposal(id)
