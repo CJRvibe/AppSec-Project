@@ -2,6 +2,7 @@ import dotenv
 import json
 import os
 from flask import Flask, render_template, redirect, url_for, request, abort, session, flash
+from flask_mail import Mail, Message, Attachment
 from forms import *
 import db
 import config
@@ -17,6 +18,9 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 app = Flask(__name__)
 app.config.from_object(config.DevelopmentConfig)
 app.config["SECRET_KEY"] = os.environ["SECRET_KEY"]
+app.config["MAIL_PASSWORD"] = os.environ["MAIL_PASSWORD"]
+
+mail = Mail(app)
 
 app.register_blueprint(admin.admin, url_prefix="/admin")
 app.teardown_appcontext(db.close_db)
@@ -24,6 +28,11 @@ app.teardown_appcontext(db.close_db)
 def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def send_email(recipient, subject, body):
+    msg = Message(f"{subject}", recipients=[f'{recipient}'])
+    msg.body = f"{body}"
+    mail.send(msg)
 
 @app.route('/')
 def index():
