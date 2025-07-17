@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% block title %}Admin - Manage Group Proposals{% endblock %}
+
+{% block navbar %}
+{% include "includes/admin_navbar.html" %}
+{% endblock %}
+
+{% block content %}
+
+{% if 'view_error' in session %}
+<div class="alert alert-danger alert-dismissible my-1">
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    <strong>Error</strong> Group ID {{ session.pop("view_error", None) }} does not exist
+</div>
+{% endif %}
+
+<ul class="nav nav-tabs nav-justified py-2">
+    <li class="nav-item">
+        <a class="nav-link" href="{{url_for('admin.manage_active_groups')}}">Active Groups</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link active disabled" href="">Group Proposals</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="{{url_for('admin.manage_reject_groups')}}">Rejected Groups</a>
+    </li>
+</ul>
+
+<table class="table table-hover table-striped text-center table-bordered mt-4">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Topic</th>
+            <th>Description</th>
+            <th>Max Size</th>
+            <th>Join Type</th>
+            <th>Activity Occurence</th>
+            <th>Details</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for proposal in proposals %}
+        <tr>
+            <td>{{ proposal.get("group_id") }}</td>
+            <td>{{ proposal.get("name") }}</td>
+            <td>{{ proposal.get("topic") }}</td>
+            <td>{{ proposal.get("description") }}</td>
+            <td>{{ proposal.get("max_size") }}</td>
+
+            {% if proposal.get("is_public") == 1 %}
+            <td>Public</td>
+            {% else %}
+            <td>Private</td>
+            {% endif %}
+
+            <td>{{ proposal.get("occurence") }}</td>
+            <td><a href="{{ url_for('admin.view_group_proposal', id=proposal.get('group_id')) }}" class="btn btn-info">View</a></td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

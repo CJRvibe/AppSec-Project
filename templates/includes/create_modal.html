@@ -1,0 +1,27 @@
+{% macro create_modal(modal_id, modal_heading, modal_body) %}
+
+    <!-- The Modal -->
+    <div class="modal" id="{{modal_id}}">
+        <div class="modal-dialog">
+            <div class="modal-content">
+
+                <!-- Modal Header -->
+                <div class="modal-header">
+                    <h4 class="modal-title">{{ modal_heading }}</h4>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <!-- Modal body -->
+                <div class="modal-body">
+                    {{ modal_body }}
+                </div>
+
+                <!-- Modal footer -->
+                <div class="modal-footer">
+                    {{ caller() }}
+                </div>
+
+            </div>
+        </div>
+    </div>
+{% endmacro %}
