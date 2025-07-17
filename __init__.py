@@ -162,26 +162,28 @@ groups = [
 
 @app.route('/exploreGroups')
 def explore_groups():
-    groups = db.get_all_groups()
-    print(groups)
-    return render_template('explore_groups.html', groups=groups)
+    query = request.args.get('q', '').strip()
+    if query:
+        groups = db.search_groups(query)
+    else:
+        groups = db.get_all_groups()
+    return render_template('explore_groups.html', groups=groups, query=query)
 
 @app.route('/groupHome/<int:group_id>')
 def group_home(group_id):
     view = request.args.get('view', 'activities')
+    search = request.args.get('search', '').strip()
 
     group = db.get_group_by_id(group_id)
     if not group:
         abort(404)
 
-    print(group_id)
+    if view == "activities":
+        activities = db.get_activities_by_group_id(group_id, search)
+    else:
+        activities = []
 
-    activities = db.get_activities_by_group_id(group_id)
-    print(activities)
-    group["activities"] = activities
-    print(group)
     return render_template("group_home.html", group=group, view=view, activities=activities)
-
 
 @app.route('/group/<int:group_id>/activity/<int:activity_id>')
 def view_group_activity(group_id, activity_id):

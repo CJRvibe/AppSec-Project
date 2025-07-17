@@ -72,11 +72,20 @@ def get_group_by_id(group_id):
     cursor.execute(statement, (group_id,))
     return cursor.fetchone()
 
-def get_activities_by_group_id(group_id):
+def get_activities_by_group_id(group_id, search=None):
     connection = get_db()
     cursor = connection.cursor(dictionary=True)
-    statement = "SELECT * FROM interest_activity WHERE group_id = %s"
-    cursor.execute(statement, (group_id,))
+    
+    if search:
+        statement = """
+            SELECT * FROM interest_activity 
+            WHERE group_id = %s AND LOWER(name) LIKE %s
+        """
+        cursor.execute(statement, (group_id, f"%{search.lower()}%"))
+    else:
+        statement = "SELECT * FROM interest_activity WHERE group_id = %s"
+        cursor.execute(statement, (group_id,))
+    
     return cursor.fetchall()
 
 def get_activity_by_id(activity_id):
@@ -157,4 +166,15 @@ def get_group_proposals():
     """
 
     cursor.execute(statement)
+    return cursor.fetchall()
+
+def search_groups(query):
+    connection = get_db()
+    cursor = connection.cursor(dictionary=True)
+    statement = """
+        SELECT * FROM interest_group
+        WHERE name LIKE %s OR topic LIKE %s OR description LIKE %s
+    """
+    like_query = f"%{query}%"
+    cursor.execute(statement, (like_query, like_query, like_query))
     return cursor.fetchall()

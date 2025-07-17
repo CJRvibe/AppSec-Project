@@ -26,10 +26,16 @@
 <div class="container mt-4">
 
     <!-- Hero Banner -->
-    <div class="activity-hero text-center mb-5">
+    <div class="activity-hero text-center mb-5"
+        style="background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), 
+                url('{{ url_for('static', filename='img/' ~ activity.picture) }}') center/cover no-repeat;
+                color: white;
+                padding: 4rem 2rem;
+                border-radius: 0.5rem;">
         <h1 class="display-5 fw-bold">{{ activity.name }}</h1>
         <p class="lead">Hosted by {{ activity.group_name }}</p>
     </div>
+
 
     <div class="row">
         <!-- Left: Description -->
