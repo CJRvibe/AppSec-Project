@@ -29,13 +29,15 @@ def index():
 
 @app.route('/signUp', methods=['GET', 'POST'])
 def sign_up():
-    if request.method == 'POST':
-        first_name = request.form.get('first_name')
-        last_name = request.form.get('last_name')
-        email = request.form.get('email')
-        password = request.form.get('password')
-        confirm = request.form.get('confirm_password')
-        role = request.form.get('role')
+    form = SignUpForm(request.form)
+    if request.method == 'POST' and form.validate():
+        first_name = form.first_name.data
+        last_name = form.last_name.data
+        email = form.email.data
+        password = form.password.data
+        password = db.hashed_pw(password)
+        confirm_password = form.confirm_password.data
+        role = form.role.data
 
         if role == "volunteer":
             user_role = 1
@@ -47,26 +49,32 @@ def sign_up():
             flash("Invalid role.", "danger")
             return render_template('sign_up.html')
 
-        if password != confirm:
+        if db.insert_user(first_name, last_name, email, password, user_role):
+            flash('User created successfully!', 'success')
+            return redirect(url_for('login'))  
+        
+        elif password != confirm_password:
             flash('Passwords do not match.', 'danger')
             return render_template('sign_up.html')
-
-        if db.insert_user(first_name, last_name, email, password, user_role):
-            return redirect(url_for('login'))  
+        
         else:
             flash('Email already exists or database error.', 'danger')
             return render_template('sign_up.html')
-    return render_template('sign_up.html')
+        
+    return render_template('sign_up.html', form=form)
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    if request.method == 'POST':
-        email = request.form['email']
-        password = request.form['password']
+    form = LoginForm(request.form)
+    if request.method == 'POST' and form.validate():
+        email = form.email.data
+        password = form.password.data
+        
         user = db.verify_user(email, password)
         if user:
             session['user_id'] = user['user_id']
             session['email'] = user['email']
+            session['role'] = user['user_role']
             flash('Logged in successfully!', 'success')
             return redirect(url_for('explore_groups'))  
         else:

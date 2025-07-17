@@ -24,14 +24,17 @@ def open_db():
 
     return connection
 
+def hashed_pw(password):
+    hashed_pw = generate_password_hash(password)
+    return hashed_pw
+
 def insert_user(first_name, last_name, email, password, user_role):
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
-    hashed_pw = generate_password_hash(password)
     try:
         cursor.execute(
             "INSERT INTO users (first_name, last_name, email, password, user_role) VALUES (%s, %s, %s, %s, %s)",
-            (first_name, last_name, email, hashed_pw, user_role)
+            (first_name, last_name, email, password, user_role)
         )
         conn.commit()
         return True
@@ -46,13 +49,11 @@ def verify_user(email, password):
     cursor = conn.cursor(dictionary=True)
     cursor.execute("SELECT * FROM users WHERE email = %s", (email,))
     user = cursor.fetchone()
-    cursor.close()
-    conn.close()
     if user and check_password_hash(user['password'], password):
         return user
     else:
         return None
-
+    
 def close_db(exception=None):
     db = g.pop('db', None)
     if db is not None:
@@ -96,8 +97,6 @@ def get_user_by_id(user_id):
         WHERE u.user_id = %s
     """, (user_id,))
     user = cursor.fetchone()
-    cursor.close()
-    conn.close()
     return user
 
 
