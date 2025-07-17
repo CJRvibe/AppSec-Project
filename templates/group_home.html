@@ -11,7 +11,7 @@
 
     <!-- Group Header -->
     <div class="d-flex align-items-center mb-3">
-        <img src="{{ url_for('static', filename=group.image or 'img/default_group.jpg') }}"
+        <img src="{{ url_for('static', filename='img/' ~group.picture or 'img/default_group.jpg') }}"
              class="rounded" style="width: 100px; height: 100px; object-fit: cover;">
         <div class="ms-3">
             <h2 class="mb-0">{{ group.name }}</h2>
@@ -36,15 +36,21 @@
 
     <!-- Activities Section -->
     <div id="activities-section" class="{% if view != 'activities' %}d-none{% endif %}">
+        {% if view == 'activities' %}
+        <form method="get" class="mb-4">
+            <input type="hidden" name="view" value="activities">
+            <input type="text" name="search" class="form-control" placeholder="Search activities..." value="{{ request.args.get('search', '') }}">
+        </form>
+        {% endif %}
+
         {% if activities %}
         <div class="row row-cols-1 row-cols-md-3 g-4">
             {% for activity in activities %}
-            {{ activity}}
             <div class="col">
                 <a href="{{ url_for('view_group_activity', group_id=group.group_id, activity_id=activity.activity_id) }}" class="text-decoration-none text-dark">
                     <div class="card h-100 shadow">
-                        <img src="{{ url_for('static', filename=activity.image or 'img/default_activity.jpg') }}"
-                             class="card-img-top" alt="{{ activity.name }}">
+                        <img src="{{ url_for('static', filename='img/' ~ activity.picture or 'img/default_activity.jpg') }}"
+                            class="card-img-top" alt="{{ activity.name }}">
                         <div class="card-body">
                             <small class="text-muted">{{ activity["category"] }}</small>
                             <h5 class="card-title">{{ activity["name"] }}</h5>
@@ -55,9 +61,10 @@
             {% endfor %}
         </div>
         {% else %}
-        <p class="text-muted">No activities available for this group.</p>
+        <p class="text-muted">No activities found for this group.</p>
         {% endif %}
     </div>
+
 
     <!-- Forum Section -->
     <div id="forum-section" class="{% if view != 'forum' %}d-none{% endif %}">
