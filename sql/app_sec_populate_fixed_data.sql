@@ -49,11 +49,11 @@ VALUES
     ("Tom", "Tan", "tomtan@gmail.com", "scrypt:32768:8:1$nDxwfSmPjmWDJ3dV$ca54472e55e47f0bd573971c205331e20bb3d1fba892ee365ba2e5aa533ad8f35dbc127aee92b5a635efe73e19c63e16dffcbaf8d6cea2ae422feb45ed1a7008", 2),
     ("admin", "admin", "admin@gmail.com", "scrypt:32768:8:1$NpJdo0T9CYT9txvD$85a4f4c1b0b1e0599520eba9db3dbcb1b70af0c3b51e2f762856e4ee4e433c0d194ae00f2bd331500cb77d5a65dd14219b27111813cc51a2a0db1291a4d712d1", 3);
     
-INSERT INTO interest_group (group_id, name, topic, description, max_size, is_public, picture, activity_occurence_id, status_id, owner)
+INSERT INTO interest_group (group_id, name, topic, description, max_size, is_public, picture, proposal, activity_occurence_id, status_id, owner)
 VALUES
-    (1, "Health and Wellness", "Fitness", "Activities focused on improving health and wellness for seniors.", 30, TRUE, "elderly.jpg", 1, 1, "1"),
-    (2, "Gardening Enthusiasts", "Gardening", "A group for seniors who love gardening and nature.", 20, TRUE, "elderly.jpg", 2, 1, "1"),
-    (3, "Culinary Arts", "Cooking", "A group for seniors interested in cooking and sharing recipes.", 15, TRUE, "elderly.jpg", 3, 1, "1");
+    (1, "Health and Wellness", "Fitness", "Activities focused on improving health and wellness for seniors.", 30, TRUE, "elderly.jpg", "A new proposal for health and wellness", 1, 1, "1"),
+    (2, "Gardening Enthusiasts", "Gardening", "A group for seniors who love gardening and nature.", 20, TRUE, "elderly.jpg", "Another proposal", 2, 2, "1"),
+    (3, "Culinary Arts", "Cooking", "A group for seniors interested in cooking and sharing recipes.", 15, TRUE, "elderly.jpg", "Last proposal", 3, 3, "1");
 
 
 INSERT INTO interest_activity (activity_id, name, description, start_datetime, end_datetime, max_size, funds, location_code, remarks, picture, status_id, group_id)

@@ -91,6 +91,7 @@ CREATE TABLE IF NOT EXISTS `social_sage_db`.`interest_group` (
   `max_size` TINYINT NOT NULL,
   `is_public` TINYINT NOT NULL,
   `picture` VARCHAR(255) NULL DEFAULT NULL,
+  `proposal` VARCHAR(1000) NOT NULL,
   `activity_occurence_id` INT NOT NULL,
   `status_id` TINYINT NOT NULL,
   `owner` INT NOT NULL,
@@ -137,10 +138,12 @@ DROP TABLE IF EXISTS `social_sage_db`.`user_interest_group` ;
 CREATE TABLE IF NOT EXISTS `social_sage_db`.`user_interest_group` (
   `user_id` INT NOT NULL,
   `group_id` INT NOT NULL,
+  `status_id` TINYINT NOT NULL,
   `date_joined` DATETIME NOT NULL,
   INDEX `fk_user_interest_group_users1_idx` (`user_id` ASC) VISIBLE,
   INDEX `fk_user_interest_group_interest_group1_idx` (`group_id` ASC) VISIBLE,
   PRIMARY KEY (`user_id`, `group_id`),
+  INDEX `fk_user_interest_group_statuses1_idx` (`status_id` ASC) VISIBLE,
   CONSTRAINT `fk_user_interest_group_users1`
     FOREIGN KEY (`user_id`)
     REFERENCES `social_sage_db`.`users` (`user_id`)
@@ -149,6 +152,11 @@ CREATE TABLE IF NOT EXISTS `social_sage_db`.`user_interest_group` (
   CONSTRAINT `fk_user_interest_group_interest_group1`
     FOREIGN KEY (`group_id`)
     REFERENCES `social_sage_db`.`interest_group` (`group_id`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT `fk_user_interest_group_statuses1`
+    FOREIGN KEY (`status_id`)
+    REFERENCES `social_sage_db`.`statuses` (`status_id`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
 ENGINE = InnoDB;
@@ -164,19 +172,12 @@ CREATE TABLE IF NOT EXISTS `social_sage_db`.`group_discussion_post` (
   `title` VARCHAR(50) NOT NULL,
   `description` VARCHAR(1000) NOT NULL,
   `group_id` INT NOT NULL,
-  `user_id` INT NOT NULL,
   PRIMARY KEY (`post_id`),
   INDEX `fk_group_discussion_post_interest_group1_idx` (`group_id` ASC) VISIBLE,
-  INDEX `fk_group_discussion_post_users1_idx` (`user_id` ASC) VISIBLE,
   CONSTRAINT `fk_group_discussion_post_interest_group1`
     FOREIGN KEY (`group_id`)
     REFERENCES `social_sage_db`.`interest_group` (`group_id`)
     ON DELETE CASCADE
-    ON UPDATE NO ACTION,
-  CONSTRAINT `fk_group_discussion_post_users1`
-    FOREIGN KEY (`user_id`)
-    REFERENCES `social_sage_db`.`users` (`user_id`)
-    ON DELETE NO ACTION
     ON UPDATE NO ACTION)
 ENGINE = InnoDB;
 
@@ -277,23 +278,6 @@ ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table `social_sage_db`.`interest_group_proposals`
--- -----------------------------------------------------
-DROP TABLE IF EXISTS `social_sage_db`.`interest_group_proposals` ;
-
-CREATE TABLE IF NOT EXISTS `social_sage_db`.`interest_group_proposals` (
-  `group_id` INT NOT NULL,
-  `reason` VARCHAR(1000) NOT NULL,
-  PRIMARY KEY (`group_id`),
-  CONSTRAINT `fk_interest_group_proposals_interest_group1`
-    FOREIGN KEY (`group_id`)
-    REFERENCES `social_sage_db`.`interest_group` (`group_id`)
-    ON DELETE CASCADE
-    ON UPDATE NO ACTION)
-ENGINE = InnoDB;
-
-
--- -----------------------------------------------------
 -- Table `social_sage_db`.`calendar_event`
 -- -----------------------------------------------------
 DROP TABLE IF EXISTS `social_sage_db`.`calendar_event` ;
@@ -307,6 +291,97 @@ CREATE TABLE IF NOT EXISTS `social_sage_db`.`calendar_event` (
   PRIMARY KEY (`event_id`),
   INDEX `fk_calendar_event_users1_idx` (`user_id` ASC) VISIBLE,
   CONSTRAINT `fk_calendar_event_users1`
+    FOREIGN KEY (`user_id`)
+    REFERENCES `social_sage_db`.`users` (`user_id`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION)
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table `social_sage_db`.`flagged_activities`
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS `social_sage_db`.`flagged_activities` ;
+
+CREATE TABLE IF NOT EXISTS `social_sage_db`.`flagged_activities` (
+  `flag_id` VARCHAR(45) NOT NULL,
+  `activity_id` INT NOT NULL,
+  `user_id` INT NOT NULL,
+  `status_id` TINYINT NOT NULL,
+  `reason` VARCHAR(255) NULL DEFAULT NULL,
+  INDEX `fk_flagged_groups_interest_activity1_idx` (`activity_id` ASC) VISIBLE,
+  INDEX `fk_flagged_groups_users1_idx` (`user_id` ASC) VISIBLE,
+  PRIMARY KEY (`flag_id`),
+  INDEX `fk_flagged_groups_statuses1_idx` (`status_id` ASC) VISIBLE,
+  CONSTRAINT `fk_flagged_groups_interest_activity1`
+    FOREIGN KEY (`activity_id`)
+    REFERENCES `social_sage_db`.`interest_activity` (`activity_id`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT `fk_flagged_groups_users1`
+    FOREIGN KEY (`user_id`)
+    REFERENCES `social_sage_db`.`users` (`user_id`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT `fk_flagged_groups_statuses1`
+    FOREIGN KEY (`status_id`)
+    REFERENCES `social_sage_db`.`statuses` (`status_id`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION)
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table `social_sage_db`.`flagged_groups`
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS `social_sage_db`.`flagged_groups` ;
+
+CREATE TABLE IF NOT EXISTS `social_sage_db`.`flagged_groups` (
+  `flag_id` INT NOT NULL,
+  `group_id` INT NOT NULL,
+  `user_id` INT NOT NULL,
+  `status_id` TINYINT NOT NULL,
+  `reason` VARCHAR(255) NULL DEFAULT NULL,
+  PRIMARY KEY (`flag_id`),
+  INDEX `fk_flagged_groups_interest_group1_idx` (`group_id` ASC) VISIBLE,
+  INDEX `fk_flagged_groups_users2_idx` (`user_id` ASC) VISIBLE,
+  INDEX `fk_flagged_groups_statuses2_idx` (`status_id` ASC) VISIBLE,
+  CONSTRAINT `fk_flagged_groups_interest_group1`
+    FOREIGN KEY (`group_id`)
+    REFERENCES `social_sage_db`.`interest_group` (`group_id`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT `fk_flagged_groups_users2`
+    FOREIGN KEY (`user_id`)
+    REFERENCES `social_sage_db`.`users` (`user_id`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT `fk_flagged_groups_statuses2`
+    FOREIGN KEY (`status_id`)
+    REFERENCES `social_sage_db`.`statuses` (`status_id`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION)
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table `social_sage_db`.`user_interest_activity`
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS `social_sage_db`.`user_interest_activity` ;
+
+CREATE TABLE IF NOT EXISTS `social_sage_db`.`user_interest_activity` (
+  `activity_id` INT NOT NULL,
+  `user_id` INT NOT NULL,
+  `join_datetime` DATETIME NOT NULL,
+  INDEX `fk_user_interest_activity_interest_activity1_idx` (`activity_id` ASC) VISIBLE,
+  INDEX `fk_user_interest_activity_users1_idx` (`user_id` ASC) VISIBLE,
+  PRIMARY KEY (`activity_id`, `user_id`),
+  CONSTRAINT `fk_user_interest_activity_interest_activity1`
+    FOREIGN KEY (`activity_id`)
+    REFERENCES `social_sage_db`.`interest_activity` (`activity_id`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT `fk_user_interest_activity_users1`
     FOREIGN KEY (`user_id`)
     REFERENCES `social_sage_db`.`users` (`user_id`)
     ON DELETE NO ACTION
