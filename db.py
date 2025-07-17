@@ -24,6 +24,7 @@ def open_db():
 
     return connection
 
+<<<<<<< HEAD
 def insert_user(first_name, last_name, email, password, user_role):
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
@@ -32,6 +33,19 @@ def insert_user(first_name, last_name, email, password, user_role):
         cursor.execute(
             "INSERT INTO users (first_name, last_name, email, password, user_role) VALUES (%s, %s, %s, %s, %s)",
             (first_name, last_name, email, hashed_pw, user_role)
+=======
+def hashed_pw(password):
+    hashed_pw = generate_password_hash(password)
+    return hashed_pw
+
+def insert_user(first_name, last_name, email, password, user_role):
+    conn = get_db()
+    cursor = conn.cursor(dictionary=True)
+    try:
+        cursor.execute(
+            "INSERT INTO users (first_name, last_name, email, password, user_role) VALUES (%s, %s, %s, %s, %s)",
+            (first_name, last_name, email, password, user_role)
+>>>>>>> origin/main
         )
         conn.commit()
         return True
@@ -46,13 +60,20 @@ def verify_user(email, password):
     cursor = conn.cursor(dictionary=True)
     cursor.execute("SELECT * FROM users WHERE email = %s", (email,))
     user = cursor.fetchone()
+<<<<<<< HEAD
     cursor.close()
     conn.close()
+=======
+>>>>>>> origin/main
     if user and check_password_hash(user['password'], password):
         return user
     else:
         return None
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> origin/main
 def close_db(exception=None):
     db = g.pop('db', None)
     if db is not None:
@@ -105,8 +126,11 @@ def get_user_by_id(user_id):
         WHERE u.user_id = %s
     """, (user_id,))
     user = cursor.fetchone()
+<<<<<<< HEAD
     cursor.close()
     conn.close()
+=======
+>>>>>>> origin/main
     return user
 
 
@@ -166,6 +190,7 @@ def get_group_proposals():
     """
 
     cursor.execute(statement)
+<<<<<<< HEAD
     return cursor.fetchall()
 
 def search_groups(query):
@@ -178,3 +203,6 @@ def search_groups(query):
     like_query = f"%{query}%"
     cursor.execute(statement, (like_query, like_query, like_query))
     return cursor.fetchall()
+=======
+    return cursor.fetchall()
+>>>>>>> origin/main

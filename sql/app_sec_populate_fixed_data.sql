@@ -43,6 +43,7 @@ VALUES
     ("HCC", "hougang community center"),
     ("JCCC", "joo chiat community center");
     
+<<<<<<< HEAD
 INSERT INTO users (user_id, first_name, last_name, email, password, profile_pic, user_role)
 VALUES
     (1, "John", "Doe", "roblox@gmail.com", "password123", "elderly.jpg", "3");
@@ -60,4 +61,12 @@ VALUES
     (2, "Gardening Club", "Join us in our community garden to learn about gardening and enjoy nature.", "2023-11-02 09:00:00", "2023-11-02 11:00:00", 15, 30.00, "ANCC", "All tools provided.", "elderly.jpg", 1, 2),
     (3, "Cooking Class", "Learn to cook healthy meals with our experienced chef.", "2023-11-03 14:00:00", "2023-11-03 16:00:00", 10, 40.00, "AMKCC", "Ingredients provided.", "elderly.jpg", 1, 3);
 
+=======
+INSERT INTO users (first_name, last_name, email, password, user_role)
+VALUES
+    ("Jian Hao", "Boo", "boojianhao@gmail.com", "scrypt:32768:8:1$OdjtJNaE4MmMEhUi$aeba4e9565b897dd40b45ad91fe5e10ae253a324d79d4ec891d29ad54aa690c6ac989b953e9a6c303cf526cbc748b9f537d07a84a3cc335fd3d450df99920674", 1),
+    ("Tom", "Tan", "tomtan@gmail.com", "scrypt:32768:8:1$nDxwfSmPjmWDJ3dV$ca54472e55e47f0bd573971c205331e20bb3d1fba892ee365ba2e5aa533ad8f35dbc127aee92b5a635efe73e19c63e16dffcbaf8d6cea2ae422feb45ed1a7008", 2),
+    ("admin", "admin", "admin@gmail.com", "scrypt:32768:8:1$NpJdo0T9CYT9txvD$85a4f4c1b0b1e0599520eba9db3dbcb1b70af0c3b51e2f762856e4ee4e433c0d194ae00f2bd331500cb77d5a65dd14219b27111813cc51a2a0db1291a4d712d1", 3);
+    
+>>>>>>> origin/main
 COMMIT;
