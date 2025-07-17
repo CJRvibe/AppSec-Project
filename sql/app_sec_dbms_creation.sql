@@ -164,12 +164,19 @@ CREATE TABLE IF NOT EXISTS `social_sage_db`.`group_discussion_post` (
   `title` VARCHAR(50) NOT NULL,
   `description` VARCHAR(1000) NOT NULL,
   `group_id` INT NOT NULL,
+  `user_id` INT NOT NULL,
   PRIMARY KEY (`post_id`),
   INDEX `fk_group_discussion_post_interest_group1_idx` (`group_id` ASC) VISIBLE,
+  INDEX `fk_group_discussion_post_users1_idx` (`user_id` ASC) VISIBLE,
   CONSTRAINT `fk_group_discussion_post_interest_group1`
     FOREIGN KEY (`group_id`)
     REFERENCES `social_sage_db`.`interest_group` (`group_id`)
     ON DELETE CASCADE
+    ON UPDATE NO ACTION,
+  CONSTRAINT `fk_group_discussion_post_users1`
+    FOREIGN KEY (`user_id`)
+    REFERENCES `social_sage_db`.`users` (`user_id`)
+    ON DELETE NO ACTION
     ON UPDATE NO ACTION)
 ENGINE = InnoDB;
 
@@ -287,35 +294,24 @@ ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table `social_sage_db`.`interest_activity_proposals`
+-- Table `social_sage_db`.`calendar_event`
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS `social_sage_db`.`interest_activity_proposals` ;
+DROP TABLE IF EXISTS `social_sage_db`.`calendar_event` ;
 
-CREATE TABLE IF NOT EXISTS `social_sage_db`.`interest_activity_proposals` (
-  `activity_id` INT NOT NULL,
-  `description` VARCHAR(1000) NULL,
-  PRIMARY KEY (`activity_id`),
-  CONSTRAINT `fk_interest_activity_proposals_interest_activity1`
-    FOREIGN KEY (`activity_id`)
-    REFERENCES `social_sage_db`.`interest_activity` (`activity_id`)
+CREATE TABLE IF NOT EXISTS `social_sage_db`.`calendar_event` (
+  `event_id` INT NOT NULL,
+  `title` VARCHAR(50) NOT NULL,
+  `start_datetime` DATETIME NOT NULL,
+  `end_datetime` DATETIME NOT NULL,
+  `user_id` INT NOT NULL,
+  PRIMARY KEY (`event_id`),
+  INDEX `fk_calendar_event_users1_idx` (`user_id` ASC) VISIBLE,
+  CONSTRAINT `fk_calendar_event_users1`
+    FOREIGN KEY (`user_id`)
+    REFERENCES `social_sage_db`.`users` (`user_id`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
 ENGINE = InnoDB;
-
-CREATE TABLE user_role (
-    role_id TINYINT(1) PRIMARY KEY,
-    user_role VARCHAR(40) NOT NULL
-);
-
-CREATE TABLE users (
-    user_id INTEGER PRIMARY KEY AUTOINCREMENT,
-    first_name VARCHAR(50) NOT NULL,
-    last_name VARCHAR(50) NOT NULL,
-    email VARCHAR(50) NOT NULL UNIQUE,
-    password VARCHAR(255) NOT NULL,
-    user_role TINYINT(1),
-    FOREIGN KEY (user_role) REFERENCES user_role(role_id)
-);
 
 
 SET SQL_MODE=@OLD_SQL_MODE;
