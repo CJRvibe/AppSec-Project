@@ -1,8 +1,11 @@
 import dotenv
 import json
+import os
 from flask import Flask, render_template, redirect, url_for, request, abort, session, flash
+from flask_mail import Mail, Message, Attachment
 from forms import *
 import db
+import config
 import admin
 from werkzeug.utils import secure_filename
 from datetime import datetime, timedelta
@@ -10,12 +13,15 @@ from access_control import login_required, role_required
 
 dotenv.load_dotenv()
 
-UPLOAD_FOLDER = 'static/uploads'
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
 app = Flask(__name__)
-app.secret_key = "your_secret_key"  
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config.from_object(config.DevelopmentConfig)
+app.config["SECRET_KEY"] = os.environ["SECRET_KEY"]
+app.config["MAIL_PASSWORD"] = os.environ["MAIL_PASSWORD"]
+
+mail = Mail(app)
+
 app.register_blueprint(admin.admin, url_prefix="/admin")
 app.teardown_appcontext(db.close_db)
 
@@ -23,21 +29,17 @@ def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+def send_email(recipient, subject, body):
+    msg = Message(f"{subject}", recipients=[f'{recipient}'])
+    msg.body = f"{body}"
+    mail.send(msg)
+
 @app.route('/')
 def index():
     return render_template("home.html")
 
 @app.route('/signUp', methods=['GET', 'POST'])
 def sign_up():
-<<<<<<< HEAD
-    if request.method == 'POST':
-        first_name = request.form.get('first_name')
-        last_name = request.form.get('last_name')
-        email = request.form.get('email')
-        password = request.form.get('password')
-        confirm = request.form.get('confirm_password')
-        role = request.form.get('role')
-=======
     form = SignUpForm(request.form)
     if request.method == 'POST' and form.validate():
         first_name = form.first_name.data
@@ -47,7 +49,6 @@ def sign_up():
         password = db.hashed_pw(password)
         confirm_password = form.confirm_password.data
         role = form.role.data
->>>>>>> origin/main
 
         if role == "volunteer":
             user_role = 1
@@ -59,24 +60,6 @@ def sign_up():
             flash("Invalid role.", "danger")
             return render_template('sign_up.html')
 
-<<<<<<< HEAD
-        if password != confirm:
-            flash('Passwords do not match.', 'danger')
-            return render_template('sign_up.html')
-
-        if db.insert_user(first_name, last_name, email, password, user_role):
-            return redirect(url_for('login'))  
-        else:
-            flash('Email already exists or database error.', 'danger')
-            return render_template('sign_up.html')
-    return render_template('sign_up.html')
-
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if request.method == 'POST':
-        email = request.form['email']
-        password = request.form['password']
-=======
         if db.insert_user(first_name, last_name, email, password, user_role):
             flash('User created successfully!', 'success')
             return redirect(url_for('login'))  
@@ -98,15 +81,11 @@ def login():
         email = form.email.data
         password = form.password.data
         
->>>>>>> origin/main
         user = db.verify_user(email, password)
         if user:
             session['user_id'] = user['user_id']
             session['email'] = user['email']
-<<<<<<< HEAD
-=======
             session['role'] = user['user_role']
->>>>>>> origin/main
             flash('Logged in successfully!', 'success')
             return redirect(url_for('explore_groups'))  
         else:
