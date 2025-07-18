@@ -19,6 +19,7 @@ app = Flask(__name__)
 app.config.from_object(config.DevelopmentConfig)
 app.config["SECRET_KEY"] = os.environ["SECRET_KEY"]
 app.config["MAIL_PASSWORD"] = os.environ["MAIL_PASSWORD"]
+app.config['UPLOAD_FOLDER'] = os.path.join('static', 'uploads')
 
 mail = Mail(app)
 
@@ -114,8 +115,10 @@ def user_profile():
     user_id = session.get('user_id')
     if not user_id:
         return redirect(url_for('login'))
-    user = db.get_user_by_id(user_id)
+
+    user = db.get_user_by_id(user_id)  
     return render_template('user_profile.html', user=user)
+
 
 @app.route('/calendar')
 def calendar():
@@ -259,6 +262,33 @@ def create_activity_proposal():
 @app.route("/test-discussion")
 def discussion_forum():
     return render_template("group_discussion.html")
+
+
+@app.route('/userProfile/upload', methods=['POST'])
+@login_required
+def upload_file():
+    user_id = session.get('user_id')
+    if not user_id:
+        return redirect(url_for('login'))
+
+    if 'file' not in request.files:
+        return 'No file uploaded', 400
+
+    file = request.files['file']
+    if file and allowed_file(file.filename):
+        filename = secure_filename(file.filename)
+
+        filename = f"user_{user_id}_" + filename
+
+        save_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(save_path)
+
+        db.update_user_profile_pic(user_id, filename)
+
+        return redirect(url_for('user_profile'))
+
+    return 'Invalid file', 400
+
 
 
 if __name__ == "__main__":

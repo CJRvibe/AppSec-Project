@@ -100,7 +100,7 @@ def get_user_by_id(user_id):
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
     cursor.execute("""
-        SELECT u.first_name, u.last_name, u.email, r.user_role
+        SELECT u.first_name, u.last_name, u.email, r.user_role, u.profile_pic
         FROM users u
         LEFT JOIN user_role r ON u.user_role = r.role_id
         WHERE u.user_id = %s
@@ -244,3 +244,36 @@ def get_reject_groups():
 
     cursor.execute(statement)
     return cursor.fetchall()
+
+def update_user_profile_pic(user_id, profile_pic):
+    conn = get_db()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            "UPDATE users SET profile_pic = %s WHERE user_id = %s",
+            (profile_pic, user_id)
+        )
+        conn.commit()
+        return True
+    except Exception as e:
+        print("Error saving profile picture:", e)
+        return False
+    finally:
+        cursor.close()
+        conn.close()
+
+def get_user_profile_pic(user_id):
+    conn = get_db()
+    cursor = conn.cursor(dictionary=True)
+    try:
+        cursor.execute("SELECT profile_pic FROM users WHERE user_id = %s", (user_id,))
+        result = cursor.fetchone()
+        if result:
+            return result['profile_pic']
+        else:
+            return None
+    finally:
+        cursor.close()
+        conn.close()
+
+
