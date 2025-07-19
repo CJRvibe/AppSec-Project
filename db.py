@@ -42,7 +42,6 @@ def insert_user(first_name, last_name, email, password, user_role):
         return False
     finally:
         cursor.close()
-        conn.close()
 
 def verify_user(email, password):
     conn = get_db()
@@ -275,5 +274,20 @@ def get_user_profile_pic(user_id):
     finally:
         cursor.close()
         conn.close()
+    
+def get_user_by_email(email):
+    conn = get_db()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM users WHERE email = %s", (email,))
+    result = cursor.fetchone()
+    cursor.close()  
+    return result
+
+def update_user_role(user_id, role):
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("UPDATE users SET user_role = %s WHERE user_id = %s", (role, user_id))
+    conn.commit()
+    cursor.close()
 
 

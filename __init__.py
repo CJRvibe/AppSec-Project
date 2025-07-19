@@ -10,6 +10,7 @@ import admin
 from werkzeug.utils import secure_filename
 from datetime import datetime, timedelta
 from access_control import login_required, role_required
+from authlib.integrations.flask_client import OAuth
 
 dotenv.load_dotenv()
 
@@ -20,6 +21,17 @@ app.config.from_object(config.DevelopmentConfig)
 app.config["SECRET_KEY"] = os.environ["SECRET_KEY"]
 app.config["MAIL_PASSWORD"] = os.environ["MAIL_PASSWORD"]
 app.config['UPLOAD_FOLDER'] = os.path.join('static', 'uploads')
+
+oauth = OAuth(app)
+google = oauth.register(
+    name='google',
+    client_id=app.config["GOOGLE_CLIENT_ID"],
+    client_secret=app.config["GOOGLE_CLIENT_SECRET"],
+    server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
+    client_kwargs={
+        'scope': 'openid email profile'
+    }
+)
 
 mail = Mail(app)
 
@@ -128,7 +140,7 @@ def calendar():
     timeslots = [f"{h:02d}:00" for h in range(start_hour, end_hour)]
     
     activities = {
-        #sample activities waitinf for integation with database from lucas
+        #sample activities waiting for integation with database from lucas
         (0, "08:00"): "Morning Walk",
         (1, "09:00"): "Yoga Class",        
         (2, "14:00"): "Medical Checkup",
@@ -289,7 +301,51 @@ def upload_file():
 
     return 'Invalid file', 400
 
+@app.route('/login/google')
+def login_google():
+    redirect_uri = url_for('login_google_callback', _external=True)
+    return google.authorize_redirect(redirect_uri)
 
+@app.route('/login/callback')
+def login_google_callback():
+    token = google.authorize_access_token()
+    user_info = google.userinfo()
+    email = user_info['email']
+
+    # Check if user exists in your DB
+    user = db.get_user_by_email(email)
+    if not user:
+        db.insert_user(
+            user_info.get("given_name", ""), 
+            user_info.get("family_name", ""), 
+            email, 
+            '',      # Password empty for SSO
+            None     # No default role
+        )
+        user = db.get_user_by_email(email)
+    session['user_id'] = user['user_id']
+    session['email'] = email
+    session['role'] = user['user_role']
+    flash('Logged in with Google!', 'success')
+
+    # If user has no role, force them to choose one
+    if not user['user_role']:
+        return redirect(url_for('choose_role'))
+
+    return redirect(url_for('explore_groups'))
+
+@app.route('/choose_role', methods=['GET', 'POST'])
+def choose_role():
+    user_id = session.get('user_id')
+    if not user_id:
+        return redirect(url_for('login'))
+    if request.method == 'POST':
+        role = request.form.get('role')
+        db.update_user_role(user_id, role)
+        session['role'] = role
+        flash('Role selected successfully!', 'success')
+        return redirect(url_for('explore_groups'))
+    return render_template('choose_role.html')
 
 if __name__ == "__main__":
     app.run()

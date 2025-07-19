@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-5">
+    <h2>Choose Your Role</h2>
+    <form method="post">
+        <div class="mb-3">
+            <label for="role" class="form-label">Select Role:</label>
+            <select class="form-select" id="role" name="role" required>
+                <option value="">Select role</option>
+                <option value="1">Volunteer</option>
+                <option value="2">Elderly</option>
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary">Submit</button>
+    </form>
+</div>
+{% endblock %}
