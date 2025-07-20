@@ -54,7 +54,7 @@ def reject_group_proposal(id):
 def manage_approved_activities():
     activities = db.get_group_activities(type="approved")
 
-    return render_template("admin/manage_approved_activities.html", activities=activities)
+    return render_template("admin/manage_activities.html", activities=activities)
 
 
 @admin.route("/groupActivities/activityProposals")
@@ -69,3 +69,24 @@ def manage_rejected_activities():
     activities = db.get_group_activities(type="rejected")
 
     return render_template("admin/manage_activities.html", activities=activities, type="rejected")
+
+
+@admin.route("/groupActivities/<int:id>")
+def view_activity(id):
+    activity = db.admin_get_group_activity(id)
+
+    return render_template("admin/view_activity.html", activity=activity)
+
+
+@admin.route("/groupActivities/approveActivity/<int:id>", methods=["POST"])
+def approve_activity(id):
+    db.update_activity_proposal(id, approved=True)
+
+    return redirect(url_for(".manage_approved_activities"))
+
+
+@admin.route("/groupActivities/rejectActivity/<int:id>", methods=["POST"])
+def reject_activity(id):
+    db.update_activity_proposal(id, approved=False)
+
+    return redirect(url_for(".manage_rejected_activities"))

@@ -112,16 +112,14 @@ def get_user_by_id(user_id):
 def add_group_proposal(name, topic, description, max_size, is_public, activity_occurence, reason):
     connection = get_db()
     cursor = connection.cursor()
-    values = (name, topic, description, max_size, is_public, activity_occurence)
+    values = (name, topic, description, max_size, is_public, activity_occurence, reason)
     statement = """
     INSERT INTO interest_group (name, topic, description, max_size, is_public,
-        activity_occurence_id, status_id, owner)
-    VALUES (%s, %s, %s, %s, %s, %s, 1, 3)
+        activity_occurence_id, proposal, status_id, owner)
+    VALUES (%s, %s, %s, %s, %s, %s, %s, 1, 3)
     """ # change to generate dynamic owner
 
     cursor.execute(statement, values)
-
-    cursor.execute("INSERT INTO interest_group_proposals VALUES (%s, %s)", (cursor.lastrowid, reason))
     connection.commit()
 
 def add_activity_tags(cursor, activity_id, tags):
@@ -242,25 +240,22 @@ def get_reject_groups():
     return cursor.fetchall()
 
 
-# def get_group_activities(type="approved"):
-#     connection = get_db()
-#     cursor = connection.cursor(dictionary=True)
+def admin_get_group_activity(id):
+    connection = get_db()
+    cursor = connection.cursor(dictionary=True)
 
-#     if type == "pending": status_id = 1
-#     elif type == "approved": status_id = 2
-#     elif type == "rejected": status_id = 3
+    statement = """
+    SELECT ia.activity_id, ig.name group_name, ia.name, ia.description, ia.start_datetime, ia.end_datetime,
+           ia.max_size, ia.funds, al.name location, ia.remarks, s.title status
+    FROM interest_activity ia
+    INNER JOIN interest_group ig ON ia.group_id = ig.group_id
+    INNER JOIN activity_location al ON ia.location_code = al.location_code
+    INNER JOIN statuses s ON ia.status_id = s.status_id
+    WHERE ia.activity_id = %s;
+    """
 
-#     statement = """
-#     SELECT ia.activity_id, ia.name, ia.description, ia.start_datetime, ia.end_datetime,
-#            ia.max_size, ia.funds, al.name location, ia.remarks
-#     FROM interest_activity ia
-#     INNER JOIN activity_location al ON ia.location_code = al.location_code
-#     INNER JOIN statuses s ON ia.status_id = s.status_id
-#     WHERE ia.status_id = %s;
-#     """
-
-#     cursor.execute(statement, (status_id, ))
-#     return cursor.fetchall()
+    cursor.execute(statement, (id, ))
+    return cursor.fetchone()
 
 
 def get_group_activities(type="approved"):
@@ -283,3 +278,18 @@ def get_group_activities(type="approved"):
 
     cursor.execute(statement, (status_id, ))
     return cursor.fetchall()
+
+
+def update_activity_proposal(id, approved=False):
+    connection = get_db()
+    cursor = connection.cursor()
+    status = "approved" if approved else "rejected"
+
+    statement = """
+    UPDATE interest_activity
+    SET status_id = (SELECT status_id FROM statuses WHERE title = %s)
+    WHERE activity_id = %s;
+    """
+
+    cursor.execute(statement, (status, id))
+    connection.commit()
