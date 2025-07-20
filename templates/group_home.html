@@ -19,6 +19,22 @@
         </div>
     </div>
 
+    <div class="d-flex justify-content-end mb-3">
+    {% if session.user_id %}
+        {% if has_joined %}
+            <button class="btn btn-success" disabled>
+                ✓ Joined
+            </button>
+        {% else %}
+            <form method="POST" action="{{ url_for('join_group', group_id=group.group_id) }}">
+                <button type="submit" class="btn btn-primary">Join Group</button>
+            </form>
+        {% endif %}
+    {% else %}
+        <a href="{{ url_for('login') }}" class="btn btn-outline-secondary">Log in to Join</a>
+    {% endif %}
+</div>
+
     <p class="lead">{{ group.description or 'No description provided.' }}</p>
     <p class="text-muted">Est. {{ group.established or "2023" }}</p>
 

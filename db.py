@@ -244,3 +244,17 @@ def get_reject_groups():
 
     cursor.execute(statement)
     return cursor.fetchall()
+
+def check_user_joined_group(user_id, group_id):
+    connection = get_db()
+    cursor = connection.cursor()
+    statement = "SELECT * FROM user_interest_group WHERE user_id = %s AND group_id = %s"
+    cursor.execute(statement, (user_id, group_id))
+    return cursor.fetchone() is not None
+
+def join_group(user_id, group_id):
+    connection = get_db()
+    cursor = connection.cursor()
+    statement = "INSERT IGNORE INTO user_interest_group (user_id, group_id, date_joined) VALUES (%s, %s, NOW())"
+    cursor.execute(statement, (user_id, group_id))
+    connection.commit()
