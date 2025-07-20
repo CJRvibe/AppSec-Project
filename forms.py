@@ -21,8 +21,8 @@ def get_activity_occurence():
     return result
 
 JOIN_TYPE = [
-    (1, "Public"),
-    (0, "Private")
+    (True, "Public"),
+    (False, "Private")
 ]
 
 class InterestGroupProposalForm(Form):

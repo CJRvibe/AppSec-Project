@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% block title %}Admin - Manage Approved Groups{% endblock %}
+
+{% block navbar %}
+{% include "includes/admin_navbar.html" %}
+{% endblock %}
+
+{% block content %}
+<ul class="nav nav-tabs nav-justified py-2">
+    <li class="nav-item">
+        <a class="nav-link {%if type == 'approved'%}active disabled{%endif%}" href="{{url_for('admin.manage_approved_activities')}}">Approved Activities</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {%if type == 'pending'%}active disabled{%endif%}" href="{{url_for('admin.manage_pending_activities')}}">Activity Proposals</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {%if type == 'rejected'%}active disabled{%endif%}" href="">Rejected Activities</a>
+    </li>
+</ul>
+
+<table class="table table-hover table-striped text-center table-bordered mt-4">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Group</th>
+            <th>Name</th>
+            <th>Max Size</th>
+            <th>Start Date and Time</th>
+            <th>End Date and Time</th>
+            <th>Funds</th>
+            <th>Location</th>
+            <th>Details</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for activity in activities %}
+        <tr>
+            <td>{{ activity.get("activity_id") }}</td>
+            <td>{{ activity.get("name") }}</td>
+            <td>{{ activity.get("group_name") }}</td>
+            <td>{{ activity.get("max_size") }}</td>
+            <td>{{ activity.get("start_datetime") }}</td>
+            <td>{{ activity.get("end_datetime") }}</td>
+            <td>{{ activity.get("funds") }}</td>
+            <td>{{ activity.get("location") }}</td>
+            <td><a href="" class="btn btn-info">View</a></td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

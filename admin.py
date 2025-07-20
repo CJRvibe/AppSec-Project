@@ -48,3 +48,24 @@ def reject_group_proposal(id):
     db.update_group_proposal(id, approved=False)
     
     return redirect(url_for(".manage_group_proposals"))
+
+
+@admin.route("/groupActivities")
+def manage_approved_activities():
+    activities = db.get_group_activities(type="approved")
+
+    return render_template("admin/manage_approved_activities.html", activities=activities)
+
+
+@admin.route("/groupActivities/activityProposals")
+def manage_pending_activities():
+    activities = db.get_group_activities(type="pending")
+
+    return render_template("admin/manage_activities.html", activities=activities, type="pending")
+
+
+@admin.route("/gropupActivities/rejectedActivities")
+def manage_rejected_activities():
+    activities = db.get_group_activities(type="rejected")
+
+    return render_template("admin/manage_activities.html", activities=activities, type="rejected")

@@ -159,7 +159,6 @@ def get_group_proposals():
     statement = """
     SELECT ig.group_id, ig.name, ig.topic, ig.description, ig.max_size, ig.is_public, ac.title occurence
     FROM interest_group ig
-    INNER JOIN interest_group_proposals igp ON ig.group_id = igp.group_id
     INNER JOIN activity_occurences ac ON ig.activity_occurence_id = ac.activity_occurence_id
     WHERE ig.status_id = 1;
     """
@@ -186,9 +185,8 @@ def get_group_proposal(id: int):
     SELECT
         ig.group_id, ig.name, ig.topic, ig.description,
         ig.max_size, ig.is_public, ig.picture, ac.title occurence,
-        s.title status, u.email, igp.reason
+        s.title status, u.email, ig.proposal
     FROM interest_group ig
-    INNER JOIN interest_group_proposals igp ON ig.group_id = igp.group_id
     INNER JOIN activity_occurences ac ON ig.activity_occurence_id = ac.activity_occurence_id
     INNER JOIN statuses s ON s.status_id = ig.status_id
     INNER JOIN users u ON ig.owner = u.user_id
@@ -221,7 +219,6 @@ def get_active_groups():
     statement = """
     SELECT ig.group_id, ig.name, ig.topic, ig.description, ig.max_size, ig.is_public, ac.title occurence
     FROM interest_group ig
-    INNER JOIN interest_group_proposals igp ON ig.group_id = igp.group_id
     INNER JOIN activity_occurences ac ON ig.activity_occurence_id = ac.activity_occurence_id
     WHERE ig.status_id = 2;
     """
@@ -237,10 +234,52 @@ def get_reject_groups():
     statement = """
     SELECT ig.group_id, ig.name, ig.topic, ig.description, ig.max_size, ig.is_public, ac.title occurence
     FROM interest_group ig
-    INNER JOIN interest_group_proposals igp ON ig.group_id = igp.group_id
     INNER JOIN activity_occurences ac ON ig.activity_occurence_id = ac.activity_occurence_id
     WHERE ig.status_id = 3;
     """
 
     cursor.execute(statement)
+    return cursor.fetchall()
+
+
+# def get_group_activities(type="approved"):
+#     connection = get_db()
+#     cursor = connection.cursor(dictionary=True)
+
+#     if type == "pending": status_id = 1
+#     elif type == "approved": status_id = 2
+#     elif type == "rejected": status_id = 3
+
+#     statement = """
+#     SELECT ia.activity_id, ia.name, ia.description, ia.start_datetime, ia.end_datetime,
+#            ia.max_size, ia.funds, al.name location, ia.remarks
+#     FROM interest_activity ia
+#     INNER JOIN activity_location al ON ia.location_code = al.location_code
+#     INNER JOIN statuses s ON ia.status_id = s.status_id
+#     WHERE ia.status_id = %s;
+#     """
+
+#     cursor.execute(statement, (status_id, ))
+#     return cursor.fetchall()
+
+
+def get_group_activities(type="approved"):
+    connection = get_db()
+    cursor = connection.cursor(dictionary=True)
+
+    if type == "pending": status_id = 1
+    elif type == "approved": status_id = 2
+    elif type == "rejected": status_id = 3
+
+    statement = """
+    SELECT ia.activity_id, ig.name group_name, ia.name, ia.start_datetime, ia.end_datetime, 
+            ia.max_size, ia.funds, al.name location
+    FROM interest_activity ia
+    INNER JOIN interest_group ig ON ia.group_id = ig.group_id
+    INNER JOIN activity_location al ON ia.location_code = al.location_code
+    INNER JOIN statuses s ON ia.status_id = s.status_id
+    WHERE ia.status_id = %s;
+    """
+
+    cursor.execute(statement, (status_id, ))
     return cursor.fetchall()
