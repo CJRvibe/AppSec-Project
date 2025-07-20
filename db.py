@@ -290,4 +290,14 @@ def update_user_role(user_id, role):
     conn.commit()
     cursor.close()
 
+def update_user_info(user_id, first_name, last_name, email):
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute(
+        "UPDATE users SET first_name = %s, last_name = %s, email = %s WHERE user_id = %s",
+        (first_name, last_name, email, user_id)
+    )
+    conn.commit()
+    cursor.close()
+
 

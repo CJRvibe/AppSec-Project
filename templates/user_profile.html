@@ -1,58 +1,78 @@
 {% extends "base.html" %}
 
 {% block navbar %}
-{% include "includes/elderly_navbar.html" %}
+    {% include "includes/elderly_navbar.html" %}
 {% endblock %}
 
 {% block content %}
-<div class="container d-flex justify-content-center align-items-center vh-100 bg-light">
-    <div class="card shadow p-4" style="max-width: 480px; border-radius: 1rem;">
-        <div class="card-body text-center">
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
 
-            <h3 class="fw-bold text-dark mb-4">User Profile</h3>
+            <div class="card border-0 shadow rounded-4">
+                <div class="card-body p-5">
 
-            {% if user %}
-                <!-- Profile Picture -->
-                <div class="mb-4">
-                    <img src="{{ url_for('static', filename='uploads/' ~ user.profile_pic) if user.profile_pic else url_for('static', filename='default_avatar.png') }}"
-                         alt="Profile Picture"
-                         class="rounded-circle border border-2 shadow-sm"
-                         style="width: 150px; height: 150px; object-fit: cover;">
+                    <div class="text-center mb-4">
+                        <h2 class="fw-bold text-dark">Your Profile</h2>
+
+                        <!-- Profile Picture -->
+                        <div class="mt-4 mb-3">
+                            <img src="{{ url_for('static', filename='uploads/' ~ user.profile_pic) if user.profile_pic else url_for('static', filename='default_avatar.png') }}"
+                                 alt="Profile Picture"
+                                 class="rounded-circle border border-secondary shadow"
+                                 style="width: 140px; height: 140px; object-fit: cover;">
+                        </div>
+                    </div>
+
+                    {% if user %}
+                    <!-- Edit Profile Form -->
+                    <form method="POST" action="{{ url_for('user_profile') }}">
+                        <div class="mb-3">
+                            <label for="first_name" class="form-label">First Name</label>
+                            <input type="text" class="form-control rounded-pill" id="first_name" name="first_name" value="{{ user.first_name }}" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="last_name" class="form-label">Last Name</label>
+                            <input type="text" class="form-control rounded-pill" id="last_name" name="last_name" value="{{ user.last_name }}" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control rounded-pill" id="email" name="email" value="{{ user.email }}" required>
+                        </div>
+
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-success rounded-pill fw-semibold">Save Changes</button>
+                        </div>
+                    </form>
+
+                    <!-- Role Info -->
+                    <div class="mt-4">
+                        <p class="mb-1"><strong class="text-muted">Role:</strong> {{ user.user_role }}</p>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <!-- Upload Profile Picture -->
+                    <form action="{{ url_for('upload_file') }}" method="POST" enctype="multipart/form-data">
+                        <div class="mb-3">
+                            <label for="file" class="form-label">Upload New Profile Picture</label>
+                            <input class="form-control rounded-pill" type="file" id="file" name="file" accept="image/*" required>
+                        </div>
+
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary rounded-pill fw-semibold">Upload</button>
+                        </div>
+                    </form>
+                    {% else %}
+                        <p class="text-danger text-center mt-3">User not found.</p>
+                    {% endif %}
+
                 </div>
-
-                <!-- User Info List -->
-                <ul class="list-group list-group-flush text-start mb-4">
-                    <li class="list-group-item bg-transparent">
-                        <strong class="text-primary">First Name:</strong> {{ user.first_name }}
-                    </li>
-                    <li class="list-group-item bg-transparent">
-                        <strong class="text-primary">Last Name:</strong> {{ user.last_name }}
-                    </li>
-                    <li class="list-group-item bg-transparent">
-                        <strong class="text-primary">Email:</strong> {{ user.email }}
-                    </li>
-                    <li class="list-group-item bg-transparent">
-                        <strong class="text-primary">Role:</strong> {{ user.user_role }}
-                    </li>
-                </ul>
-
-                <!-- Upload Form -->
-                <form action="{{ url_for('upload_file') }}" method="POST" enctype="multipart/form-data" class="text-start">
-                    <div class="mb-3">
-                        <label for="file" class="form-label fw-semibold">Change Profile Picture</label>
-                        <input class="form-control" type="file" id="file" name="file" accept="image/*" required>
-                    </div>
-                    <div class="d-grid">
-                        <button type="submit" class="btn btn-primary fw-semibold">Upload</button>
-                    </div>
-                </form>
-
-            {% else %}
-                <p class="text-danger">User not found.</p>
-            {% endif %}
+            </div>
 
         </div>
     </div>
 </div>
 {% endblock %}
-

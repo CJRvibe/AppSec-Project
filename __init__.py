@@ -122,13 +122,27 @@ def enter_pin():
 def change_password():
     return render_template('change_password.html')
 
-@app.route('/userProfile')
+@app.route('/userProfile', methods=['GET', 'POST'])
 def user_profile():
     user_id = session.get('user_id')
     if not user_id:
         return redirect(url_for('login'))
 
-    user = db.get_user_by_id(user_id)  
+    user = db.get_user_by_id(user_id)
+
+    if request.method == 'POST':
+        first_name = request.form.get('first_name')
+        last_name = request.form.get('last_name')
+        email = request.form.get('email')
+        if first_name and last_name and email:
+            db.update_user_info(user_id, first_name, last_name, email)
+            session['email'] = email  # Update session if email changes
+            flash('Profile updated successfully!', 'success')
+            # Refresh user info after update
+            user = db.get_user_by_id(user_id)
+        else:
+            flash('All fields are required.', 'danger')
+
     return render_template('user_profile.html', user=user)
 
 
@@ -312,15 +326,14 @@ def login_google_callback():
     user_info = google.userinfo()
     email = user_info['email']
 
-    # Check if user exists in your DB
     user = db.get_user_by_email(email)
     if not user:
         db.insert_user(
             user_info.get("given_name", ""), 
             user_info.get("family_name", ""), 
             email, 
-            '',      # Password empty for SSO
-            None     # No default role
+            '',      
+            None     
         )
         user = db.get_user_by_email(email)
     session['user_id'] = user['user_id']
@@ -328,7 +341,6 @@ def login_google_callback():
     session['role'] = user['user_role']
     flash('Logged in with Google!', 'success')
 
-    # If user has no role, force them to choose one
     if not user['user_role']:
         return redirect(url_for('choose_role'))
 
