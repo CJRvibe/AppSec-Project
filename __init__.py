@@ -359,5 +359,30 @@ def choose_role():
         return redirect(url_for('explore_groups'))
     return render_template('choose_role.html')
 
+@app.route('/admin/users', methods=['GET'])
+@login_required
+@role_required(3)
+def admin_view_users():
+    roles = [
+        {"label": "All", "value": ""},
+        {"label": "Volunteer", "value": 1},
+        {"label": "Elderly", "value": 2},
+        {"label": "Admin", "value": 3}
+    ]
+
+    selected_role = request.args.get('role', '')
+
+    if selected_role != '':
+        users = db.get_users_by_role(int(selected_role))
+    else:
+        users = db.get_all_users()
+
+    return render_template(
+        "admin/manage_users.html",
+        users=users,
+        roles=roles,
+        selected_role=selected_role
+    )
+
 if __name__ == "__main__":
     app.run()

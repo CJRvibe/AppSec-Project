@@ -300,4 +300,20 @@ def update_user_info(user_id, first_name, last_name, email):
     conn.commit()
     cursor.close()
 
+def get_all_users():
+    conn = get_db()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM users")
+    users = cursor.fetchall()
+    cursor.close()
+    return users
+
+def get_users_by_role(role):
+    conn = get_db()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM users WHERE user_role = %s", (role,))
+    users = cursor.fetchall()
+    cursor.close()
+    return users
+
 

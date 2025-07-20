@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block navbar %}
+    {% include "includes/admin_navbar.html" %}
+{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="card shadow rounded">
+        <div class="card-body">
+
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h3 class="mb-0 fw-bold text-primary">Users List</h3>
+            </div>
+
+            <!-- Filter Form -->
+            <form method="get" class="mb-4">
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-auto">
+                        <label for="role" class="form-label mb-0 fw-semibold">Filter by Role:</label>
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select" name="role" id="role">
+                            {% for role in roles %}
+                                <option value="{{ role.value }}" {% if selected_role|int == role.value %}selected{% endif %}>
+                                    {{ role.label }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-auto">
+                        <button type="submit" class="btn btn-outline-primary">Apply Filter</button>
+                    </div>
+                </div>
+            </form>
+
+            <!-- Users Table -->
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover text-center align-middle">
+                    <thead class="table-primary">
+                        <tr>
+                            <th>User ID</th>
+                            <th>First Name</th>
+                            <th>Last Name</th>
+                            <th>Email</th>
+                            <th>Role</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users %}
+                            <tr>
+                                <td>{{ user.user_id }}</td>
+                                <td>{{ user.first_name }}</td>
+                                <td>{{ user.last_name }}</td>
+                                <td>{{ user.email }}</td>
+                                <td>
+                                    {% if user.user_role == 1 %}
+                                        <span class="badge bg-success">Volunteer</span>
+                                    {% elif user.user_role == 2 %}
+                                        <span class="badge bg-info text-dark">Elderly</span>
+                                    {% elif user.user_role == 3 %}
+                                        <span class="badge bg-danger">Admin</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Unknown</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% if not users %}
+                    <div class="text-center text-muted py-3">
+                        <i class="bi bi-person-x fs-3"></i>
+                        <p class="mt-2 mb-0">No users found for this role.</p>
+                    </div>
+                {% endif %}
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}
