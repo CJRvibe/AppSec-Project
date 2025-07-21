@@ -12,7 +12,9 @@
 {% endblock %}
 
 {% block content %}
-{% from "includes/form_helper.html" import render_field, invalid_feedback %}
+{% from "includes/form_helper.html" import render_field, invalid_feedback, render_errors %}
+
+{{ render_errors(form) }}
 
 <!-- Disable autocomplete next time -->
 <form method="post" class="needs-validation" novalidate>

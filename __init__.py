@@ -238,8 +238,10 @@ def create_activity_proposal():
     # CHANGE TO GET ACTIVITY_ID
     proposal_form = ActivityProposalForm(request.form)
     if request.method == "POST" and proposal_form.validate():
+        if not proposal_form.tags.data:
+            proposal_form.tags.data = "[]"
         decoded_tags = json.loads(proposal_form.tags.data)
-        tags = [tag["value"] for tag in decoded_tags]
+        tags = set([str(tag["value"]) for tag in decoded_tags]) #str all tag values and eliminate duplicates
         db.add_activity_proposal(
             proposal_form.name.data,
             proposal_form.description.data,
@@ -251,7 +253,6 @@ def create_activity_proposal():
             tags,
             proposal_form.remarks.data
         )
-        print("succesffully added activity proposal")
         return redirect(url_for("index"))
     return render_template("volunteer/create_group_activity.html", form=proposal_form)
 

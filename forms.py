@@ -1,3 +1,5 @@
+import json
+from datetime import datetime, timedelta
 from wtforms import Form, StringField, IntegerField, RadioField, SelectField, DateField, DateTimeField, TextAreaField, validators, PasswordField
 from flask import current_app
 import db
@@ -25,6 +27,22 @@ JOIN_TYPE = [
     (0, "Private")
 ]
 
+def start_datetime_check(form, field):
+    if field.data < datetime.now():
+        raise validators.ValidationError("Start date must be in the future.")
+    elif field.data < datetime.now() + timedelta(days=4):
+        raise validators.ValidationError("Start date must be at least 4 days from now.")
+    elif field.data > datetime.now() + timedelta(days=30):
+        raise validators.ValidationError("Start date must be within 30 days from now.")
+    
+def end_datetime_check(form, field):
+    if field.data < form.start_datetime.data:
+        raise validators.ValidationError("End date must be after the start date.")
+    if (field.data - form.start_datetime.data).toal_seconds() / 3600 < 1:
+        raise validators.ValidationError("Activity duration must be at least 1 hour.")
+    if field.data > form.start_datetime.data + timedelta(days=5):
+        raise validators.ValidationError("End date must be within 5 days from the start date.")
+
 class InterestGroupProposalForm(Form):
     name = StringField("Group Name", [validators.length(min=1, max=50), validators.DataRequired()])
     topic = StringField("Group Topic", [validators.length(min=1, max=50), validators.DataRequired()])
@@ -38,13 +56,24 @@ class InterestGroupProposalForm(Form):
 class ActivityProposalForm(Form):
     name = StringField("Activity Name", [validators.DataRequired(), validators.length(min=1,max=50)])
     description = StringField("Activity Description", [validators.DataRequired(), validators.length(min=1, max=200)])
-    start_datetime = DateTimeField("Activity Start Date", [validators.DataRequired()], format="%Y-%m-%d %H:%M")
+    start_datetime = DateTimeField("Activity Start Date", [validators.DataRequired(), start_datetime_check], format="%Y-%m-%d %H:%M")
     end_datetime = DateTimeField("Activity End Date", [validators.DataRequired()], format="%Y-%m-%d %H:%M")
-    max_size = IntegerField("Max Group Size", [validators.DataRequired(), validators.NumberRange(min=10, max=50)])
-    funds = IntegerField("Fund Request", [validators.DataRequired(), validators.NumberRange(min=0, max=1000)])
+    max_size = IntegerField("Max Group Size", [validators.DataRequired(), validators.NumberRange(min=10, max=50, message="Range must be between 10 and 50")])
+    funds = IntegerField("Fund Request", [validators.DataRequired(), validators.NumberRange(min=0, max=1000, message="Range must be between 0 and 1000")])
     location = SelectField("Location", [validators.DataRequired()], choices=get_activity_location(), default="")
     tags = TextAreaField("Group Tags", [validators.length(min=1, max=300), validators.Optional()])
     remarks = TextAreaField("Additional remarks", [validators.Optional(), validators.length(min=1, max=300)])
+
+    def validate_tags(form, field):
+        try:
+            tags = json.loads(field.data)
+            if not isinstance(tags, list):
+                raise validators.ValidationError("Incorrect formating of tags")
+            for tag in tags:
+                if not isinstance(tag, dict) or "value" not in tag:
+                    raise validators.ValidationError("Incorrect formating of tags")
+        except json.JSONDecodeError:
+            raise validators.ValidationError("Invalid formatting of tags")
 
 class LoginForm(Form):
     email = StringField("Email", [
