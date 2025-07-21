@@ -220,18 +220,34 @@ def explore_groups():
 @app.route('/groupHome/<int:group_id>')
 def group_home(group_id):
     view = request.args.get('view', 'activities')
-    search = request.args.get('search', '').strip()
+    user_id = session.get('user_id')
 
     group = db.get_group_by_id(group_id)
     if not group:
         abort(404)
 
-    if view == "activities":
-        activities = db.get_activities_by_group_id(group_id, search)
-    else:
-        activities = []
+    activities = db.get_activities_by_group_id(group_id)
+    has_joined = False
 
-    return render_template("group_home.html", group=group, view=view, activities=activities)
+    if user_id:
+        has_joined = db.check_user_joined_group(user_id, group_id)
+
+    return render_template(
+        "group_home.html",
+        group=group,
+        view=view,
+        activities=activities,
+        has_joined=has_joined
+    )
+
+@app.route('/join_group/<int:group_id>', methods=['POST'])
+def join_group(group_id):
+    user_id = session.get('user_id')
+    if not user_id:
+        return redirect(url_for('login'))
+
+    db.join_group(user_id, group_id)
+    return redirect(url_for('group_home', group_id=group_id))
 
 @app.route('/group/<int:group_id>/activity/<int:activity_id>')
 def view_group_activity(group_id, activity_id):
