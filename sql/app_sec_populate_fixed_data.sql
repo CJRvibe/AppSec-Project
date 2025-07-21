@@ -6,7 +6,10 @@ INSERT INTO statuses (title)
 VALUES
 	("pending"),
 	("approved"),
-    ("rejected");
+    ("rejected"),
+    ("completed"),
+    ("cancelled"),
+    ("suspended");
     
 INSERT INTO user_role (user_role)
 VALUES 

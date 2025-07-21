@@ -14,7 +14,7 @@
         <a class="nav-link {%if type == 'pending'%}active disabled{%endif%}" href="{{url_for('admin.manage_pending_activities')}}">Activity Proposals</a>
     </li>
     <li class="nav-item">
-        <a class="nav-link {%if type == 'rejected'%}active disabled{%endif%}" href="">Rejected Activities</a>
+        <a class="nav-link {%if type == 'rejected'%}active disabled{%endif%}" href="{{url_for('admin.manage_rejected_activities')}}">Rejected Activities</a>
     </li>
 </ul>
 
@@ -43,7 +43,7 @@
             <td>{{ activity.get("end_datetime") }}</td>
             <td>{{ activity.get("funds") }}</td>
             <td>{{ activity.get("location") }}</td>
-            <td><a href="" class="btn btn-info">View</a></td>
+            <td><a href="{{url_for('admin.view_activity', id=activity.get('activity_id'))}}" class="btn btn-info">View</a></td>
         </tr>
         {% endfor %}
     </tbody>
