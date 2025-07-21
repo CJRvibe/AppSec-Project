@@ -112,16 +112,14 @@ def get_user_by_id(user_id):
 def add_group_proposal(name, topic, description, max_size, is_public, activity_occurence, reason):
     connection = get_db()
     cursor = connection.cursor()
-    values = (name, topic, description, max_size, is_public, activity_occurence)
+    values = (name, topic, description, max_size, is_public, activity_occurence, reason)
     statement = """
     INSERT INTO interest_group (name, topic, description, max_size, is_public,
-        activity_occurence_id, status_id, owner)
-    VALUES (%s, %s, %s, %s, %s, %s, 1, 3)
+        activity_occurence_id, proposal, status_id, owner)
+    VALUES (%s, %s, %s, %s, %s, %s, %s, 1, 3)
     """ # change to generate dynamic owner
 
     cursor.execute(statement, values)
-
-    cursor.execute("INSERT INTO interest_group_proposals VALUES (%s, %s)", (cursor.lastrowid, reason))
     connection.commit()
 
 def add_activity_tags(cursor, activity_id, tags):
@@ -153,20 +151,6 @@ def add_activity_proposal(name, description, start_datetime, end_datetime, max_s
     connection.commit()
 
 
-def get_group_proposals():
-    connection = get_db()
-    cursor = connection.cursor(dictionary=True)
-    statement = """
-    SELECT ig.group_id, ig.name, ig.topic, ig.description, ig.max_size, ig.is_public, ac.title occurence
-    FROM interest_group ig
-    INNER JOIN interest_group_proposals igp ON ig.group_id = igp.group_id
-    INNER JOIN activity_occurences ac ON ig.activity_occurence_id = ac.activity_occurence_id
-    WHERE ig.status_id = 1;
-    """
-
-    cursor.execute(statement)
-    return cursor.fetchall()
-
 def search_groups(query):
     connection = get_db()
     cursor = connection.cursor(dictionary=True)
@@ -179,16 +163,15 @@ def search_groups(query):
     return cursor.fetchall()
 
 
-def get_group_proposal(id: int):
+def admin_get_group_by_id(id: int):
     connection = get_db()
     cursor = connection.cursor(dictionary=True)
     statement = """
     SELECT
         ig.group_id, ig.name, ig.topic, ig.description,
         ig.max_size, ig.is_public, ig.picture, ac.title occurence,
-        s.title status, u.email, igp.reason
+        s.title status, u.email, ig.proposal
     FROM interest_group ig
-    INNER JOIN interest_group_proposals igp ON ig.group_id = igp.group_id
     INNER JOIN activity_occurences ac ON ig.activity_occurence_id = ac.activity_occurence_id
     INNER JOIN statuses s ON s.status_id = ig.status_id
     INNER JOIN users u ON ig.owner = u.user_id
@@ -199,7 +182,7 @@ def get_group_proposal(id: int):
     return cursor.fetchone()
 
 
-def update_group_proposal(id, approved=False):
+def admin_update_group_proposal(id, approved=False):
     connection = get_db()
     cursor = connection.cursor()
     status = "approved" if approved else "rejected"
@@ -214,35 +197,63 @@ def update_group_proposal(id, approved=False):
     connection.commit()
 
 
-def get_active_groups():
+def admin_get_groups(type="approved"):
     connection = get_db()
     cursor = connection.cursor(dictionary=True)
 
+    if type == "pending": status_id = 1
+    elif type == "approved": status_id = 2
+    elif type == "rejected": status_id = 3
+
     statement = """
-    SELECT ig.group_id, ig.name, ig.topic, ig.description, ig.max_size, ig.is_public, ac.title occurence
+    SELECT ig.group_id, ig.name, ig.topic, ig.max_size, ig.is_public, ac.title occurence
     FROM interest_group ig
-    INNER JOIN interest_group_proposals igp ON ig.group_id = igp.group_id
     INNER JOIN activity_occurences ac ON ig.activity_occurence_id = ac.activity_occurence_id
-    WHERE ig.status_id = 2;
+    INNER JOIN statuses s ON ig.status_id = s.status_id
+    WHERE s.status_id = %s;
     """
 
-    cursor.execute(statement)
+    cursor.execute(statement, (status_id,))
     return cursor.fetchall()
 
 
-def get_reject_groups():
+def admin_get_group_activity(id):
     connection = get_db()
     cursor = connection.cursor(dictionary=True)
 
     statement = """
-    SELECT ig.group_id, ig.name, ig.topic, ig.description, ig.max_size, ig.is_public, ac.title occurence
-    FROM interest_group ig
-    INNER JOIN interest_group_proposals igp ON ig.group_id = igp.group_id
-    INNER JOIN activity_occurences ac ON ig.activity_occurence_id = ac.activity_occurence_id
-    WHERE ig.status_id = 3;
+    SELECT ia.activity_id, ig.name group_name, ia.name, ia.description, ia.start_datetime, ia.end_datetime,
+           ia.max_size, ia.funds, al.name location, ia.remarks, s.title status
+    FROM interest_activity ia
+    INNER JOIN interest_group ig ON ia.group_id = ig.group_id
+    INNER JOIN activity_location al ON ia.location_code = al.location_code
+    INNER JOIN statuses s ON ia.status_id = s.status_id
+    WHERE ia.activity_id = %s;
     """
 
-    cursor.execute(statement)
+    cursor.execute(statement, (id, ))
+    return cursor.fetchone()
+
+
+def admin_get_group_activities(type="approved"):
+    connection = get_db()
+    cursor = connection.cursor(dictionary=True)
+
+    if type == "pending": status_id = 1
+    elif type == "approved": status_id = 2
+    elif type == "rejected": status_id = 3
+
+    statement = """
+    SELECT ia.activity_id, ig.name group_name, ia.name, ia.start_datetime, ia.end_datetime, 
+            ia.max_size, ia.funds, al.name location
+    FROM interest_activity ia
+    INNER JOIN interest_group ig ON ia.group_id = ig.group_id
+    INNER JOIN activity_location al ON ia.location_code = al.location_code
+    INNER JOIN statuses s ON ia.status_id = s.status_id
+    WHERE ia.status_id = %s;
+    """
+
+    cursor.execute(statement, (status_id, ))
     return cursor.fetchall()
 
 def check_user_joined_group(user_id, group_id):
@@ -257,4 +268,20 @@ def join_group(user_id, group_id):
     cursor = connection.cursor()
     statement = "INSERT IGNORE INTO user_interest_group (user_id, group_id, date_joined) VALUES (%s, %s, NOW())"
     cursor.execute(statement, (user_id, group_id))
+    connection.commit()
+
+
+
+def admin_update_activity_proposal(id, approved=False):
+    connection = get_db()
+    cursor = connection.cursor()
+    status = "approved" if approved else "rejected"
+
+    statement = """
+    UPDATE interest_activity
+    SET status_id = (SELECT status_id FROM statuses WHERE title = %s)
+    WHERE activity_id = %s;
+    """
+
+    cursor.execute(statement, (status, id))
     connection.commit()
