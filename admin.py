@@ -53,7 +53,7 @@ def reject_group_proposal(id):
 def manage_approved_activities():
     activities = db.admin_get_group_activities(type="approved")
 
-    return render_template("admin/manage_activities.html", activities=activities)
+    return render_template("admin/manage_activities.html", activities=activities, type="approved")
 
 
 @admin.route("/groupActivities/activityProposals")
