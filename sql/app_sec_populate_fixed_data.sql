@@ -65,7 +65,4 @@ VALUES
     (2, "Gardening Club", "Join us in our community garden to learn about gardening and enjoy nature.", "2023-11-02 09:00:00", "2023-11-02 11:00:00", 15, 30.00, "ANCC", "All tools provided.", "elderly.jpg", 1, 2),
     (3, "Cooking Class", "Learn to cook healthy meals with our experienced chef.", "2023-11-03 14:00:00", "2023-11-03 16:00:00", 10, 40.00, "AMKCC", "Ingredients provided.", "elderly.jpg", 1, 3);
 
-alter table users
-modify column user_role tinyint null;
-
 COMMIT;
