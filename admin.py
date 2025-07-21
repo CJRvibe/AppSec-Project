@@ -3,6 +3,10 @@ import db
 
 admin = Blueprint("admin", __name__, template_folder="templates")
 
+@admin.route("/")
+def home():
+    return render_template("admin/admin_home.html")
+
 
 @admin.route("/interestGroups/proposals")
 def manage_group_proposals():
