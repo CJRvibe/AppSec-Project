@@ -151,19 +151,6 @@ def add_activity_proposal(name, description, start_datetime, end_datetime, max_s
     connection.commit()
 
 
-def get_group_proposals():
-    connection = get_db()
-    cursor = connection.cursor(dictionary=True)
-    statement = """
-    SELECT ig.group_id, ig.name, ig.topic, ig.description, ig.max_size, ig.is_public, ac.title occurence
-    FROM interest_group ig
-    INNER JOIN activity_occurences ac ON ig.activity_occurence_id = ac.activity_occurence_id
-    WHERE ig.status_id = 1;
-    """
-
-    cursor.execute(statement)
-    return cursor.fetchall()
-
 def search_groups(query):
     connection = get_db()
     cursor = connection.cursor(dictionary=True)
@@ -176,7 +163,7 @@ def search_groups(query):
     return cursor.fetchall()
 
 
-def get_group_proposal(id: int):
+def admin_get_group_by_id(id: int):
     connection = get_db()
     cursor = connection.cursor(dictionary=True)
     statement = """
@@ -195,7 +182,7 @@ def get_group_proposal(id: int):
     return cursor.fetchone()
 
 
-def update_group_proposal(id, approved=False):
+def admin_update_group_proposal(id, approved=False):
     connection = get_db()
     cursor = connection.cursor()
     status = "approved" if approved else "rejected"
@@ -210,33 +197,23 @@ def update_group_proposal(id, approved=False):
     connection.commit()
 
 
-def get_active_groups():
+def admin_get_groups(type="approved"):
     connection = get_db()
     cursor = connection.cursor(dictionary=True)
 
-    statement = """
-    SELECT ig.group_id, ig.name, ig.topic, ig.description, ig.max_size, ig.is_public, ac.title occurence
-    FROM interest_group ig
-    INNER JOIN activity_occurences ac ON ig.activity_occurence_id = ac.activity_occurence_id
-    WHERE ig.status_id = 2;
-    """
-
-    cursor.execute(statement)
-    return cursor.fetchall()
-
-
-def get_reject_groups():
-    connection = get_db()
-    cursor = connection.cursor(dictionary=True)
+    if type == "pending": status_id = 1
+    elif type == "approved": status_id = 2
+    elif type == "rejected": status_id = 3
 
     statement = """
-    SELECT ig.group_id, ig.name, ig.topic, ig.description, ig.max_size, ig.is_public, ac.title occurence
+    SELECT ig.group_id, ig.name, ig.topic, ig.max_size, ig.is_public, ac.title occurence
     FROM interest_group ig
     INNER JOIN activity_occurences ac ON ig.activity_occurence_id = ac.activity_occurence_id
-    WHERE ig.status_id = 3;
+    INNER JOIN statuses s ON ig.status_id = s.status_id
+    WHERE s.status_id = %s;
     """
 
-    cursor.execute(statement)
+    cursor.execute(statement, (status_id,))
     return cursor.fetchall()
 
 
@@ -258,7 +235,7 @@ def admin_get_group_activity(id):
     return cursor.fetchone()
 
 
-def get_group_activities(type="approved"):
+def admin_get_group_activities(type="approved"):
     connection = get_db()
     cursor = connection.cursor(dictionary=True)
 
@@ -280,7 +257,7 @@ def get_group_activities(type="approved"):
     return cursor.fetchall()
 
 
-def update_activity_proposal(id, approved=False):
+def admin_update_activity_proposal(id, approved=False):
     connection = get_db()
     cursor = connection.cursor()
     status = "approved" if approved else "rejected"
