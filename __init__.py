@@ -340,9 +340,15 @@ def login_google():
 def login_google_callback():
     token = google.authorize_access_token()
     user_info = google.userinfo()
-    email = user_info['email']
+    print("Google user_info:", user_info)  # Debug: see what you get from Google
+    email = user_info.get('email')
+
+    if not email:
+        flash('Google did not return your email address. Please ensure you have granted permission to share your email.', 'danger')
+        return redirect(url_for('login'))
 
     user = db.get_user_by_email(email)
+
     if not user:
         db.insert_user(
             user_info.get("given_name", ""), 
@@ -351,7 +357,12 @@ def login_google_callback():
             '',      
             None     
         )
-        user = db.get_user_by_email(email)
+    user = db.get_user_by_email(email)
+
+    if not user:
+        flash('Error logging in with Google. Please try again.', 'danger')
+        return redirect(url_for('login'))
+
     session['user_id'] = user['user_id']
     session['email'] = email
     session['role'] = user['user_role']
@@ -361,6 +372,7 @@ def login_google_callback():
         return redirect(url_for('choose_role'))
 
     return redirect(url_for('explore_groups'))
+
 
 @app.route('/choose_role', methods=['GET', 'POST'])
 def choose_role():
@@ -399,6 +411,16 @@ def admin_view_users():
         roles=roles,
         selected_role=selected_role
     )
+
+@app.context_processor
+def inject_profile_pic():
+    user_id = session.get('user_id')
+    profile_pic = None
+    if user_id:
+        profile_pic = db.get_user_profile_pic(user_id)
+    return {
+        'navbar_profile_pic': profile_pic
+    }
 
 if __name__ == "__main__":
     app.run()

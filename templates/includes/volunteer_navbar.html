@@ -1,41 +1,43 @@
 <nav class="navbar navbar-expand-sm bg-primary navbar-dark">
-
     <div class="container-fluid">
         <div class="container-fluid d-flex">
-            <a class="navbar-brand" href="/"><img class="rounded-pill" width="50px" height="50px" src=""></a>
+            <a class="navbar-brand" href="/">
+                <img class="rounded-pill" width="50px" height="50px"
+                    src="">
+            </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#collapsibleNavbar">
                 <span class="navbar-toggler-icon"></span>
             </button>
-        <div class="collapse navbar-collapse" id="collapsibleNavbar">
-        <!-- Links -->
-        <ul class="navbar-nav">
-            <li class="nav-item">
-                <a class="nav-link text-dark" href="#">My Groups</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link text-dark" href="#">Explore Groups</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link text-dark" href="#">My Calendar</a>
-            </li>
-        </ul>
-    </div>
-
-    <div class="d-flex">
-        <div class="navbar-nav">
-            <div class="nav-item dropdown">
-                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                    <img class="rounded-pill" width="50px" height="50px" src="">
-                </a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#collapsibleNavbar">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <ul class="dropdown-menu dropdown-menu-end">
-                    <li><a class="dropdown-item" href="/templates/user_profile.html">Customise Profile</a>
-                    <li><a class="dropdown-item" href="{{url_for('logout')}}">Logout</a>
+            <div class="collapse navbar-collapse" id="collapsibleNavbar">
+                <!-- Links -->
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link text-dark" href="#">My Groups</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-dark" href="#">Explore Groups</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-dark" href="#">My Calendar</a>
+                    </li>
                 </ul>
-              </div>
-          </div>
+        <div class="d-flex">
+                <div class="navbar-nav">
+                    <div class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <img class="rounded-pill" width="50px" height="50px"
+                                    src="{% if navbar_profile_pic %}{{ url_for('static', filename='uploads/' ~ navbar_profile_pic) }}{% else %}{{ url_for('static', filename='img/default_icon.png') }}{% endif %}">
+                        </a>
+                        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#collapsibleNavbar">
+                            <span class="navbar-toggler-icon"></span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="{{url_for('user_profile')}}">Customise Profile</a></li>
+                            <li><a class="dropdown-item" href="{{url_for('logout')}}">Logout</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-
 </nav>

@@ -38,7 +38,11 @@ def insert_user(first_name, last_name, email, password, user_role):
         )
         conn.commit()
         return True
-    except mysql.connector.IntegrityError:
+    except mysql.connector.IntegrityError as e:
+        print("IntegrityError inserting user:", e)
+        return False
+    except Exception as e:
+        print("Error inserting user:", e)
         return False
     finally:
         cursor.close()
@@ -298,9 +302,6 @@ def update_user_profile_pic(user_id, profile_pic):
     except Exception as e:
         print("Error saving profile picture:", e)
         return False
-    finally:
-        cursor.close()
-        conn.close()
 
 def get_user_profile_pic(user_id):
     conn = get_db()
@@ -308,14 +309,13 @@ def get_user_profile_pic(user_id):
     try:
         cursor.execute("SELECT profile_pic FROM users WHERE user_id = %s", (user_id,))
         result = cursor.fetchone()
-        if result:
+        if result and result['profile_pic']:
             return result['profile_pic']
         else:
             return None
     finally:
         cursor.close()
-        conn.close()
-    
+
 def get_user_by_email(email):
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
@@ -329,7 +329,7 @@ def update_user_role(user_id, role):
     cursor = conn.cursor()
     cursor.execute("UPDATE users SET user_role = %s WHERE user_id = %s", (role, user_id))
     conn.commit()
-    cursor.close()
+
 
 def update_user_info(user_id, first_name, last_name, email):
     conn = get_db()
@@ -339,14 +339,13 @@ def update_user_info(user_id, first_name, last_name, email):
         (first_name, last_name, email, user_id)
     )
     conn.commit()
-    cursor.close()
+
 
 def get_all_users():
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
     cursor.execute("SELECT * FROM users")
     users = cursor.fetchall()
-    cursor.close()
     return users
 
 def get_users_by_role(role):
@@ -354,7 +353,6 @@ def get_users_by_role(role):
     cursor = conn.cursor(dictionary=True)
     cursor.execute("SELECT * FROM users WHERE user_role = %s", (role,))
     users = cursor.fetchall()
-    cursor.close()
     return users
 
 
