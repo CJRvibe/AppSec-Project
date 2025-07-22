@@ -2,7 +2,9 @@ import json
 from datetime import datetime, timedelta
 import dotenv
 from wtforms import Form, StringField, IntegerField, RadioField, SelectField, DateField, DateTimeField, TextAreaField, validators, PasswordField
-from flask import current_app
+from wtforms.csrf.session import SessionCSRF
+from flask import session
+import os
 import db
 
 dotenv.load_dotenv()
@@ -54,7 +56,20 @@ def end_datetime_check(form, field: DateTimeField):
         raise validators.ValidationError("End date must be within 5 days from the start date.")
     return
 
-class InterestGroupProposalForm(Form):
+
+class BaseForm(Form):
+    class Meta:
+        csrf = True
+        csrf_class = SessionCSRF
+        csrf_secret = os.environ['CSRF_SECRET_KEY'].encode('utf-8')
+        csrf_time_limit = timedelta(minutes=30)
+
+        @property
+        def csrf_context(self):
+            return session
+
+
+class InterestGroupProposalForm(BaseForm):
     name = StringField("Group Name", [validators.length(min=1, max=50), validators.DataRequired()])
     topic = StringField("Group Topic", [validators.length(min=1, max=50), validators.DataRequired()])
     description = StringField("Group Description", [validators.length(min=1, max=200), validators.DataRequired()])
@@ -64,7 +79,7 @@ class InterestGroupProposalForm(Form):
     reason = TextAreaField("Proposal Elaboration", [validators.length(min=1, max=1000), validators.DataRequired()])
 
 
-class ActivityProposalForm(Form):
+class ActivityProposalForm(BaseForm):
     name = StringField("Activity Name", [validators.DataRequired(), validators.length(min=1,max=50)])
     description = StringField("Activity Description", [validators.DataRequired(), validators.length(min=1, max=200)])
     start_datetime = DateTimeField("Activity Start Date", [validators.DataRequired(message="Invalid value, please try again"), start_datetime_check], format="%Y-%m-%d %H:%M")

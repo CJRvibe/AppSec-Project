@@ -17,8 +17,9 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
 app = Flask(__name__)
 app.config.from_object(config.DevelopmentConfig)
-app.config["SECRET_KEY"] = os.environ["SECRET_KEY"]
+app.config["SECRET_KEY"] = os.environ["SECRET_KEY"].encode('utf-8')
 app.config["MAIL_PASSWORD"] = os.environ["MAIL_PASSWORD"]
+app.config["CSRF_SECRET_KEY"] = os.environ["CSRF_SECRET_KEY"].encode('utf-8')
 
 mail = Mail(app)
 
