@@ -30,21 +30,29 @@ JOIN_TYPE = [
     (0, "Private")
 ]
 
-def start_datetime_check(form, field):
-    if field.data < datetime.now():
+def start_datetime_check(form, field: DateTimeField):
+    if not isinstance(field.data, datetime):
+        raise validators.ValidationError("Invalid date format, please try again.")
+    elif field.data < datetime.now():
         raise validators.ValidationError("Start date must be in the future.")
     elif field.data < datetime.now() + timedelta(days=4):
         raise validators.ValidationError("Start date must be at least 4 days from now.")
     elif field.data > datetime.now() + timedelta(days=30):
         raise validators.ValidationError("Start date must be within 30 days from now.")
+    return
     
-def end_datetime_check(form, field):
-    if field.data < form.start_datetime.data:
+def end_datetime_check(form, field: DateTimeField):
+    if not isinstance(form.start_datetime.data, datetime):
+        return
+    elif not isinstance(field.data, datetime):
+        raise validators.ValidationError("Invalid date format, please try again.")
+    elif field.data < form.start_datetime.data:
         raise validators.ValidationError("End date must be after the start date.")
-    if (field.data - form.start_datetime.data).toal_seconds() / 3600 < 1:
+    elif (field.data - form.start_datetime.data).total_seconds() / 3600 < 1:
         raise validators.ValidationError("Activity duration must be at least 1 hour.")
-    if field.data > form.start_datetime.data + timedelta(days=5):
+    elif field.data > form.start_datetime.data + timedelta(days=5):
         raise validators.ValidationError("End date must be within 5 days from the start date.")
+    return
 
 class InterestGroupProposalForm(Form):
     name = StringField("Group Name", [validators.length(min=1, max=50), validators.DataRequired()])
@@ -59,8 +67,8 @@ class InterestGroupProposalForm(Form):
 class ActivityProposalForm(Form):
     name = StringField("Activity Name", [validators.DataRequired(), validators.length(min=1,max=50)])
     description = StringField("Activity Description", [validators.DataRequired(), validators.length(min=1, max=200)])
-    start_datetime = DateTimeField("Activity Start Date", [validators.DataRequired(), start_datetime_check], format="%Y-%m-%d %H:%M")
-    end_datetime = DateTimeField("Activity End Date", [validators.DataRequired()], format="%Y-%m-%d %H:%M")
+    start_datetime = DateTimeField("Activity Start Date", [validators.DataRequired(message="Invalid value, please try again"), start_datetime_check], format="%Y-%m-%d %H:%M")
+    end_datetime = DateTimeField("Activity End Date", [validators.DataRequired(message="Invalid value, please try again"), end_datetime_check], format="%Y-%m-%d %H:%M")
     max_size = IntegerField("Max Group Size", [validators.DataRequired(), validators.NumberRange(min=10, max=50, message="Range must be between 10 and 50")])
     funds = IntegerField("Fund Request", [validators.DataRequired(), validators.NumberRange(min=0, max=1000, message="Range must be between 0 and 1000")])
     location = SelectField("Location", [validators.DataRequired()], choices=get_activity_location(), default="")
