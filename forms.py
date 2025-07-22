@@ -1,8 +1,11 @@
 import json
 from datetime import datetime, timedelta
+import dotenv
 from wtforms import Form, StringField, IntegerField, RadioField, SelectField, DateField, DateTimeField, TextAreaField, validators, PasswordField
 from flask import current_app
 import db
+
+dotenv.load_dotenv()
 
 def get_activity_location():
     connection = db.open_db()

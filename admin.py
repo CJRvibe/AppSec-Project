@@ -42,26 +42,26 @@ def view_group(id):
 def approve_group_proposal(id):
     group = db.admin_get_group_by_id(id)
 
-    if group and group.get("status") == "pending":
-        db.admin_update_group_proposal(id, approved=True)
-        return redirect(url_for(".manage_active_groups"))
+    if not group:
+        abort(404, description="Group not found")
     elif group and group.get("status") != "pending":
         abort(405, description="Method not allowed for this group")
     else:
-        abort(404, description="Group not found")
+        db.admin_update_group_proposal(id, approved=True)
+        return redirect(url_for(".manage_active_groups"))
 
 
 @admin.route("/interestGroups/rejectGroupProposal/<int:id>", methods=["POST"])
 def reject_group_proposal(id):
     group = db.admin_get_group_by_id(id)
 
-    if group and group.get("status") == "pending":
-        db.admin_update_group_proposal(id, approved=False)
-        return redirect(url_for(".manage_reject_groups"))
+    if not group:
+        abort(404, description="Group not found")
     elif group and group.get("status") != "pending":
         abort(405, description="Method not allowed for this group")
     else:
-        abort(404, description="Group not found")
+        db.admin_update_group_proposal(id, approved=False)
+        return redirect(url_for(".manage_reject_groups"))
 
 
 @admin.route("/groupActivities")
@@ -98,21 +98,23 @@ def view_activity(id):
 def approve_activity(id):
     activity = db.get_activity_by_id(id)
 
-    if activity and activity.get("status") == "pending":
-        db.admin_update_activity_proposal(id, approved=True)
-        return redirect(url_for(".manage_approved_activities"))
+    if not activity:
+        abort(404, description="Activity not found")
     elif activity and activity.get("status") != "pending":
         abort(405, description="Method not allowed for this activity")
-    else: abort(404, description="Activity not found")
+    else:
+        db.admin_update_activity_proposal(id, approved=True)
+        return redirect(url_for(".manage_approved_activities"))
 
 
 @admin.route("/groupActivities/rejectActivity/<int:id>", methods=["POST"])
 def reject_activity(id):
     activity = db.get_activity_by_id(id)
 
-    if activity and activity.get("status") == "pending":
-        db.admin_update_activity_proposal(id, approved=False)
-        return redirect(url_for(".manage_approved_activities"))
+    if not activity:
+        abort(404, description="Activity not found")
     elif activity and activity.get("status") != "pending":
         abort(405, description="Method not allowed for this activity")
-    else: abort(404, description="Activity not found")
+    else:
+        db.admin_update_activity_proposal(id, approved=False)
+        return redirect(url_for(".manage_approved_activities"))
