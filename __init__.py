@@ -14,6 +14,7 @@ from authlib.integrations.flask_client import OAuth
 
 dotenv.load_dotenv()
 
+
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
 app = Flask(__name__)
@@ -87,23 +88,27 @@ def sign_up():
         
     return render_template('sign_up.html', form=form)
 
-@app.route('/login', methods=['GET', 'POST'])
+
+@app.route('/login', methods=['GET', 'POST']) 
 def login():
     form = LoginForm(request.form)
-    if request.method == 'POST' and form.validate():
-        email = form.email.data
-        password = form.password.data
-        
-        user = db.verify_user(email, password)
-        if user:
-            session['user_id'] = user['user_id']
-            session['email'] = user['email']
-            session['role'] = user['user_role']
-            flash('Logged in successfully!', 'success')
-            return redirect(url_for('explore_groups'))  
+    
+    if request.method == 'POST':
+        if form.validate():
+            email = form.email.data
+            password = form.password.data
+            
+            user = db.verify_user(email, password)
+            if user:
+                session['user_id'] = user['user_id']
+                session['email'] = user['email']
+                session['role'] = user['user_role']
+                flash('Logged in successfully!', 'success')
+                return redirect(url_for('explore_groups'))
         else:
-            flash('Invalid credentials.', 'danger')
-    return render_template('login.html')
+            flash('Invalid credentials', 'danger')
+            
+    return render_template('login.html', form=form)
 
 @app.route('/logout')
 def logout():
@@ -387,30 +392,6 @@ def choose_role():
         return redirect(url_for('explore_groups'))
     return render_template('choose_role.html')
 
-@app.route('/admin/users', methods=['GET'])
-@login_required
-@role_required(3)
-def admin_view_users():
-    roles = [
-        {"label": "All", "value": ""},
-        {"label": "Volunteer", "value": 1},
-        {"label": "Elderly", "value": 2},
-        {"label": "Admin", "value": 3}
-    ]
-
-    selected_role = request.args.get('role', '')
-
-    if selected_role != '':
-        users = db.get_users_by_role(int(selected_role))
-    else:
-        users = db.get_all_users()
-
-    return render_template(
-        "admin/manage_users.html",
-        users=users,
-        roles=roles,
-        selected_role=selected_role
-    )
 
 @app.context_processor
 def inject_profile_pic():

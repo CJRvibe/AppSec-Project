@@ -20,6 +20,16 @@
                     <a href="/signUp" class="text-decoration-none" style="color: #1E80C1;">Don't have an account? Sign Up</a>
                 </div>
             </form>
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, msg in messages %}
+                        <div class="alert alert-{{ 'danger' if category == 'danger' else category }} alert-dismissible fade show mt-3" role="alert">
+                            {{ msg }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
             <div class="my-3 text-center">or</div>
             <a href="{{ url_for('login_google') }}" class="btn btn-danger w-100 mb-2">
                 <img src="https://developers.google.com/identity/images/g-logo.png" width="20" style="margin-right:8px;">

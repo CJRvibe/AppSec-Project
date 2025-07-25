@@ -53,7 +53,6 @@ class LoginForm(Form):
         validators.Length(max=120)
     ])
     password = PasswordField("Password", [
-        
         validators.DataRequired(message="Password is required."),
         validators.Length(min=8, max=128, message="Password must be at least 8 characters.")
     ])
