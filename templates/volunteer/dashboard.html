@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">Manage Group: {{ group.name }}</h2>
+    <ul class="nav nav-tabs" id="dashboardTabs" role="tablist">
+        <li class="nav-item">
+            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#activities" type="button">Activities</button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#pending-users" type="button">Join Requests</button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#users" type="button">Members</button>
+        </li>
+    </ul>
+
+    <div class="tab-content mt-3">
+        <!-- Manage Activities -->
+        <div class="tab-pane fade show active" id="activities">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <form class="w-50">
+                    <input type="text" class="form-control" placeholder="Search activities...">
+                </form>
+                <a href="{{ url_for('volunteer.create_group_proposal', group_id=group.group_id) }}" class="btn btn-success">Add Activity</a>
+            </div>
+            <div class="list-group">
+                {% for activity in activities %}
+                <div class="list-group-item d-flex justify-content-between">
+                    <div>{{ activity.name }}</div>
+                    <form method="POST" action="{{ url_for('volunteer.remove_activity', group_id=group_id, activity_id=activity.activity_id) }}">
+                        <button class="btn btn-danger btn-sm" onclick="return confirm('Remove this activity?')">Remove</button>
+                    </form>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Join Requests -->
+        <div class="tab-pane fade" id="pending-users">
+            <form class="mb-2">
+                <input type="text" class="form-control" placeholder="Search pending users...">
+            </form>
+            {% for user in pending_users %}
+            <div class="d-flex justify-content-between align-items-center border p-2 mb-1">
+                <div>{{ user.first_name }} {{ user.last_name }} ({{ user.email }})</div>
+                <form method="POST" action="{{ url_for('volunteer.approve_user', group_id=group.group_id, user_id=user.user_id) }}">
+                    <button class="btn btn-primary btn-sm">Approve</button>
+                </form>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Members -->
+        <div class="tab-pane fade" id="users">
+            <form class="mb-2">
+                <input type="text" class="form-control" placeholder="Search members...">
+            </form>
+            {% for user in joined_users %}
+            <div class="d-flex justify-content-between align-items-center border p-2 mb-1">
+                <div>{{ user.first_name }} {{ user.last_name }} ({{ user.email }})</div>
+                <form method="POST" action="{{ url_for('volunteer.remove_user', group_id=group.group_id, user_id=user.user_id) }}">
+                    <button class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to remove this user?')">Remove</button>
+                </form>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

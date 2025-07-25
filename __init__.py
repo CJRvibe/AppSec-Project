@@ -1,4 +1,5 @@
 import dotenv
+dotenv.load_dotenv()
 import json
 import os
 from flask import Flask, render_template, redirect, url_for, request, abort, session, flash
@@ -7,12 +8,11 @@ from forms import *
 import db
 import config
 import admin
+import volunteer
 from werkzeug.utils import secure_filename
 from datetime import datetime, timedelta
 from access_control import login_required, role_required
 from authlib.integrations.flask_client import OAuth
-
-dotenv.load_dotenv()
 
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
@@ -35,6 +35,7 @@ google = oauth.register(
 
 mail = Mail(app)
 
+app.register_blueprint(volunteer.volunteer, url_prefix="/volunteer")
 app.register_blueprint(admin.admin, url_prefix="/admin")
 app.teardown_appcontext(db.close_db)
 
@@ -226,11 +227,12 @@ def group_home(group_id):
     if not group:
         abort(404)
 
-    activities = db.get_activities_by_group_id(group_id)
-    has_joined = False
+    has_joined = db.check_user_joined_group(user_id, group_id) if user_id else False
 
-    if user_id:
-        has_joined = db.check_user_joined_group(user_id, group_id)
+    if group['is_public'] == 1 or has_joined:
+        activities = db.get_activities_by_group_id(group_id)
+    else:
+        activities = []
 
     return render_template(
         "group_home.html",
@@ -243,6 +245,7 @@ def group_home(group_id):
 @app.route('/join_group/<int:group_id>', methods=['POST'])
 def join_group(group_id):
     user_id = session.get('user_id')
+    print(f"Joining group: {group_id} as user: {user_id}")
     if not user_id:
         return redirect(url_for('login'))
 
@@ -260,45 +263,7 @@ def view_group_activity(group_id, activity_id):
         abort(404)
 
     return render_template('activity.html', activity=activity, group=group)
-@app.route("/createInterestGroupProposal", methods=["GET", "POST"])
-def create_group_proposal():
-    # mMUST GET OWNER ID
-    proposal_form = InterestGroupProposalForm(request.form)
-    if request.method == "POST" and proposal_form.validate():
-        db.add_group_proposal(
-            proposal_form.name.data,
-            proposal_form.topic.data,
-            proposal_form.description.data,
-            proposal_form.max_size.data,
-            proposal_form.join_type.data,
-            proposal_form.activity_occurence.data,
-            proposal_form.reason.data
-        )
-        return redirect(url_for("index"))
-    return render_template("volunteer/create_interest_group_proposal.html", form=proposal_form)
 
-
-@app.route("/createActivityProposal", methods=["GET", "POST"])
-def create_activity_proposal():
-    # CHANGE TO GET ACTIVITY_ID
-    proposal_form = ActivityProposalForm(request.form)
-    if request.method == "POST" and proposal_form.validate():
-        decoded_tags = json.loads(proposal_form.tags.data)
-        tags = [tag["value"] for tag in decoded_tags]
-        db.add_activity_proposal(
-            proposal_form.name.data,
-            proposal_form.description.data,
-            proposal_form.start_datetime.data,
-            proposal_form.end_datetime.data,
-            proposal_form.max_size.data,
-            proposal_form.funds.data,
-            proposal_form.location.data,
-            tags,
-            proposal_form.remarks.data
-        )
-        print("succesffully added activity proposal")
-        return redirect(url_for("index"))
-    return render_template("volunteer/create_group_activity.html", form=proposal_form)
 
 
 @app.route("/test-discussion")

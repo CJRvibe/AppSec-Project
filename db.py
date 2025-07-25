@@ -269,8 +269,16 @@ def check_user_joined_group(user_id, group_id):
 def join_group(user_id, group_id):
     connection = get_db()
     cursor = connection.cursor()
-    statement = "INSERT IGNORE INTO user_interest_group (user_id, group_id, date_joined) VALUES (%s, %s, NOW())"
-    cursor.execute(statement, (user_id, group_id))
+
+    group = get_group_by_id(group_id)
+    status_id = 2 if group["is_public"] == 1 else 1
+
+    statement = """
+        INSERT INTO user_interest_group (user_id, group_id, date_joined, status_id)
+        VALUES (%s, %s, NOW(), %s)
+        ON DUPLICATE KEY UPDATE status_id = VALUES(status_id)
+    """
+    cursor.execute(statement, (user_id, group_id, status_id))
     connection.commit()
 
 
@@ -355,4 +363,54 @@ def get_users_by_role(role):
     users = cursor.fetchall()
     return users
 
+def get_pending_users_by_group(group_id):
+    connection = get_db()
+    cursor = connection.cursor(dictionary=True)
+    statement = """
+        SELECT u.user_id, u.first_name, u.last_name, u.email
+        FROM user_interest_group ug
+        INNER JOIN users u ON ug.user_id = u.user_id
+        WHERE ug.group_id = %s AND ug.status_id = 1
+    """
+    cursor.execute(statement, (group_id,))
+    return cursor.fetchall()
 
+def get_approved_users_by_group(group_id):
+    connection = get_db()
+    cursor = connection.cursor(dictionary=True)
+    statement = """
+        SELECT u.user_id, u.first_name, u.last_name, u.email
+        FROM user_interest_group ug
+        INNER JOIN users u ON ug.user_id = u.user_id
+        WHERE ug.group_id = %s AND ug.status_id = 2
+    """
+    cursor.execute(statement, (group_id,))
+    return cursor.fetchall()
+
+def approve_user(user_id, group_id):
+    connection = get_db()
+    cursor = connection.cursor()
+    statement = """
+        UPDATE user_interest_group
+        SET status_id = 2
+        WHERE user_id = %s AND group_id = %s
+    """
+    cursor.execute(statement, (user_id, group_id))
+    connection.commit()
+
+def remove_user_from_group(user_id, group_id):
+    connection = get_db()
+    cursor = connection.cursor()
+    statement = """
+        DELETE FROM user_interest_group
+        WHERE user_id = %s AND group_id = %s
+    """
+    cursor.execute(statement, (user_id, group_id))
+    connection.commit()
+
+def remove_activity(activity_id):
+    connection = get_db()
+    cursor = connection.cursor()
+    statement = "DELETE FROM interest_activity WHERE activity_id = %s"
+    cursor.execute(statement, (activity_id,))
+    connection.commit()

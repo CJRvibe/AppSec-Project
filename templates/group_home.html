@@ -10,25 +10,34 @@
 <div class="container mt-4">
 
     <!-- Group Header -->
-    <div class="d-flex align-items-center mb-3">
-        <img src="{{ url_for('static', filename='img/' ~group.picture or 'img/default_group.jpg') }}"
-             class="rounded" style="width: 100px; height: 100px; object-fit: cover;">
-        <div class="ms-3">
-            <h2 class="mb-0">{{ group.name }}</h2>
-            <p class="text-muted">By {{ group.owner or 'Group Admin' }}</p>
+    <div class="d-flex justify-content-between align-items-start mb-3">
+        <!-- Left: Group Image and Info -->
+        <div class="d-flex align-items-center">
+            <img src="{{ url_for('static', filename='img/' ~ group.picture or 'img/default_group.jpg') }}"
+                class="rounded" style="width: 100px; height: 100px; object-fit: cover;">
+            <div class="ms-3">
+                <h2 class="mb-0">{{ group.name }}</h2>
+                <p class="text-muted">By {{ group.owner or 'Group Admin' }}</p>
+            </div>
         </div>
+
+        <!-- Right: Flag Button -->
+        <form>
+            <button type="submit" class="btn btn-outline-danger">
+                ⚑
+            </button>
+        </form>
     </div>
+
 
     <div class="d-flex justify-content-end mb-3">
     {% if session.user_id %}
-        {% if has_joined %}
-            <button class="btn btn-success" disabled>
-                ✓ Joined
-            </button>
+        {% if not has_joined %}
+        <form action="{{ url_for('join_group', group_id=group.group_id) }}" method="post">
+            <button type="submit" class="btn btn-success float-end">Join Group</button>
+        </form>
         {% else %}
-            <form method="POST" action="{{ url_for('join_group', group_id=group.group_id) }}">
-                <button type="submit" class="btn btn-primary">Join Group</button>
-            </form>
+        <button class="btn btn-outline-success float-end" disabled>✔ Joined</button>
         {% endif %}
     {% else %}
         <a href="{{ url_for('login') }}" class="btn btn-outline-secondary">Log in to Join</a>
