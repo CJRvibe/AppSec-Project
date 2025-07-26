@@ -414,3 +414,13 @@ def remove_activity(activity_id):
     statement = "DELETE FROM interest_activity WHERE activity_id = %s"
     cursor.execute(statement, (activity_id,))
     connection.commit()
+
+def update_user_password(email, hashed_password):
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute(
+        "UPDATE users SET password = %s WHERE email = %s",
+        (hashed_password, email)
+    )
+    conn.commit()
+    cursor.close()

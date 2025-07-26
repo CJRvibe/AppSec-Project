@@ -1,28 +1,31 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="container d-flex justify-content-center align-items-center vh-100 bg-light">
-    <div class="card shadow p-4 text-center" style="max-width: 400px; border-radius: 10px;">
-        <h3 class="fw-bold text-dark">Enter PIN</h3>
-        <p class="text-muted">Please enter the PIN sent to your email</p>
-        <form method="POST" action="/verify_pin">
-            <div class="d-flex justify-content-center gap-2 mb-4">
-                <input type="text" class="form-control text-center fs-4 fw-bold border rounded" maxlength="1" oninput="moveToNext(this, 'pin2')" id="pin1" name="pin1" required style="width: 50px; height: 50px;">
-                <input type="text" class="form-control text-center fs-4 fw-bold border rounded" maxlength="1" oninput="moveToNext(this, 'pin3')" id="pin2" name="pin2" required style="width: 50px; height: 50px;">
-                <input type="text" class="form-control text-center fs-4 fw-bold border rounded" maxlength="1" oninput="moveToNext(this, 'pin4')" id="pin3" name="pin3" required style="width: 50px; height: 50px;">
-                <input type="text" class="form-control text-center fs-4 fw-bold border rounded" maxlength="1" oninput="moveToNext(this, 'pin5')" id="pin4" name="pin4" required style="width: 50px; height: 50px;">
-                <input type="text" class="form-control text-center fs-4 fw-bold border rounded" maxlength="1" oninput="moveToNext(this, 'pin6')" id="pin5" name="pin5" required style="width: 50px; height: 50px;">
-                <input type="text" class="form-control text-center fs-4 fw-bold border rounded" maxlength="1" id="pin6" name="pin6" required style="width: 50px; height: 50px;">
-            </div>
-            <button type="submit" class="btn w-100 text-white" style="background-color: #1E80C1;">Submit</button>
-        </form>
+    <div class="card shadow p-4 w-100" style="max-width: 400px; border-radius: 10px;">
+        <div class="card-body">
+            <h3 class="fw-bold text-center text-dark mb-3">Enter PIN</h3>
+            <p class="text-muted text-center mb-4">Please enter the 6-digit PIN sent to your email</p>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, msg in messages %}
+                        <div class="alert alert-{{ category }} text-center py-2" role="alert">{{ msg }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <form method="POST">
+                <div class="mb-3">
+                    <label for="pin" class="form-label">PIN</label>
+                    <input type="text" name="pin" id="pin" class="form-control text-center fs-5 fw-bold" maxlength="6" placeholder="e.g. 123456" required>
+                </div>
+                <button type="submit" class="btn btn-success w-100">Verify PIN</button>
+                <div class="text-center mt-3">
+                    <a href="/forget_password" class="text-decoration-none" style="color: #1E80C1;">Resend PIN</a>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
-
-<script>
-    function moveToNext(current, nextId) {
-        if (current.value.length === 1) {
-            document.getElementById(nextId)?.focus();
-        }
-    }
-</script>
 {% endblock %}
+

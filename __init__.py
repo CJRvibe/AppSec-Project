@@ -13,6 +13,7 @@ from werkzeug.utils import secure_filename
 from datetime import datetime, timedelta
 from access_control import login_required, role_required
 from authlib.integrations.flask_client import OAuth
+import random
 
 dotenv.load_dotenv()
 
@@ -50,6 +51,9 @@ def send_email(recipient, subject, body):
     msg = Message(f"{subject}", recipients=[f'{recipient}'])
     msg.body = f"{body}"
     mail.send(msg)
+
+def generate_pin(length=6):
+    return ''.join([str(random.randint(0, 9)) for _ in range(length)])
 
 @app.route('/')
 def index():
@@ -118,16 +122,55 @@ def logout():
     session.clear()
     return redirect(url_for('login'))
 
-@app.route('/forgetPassword')
+@app.route('/forgetPassword', methods=['GET', 'POST'])
 def forget_password():
+    if request.method == 'POST':
+        email = request.form.get('email')
+        user = db.get_user_by_email(email)
+        if user:
+            pin = generate_pin()
+            session['reset_email'] = email
+            session['reset_pin'] = pin
+            send_email(
+                recipient=email,
+                subject="Your Social Sage Password Reset PIN",
+                body=f"Your password reset PIN is: {pin}\nIf you did not request this, please ignore."
+            )
+            flash('A PIN has been sent to your email. Please enter it below.', 'info')
+            return redirect(url_for('enter_pin'))
+        else:
+            flash('Email not found.', 'danger')
     return render_template('forget_password.html')
 
-@app.route('/enterPin')
+@app.route('/enterPin', methods=['GET', 'POST'])
 def enter_pin():
+    if 'reset_email' not in session or 'reset_pin' not in session:
+        return redirect(url_for('forget_password'))
+    if request.method == 'POST':
+        entered_pin = request.form.get('pin')
+        if entered_pin == session['reset_pin']:
+            flash('PIN verified. Please enter a new password.', 'success')
+            return redirect(url_for('change_password'))
+        else:
+            flash('Incorrect PIN. Please try again.', 'danger')
     return render_template('enter_pin.html')
 
-@app.route('/changePassword')
+@app.route('/changePassword', methods=['GET', 'POST'])
 def change_password():
+    if 'reset_email' not in session or 'reset_pin' not in session:
+        return redirect(url_for('forget_password'))
+    if request.method == 'POST':
+        password = request.form.get('password')
+        confirm_password = request.form.get('confirm_password')
+        if password and confirm_password and password == confirm_password:
+            hashed = db.hashed_pw(password)
+            db.update_user_password(session['reset_email'], hashed)
+            flash('Your password has been changed successfully!', 'success')
+            session.pop('reset_email')
+            session.pop('reset_pin')
+            return redirect(url_for('login'))
+        else:
+            flash('Passwords do not match or are empty.', 'danger')
     return render_template('change_password.html')
 
 @app.route('/userProfile', methods=['GET', 'POST'])
