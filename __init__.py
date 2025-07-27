@@ -2,7 +2,7 @@ import dotenv
 dotenv.load_dotenv()
 import json
 import os
-from flask import Flask, render_template, redirect, url_for, request, abort, session, flash
+from flask import Flask, render_template, redirect, url_for, request, abort, session, flash, send_file
 from flask_mail import Mail, Message, Attachment
 from forms import *
 import db
@@ -14,6 +14,9 @@ from datetime import datetime, timedelta
 from access_control import login_required, role_required
 from authlib.integrations.flask_client import OAuth
 import random
+import pyotp
+import qrcode
+import io
 
 dotenv.load_dotenv()
 
@@ -96,25 +99,24 @@ def sign_up():
     return render_template('sign_up.html', form=form)
 
 
-@app.route('/login', methods=['GET', 'POST']) 
+@app.route('/login', methods=['GET', 'POST'])
 def login():
     form = LoginForm(request.form)
-    
-    if request.method == 'POST':
-        if form.validate():
-            email = form.email.data
-            password = form.password.data
-            
-            user = db.verify_user(email, password)
-            if user:
-                session['user_id'] = user['user_id']
-                session['email'] = user['email']
-                session['role'] = user['user_role']
-                flash('Logged in successfully!', 'success')
-                return redirect(url_for('explore_groups'))
-        else:
-            flash('Invalid credentials', 'danger')
-            
+    if request.method == 'POST' and form.validate():
+        email = form.email.data
+        password = form.password.data
+        user = db.verify_user(email, password)
+        if user:
+            session['user_id'] = user['user_id']
+            session['email'] = user['email']
+            session['role'] = user['user_role']
+            # If MFA is enabled, prompt for code
+            if user.get('mfa_enabled'):
+                return redirect(url_for('login_mfa'))
+            flash('Logged in successfully!', 'success')
+            return redirect(url_for('explore_groups'))
+    else:
+        flash('Invalid credentials.', 'danger')
     return render_template('login.html', form=form)
 
 @app.route('/logout')
@@ -176,6 +178,7 @@ def change_password():
 @app.route('/userProfile', methods=['GET', 'POST'])
 def user_profile():
     user_id = session.get('user_id')
+    mfa_enabled = db.is_user_mfa_enabled(user_id)
     if not user_id:
         return redirect(url_for('login'))
 
@@ -194,7 +197,7 @@ def user_profile():
         else:
             flash('All fields are required.', 'danger')
 
-    return render_template('user_profile.html', user=user)
+    return render_template('user_profile.html', user=user, mfa_enabled=mfa_enabled)
 
 
 @app.route('/calendar')
@@ -389,7 +392,7 @@ def login_google_callback():
     return redirect(url_for('explore_groups'))
 
 
-@app.route('/choose_role', methods=['GET', 'POST'])
+@app.route('/chooseRole', methods=['GET', 'POST'])
 def choose_role():
     user_id = session.get('user_id')
     if not user_id:
@@ -412,6 +415,82 @@ def inject_profile_pic():
     return {
         'navbar_profile_pic': profile_pic
     }
+
+@app.route('/mfaQrCode')
+@login_required
+def mfa_qr_code():
+    user_id = session['user_id']
+    user_email = session['email']
+    secret = db.get_user_mfa_secret(user_id)
+    if not secret:
+        secret = pyotp.random_base32()
+        db.update_user_mfa_secret(user_id, secret)
+    mfa_uri = pyotp.totp.TOTP(secret).provisioning_uri(name=user_email, issuer_name="Social Sage")
+    img = qrcode.make(mfa_uri)
+    buf = io.BytesIO()
+    img.save(buf)
+    buf.seek(0)
+    return send_file(buf, mimetype='image/png')
+
+@app.route('/setupMfa', methods=['GET', 'POST'])
+@login_required
+def setup_mfa():
+    user_id = session['user_id']
+    user_email = session['email']
+
+    # Only generate secret if none exists
+    secret = db.get_user_mfa_secret(user_id)
+    if not secret:
+        secret = pyotp.random_base32()
+        db.update_user_mfa_secret(user_id, secret)
+
+    if request.method == 'POST':
+        code = request.form.get('code')
+        totp = pyotp.TOTP(secret)
+        if totp.verify(code):
+            db.enable_user_mfa(user_id)
+            flash('MFA enabled successfully!', 'success')
+            return redirect(url_for('user_profile'))
+        else:
+            flash('Invalid code, please try again.', 'danger')
+
+    return render_template('verify_mfa.html')  # This template should include <img src="{{ url_for('mfa_qr_code') }}">
+
+@app.route('/loginMfa', methods=['GET', 'POST'])
+def login_mfa():
+    user_id = session.get('user_id')
+    if not user_id:
+        return redirect(url_for('login'))
+    if request.method == 'POST':
+        code = request.form.get('code')
+        secret = db.get_user_mfa_secret(user_id)
+        totp = pyotp.TOTP(secret)
+        if totp.verify(code):
+            flash('Logged in with MFA!', 'success')
+            return redirect(url_for('explore_groups'))
+        else:
+            flash('Invalid MFA code.', 'danger')
+    return render_template('login_mfa.html')
+
+@app.route('/toggleMfa', methods=['POST'])
+@login_required
+def toggle_mfa():
+    user_id = session['user_id']
+    
+    # Get current MFA status from DB
+    is_mfa_enabled = db.is_user_mfa_enabled(user_id)
+    
+    if is_mfa_enabled:
+        db.disable_user_mfa(user_id)
+        flash('MFA disabled.', 'info')
+    else:
+        secret = db.get_user_mfa_secret(user_id)
+        if not secret:
+            return redirect(url_for('setup_mfa'))  # First time setup (redirect to QR/code setup)
+        db.enable_user_mfa(user_id)
+        flash('MFA enabled.', 'success')
+    
+    return redirect(url_for('user_profile'))
 
 if __name__ == "__main__":
     app.run()

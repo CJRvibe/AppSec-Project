@@ -423,4 +423,37 @@ def update_user_password(email, hashed_password):
         (hashed_password, email)
     )
     conn.commit()
-    cursor.close()
+    
+
+def update_user_mfa_secret(user_id, secret):
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("UPDATE users SET mfa_secret = %s WHERE user_id = %s", (secret, user_id))
+    conn.commit()
+   
+
+def get_user_mfa_secret(user_id):
+    conn = get_db()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT mfa_secret FROM users WHERE user_id = %s", (user_id,))
+    user = cursor.fetchone()
+    return user['mfa_secret'] if user else None
+
+def enable_user_mfa(user_id):
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("UPDATE users SET mfa_enabled = 1 WHERE user_id = %s", (user_id,))
+    conn.commit()
+
+def disable_user_mfa(user_id):
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("UPDATE users SET mfa_enabled = 0, mfa_secret = NULL WHERE user_id = %s", (user_id,))
+    conn.commit()
+
+def is_user_mfa_enabled(user_id):
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT mfa_enabled FROM users WHERE user_id = %s", (user_id,))
+    result = cursor.fetchone()
+    return result and result[0] == 1

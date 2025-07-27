@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container py-5">
+    <h2>Enable MFA</h2>
+    <p>Scan the QR code with your authenticator app (Microsoft Authenticator, Google Authenticator, etc.)</p>
+    <img src="{{ url_for('mfa_qr_code') }}" alt="MFA QR Code" />
+    <form method="POST">
+        <label for="code">Authenticator Code</label>
+        <input type="text" name="code" id="code" class="form-control" required>
+        <button type="submit" class="btn btn-success mt-3">Verify & Enable MFA</button>
+    </form>
+</div>
+{% endblock %}

@@ -51,9 +51,19 @@
                     <div class="mt-4">
                         <p class="mb-1"><strong class="text-muted">Role:</strong> {{ user.user_role }}</p>
                     </div>
+                    
+                    <form method="POST" action="{{ url_for('toggle_mfa') }}">
+                        <button type="submit" class="btn btn-primary">
+                            {% if mfa_enabled %}
+                                Disable MFA
+                            {% else %}
+                                Enable MFA
+                            {% endif %}
+                        </button>
+                    </form>
 
                     <hr class="my-4">
-
+                    
                     <!-- Upload Profile Picture -->
                     <form action="{{ url_for('upload_file') }}" method="POST" enctype="multipart/form-data">
                         <div class="mb-3">
