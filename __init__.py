@@ -2,6 +2,8 @@ import os
 import logging
 from flask import Flask, render_template, redirect, url_for, request, abort, session, flash, has_request_context
 from flask_mail import Mail, Message, Attachment
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 from forms import *
 import logging_conf
 from logging.config import dictConfig
@@ -40,6 +42,13 @@ google = oauth.register(
 )
 
 mail = Mail(app)
+
+limiter = Limiter(
+    get_remote_address,
+    app=app,
+    default_limits=["200 per day", "50 per hour"],
+    storage_uri="memory://",
+)
 
 app.register_blueprint(volunteer.volunteer, url_prefix="/volunteer")
 app.register_blueprint(admin.admin, url_prefix="/admin")
