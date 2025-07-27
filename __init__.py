@@ -11,7 +11,7 @@ import admin
 import volunteer
 from werkzeug.utils import secure_filename
 from datetime import datetime, timedelta
-from access_control import login_required, role_required
+from access_control import login_required, role_required, group_member_required
 from authlib.integrations.flask_client import OAuth
 import random
 import pyotp
@@ -306,6 +306,7 @@ def join_group(group_id):
     return redirect(url_for('group_home', group_id=group_id))
 
 @app.route('/group/<int:group_id>/activity/<int:activity_id>')
+@group_member_required(param='group_id')
 def view_group_activity(group_id, activity_id):
     group = db.get_group_by_id(group_id)
     if not group:
