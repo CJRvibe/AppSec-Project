@@ -10,6 +10,7 @@ wtforms = "*"
 mysql-connector-python = "*"
 flask-mail = "*"
 requests = "*"
+authlib = "*"
 
 [dev-packages]
 
