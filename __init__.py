@@ -1,6 +1,3 @@
-import dotenv
-dotenv.load_dotenv()
-import json
 import os
 import logging
 from logging.handlers import SysLogHandler
@@ -52,7 +49,7 @@ formatter = SematextFormatter("[%(asctime)s] %(levelname)s in %(module)s: %(mess
 handler.setLevel(logging.INFO)
 handler.setFormatter(formatter)
 app.logger.addHandler(handler)
-app.logger.removeHandler(default_handler)
+# app.logger.removeHandler(default_handler)
 app.logger.setLevel(logging.INFO)
 
 mail = Mail(app)
@@ -410,20 +407,20 @@ def inject_profile_pic():
         'navbar_profile_pic': profile_pic
     }
 
-@app.route("/flagGroup/<int:id>", methods=["POST"])
-def flag_group(id):
+# @app.route("/flagGroup/<int:id>", methods=["POST"])
+# def flag_group(id):
 
-    group = db.get_group_by_id(id)
-    if not group:
-        abort(404, description="Group not found")
-    if group.get("status") != "approved":
-        abort(405, description="Method not allowed for this group")
+#     group = db.get_group_by_id(id)
+#     if not group:
+#         abort(404, description="Group not found")
+#     if group.get("status") != "approved":
+#         abort(405, description="Method not allowed for this group")
     
-    flag_form = FlagForm(request.form)
-    if flag_form.validate() and request.method == "POST":
-        reason = flag_form.reason.data
-        db.add_flag_group(id, 1, reason)
-        return redirect(url_for("home"))
+#     flag_form = FlagForm(request.form)
+#     if flag_form.validate() and request.method == "POST":
+#         reason = flag_form.reason.data
+#         db.add_flag_group(id, 1, reason)
+#         return redirect(url_for("home"))
     
 
 # @app.route("/flagActivity/<int:id>", methods=["POST"])
@@ -438,6 +435,23 @@ def flag_group(id):
 #     if flag_form.validate() and request.method == "POST":
 #         reason = flag_form.reason.data
 #         db.add_flag_activity(id, 1, reason
+
+
+@app.errorhandler(401)
+def unauthorized_error(error):
+    return render_template('error_page.html', main_message="Unauthorised"), 401
+
+@app.errorhandler(404)
+def not_found_error(error):
+    return render_template('error_page.html', main_message="Resource not found"), 404
+
+@app.errorhandler(405)
+def method_not_allowed_error(error):
+    return render_template('error_page.html', main_message="Method not allowed"), 405
+
+@app.errorhandler(500)
+def internal_error(error):
+    return render_template('error_page.html', main_message="Internal server error"), 500
 
 
 if __name__ == "__main__":
