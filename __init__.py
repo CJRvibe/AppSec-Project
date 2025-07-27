@@ -18,6 +18,7 @@ dotenv.load_dotenv()
 
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
+# configuration setup
 app = Flask(__name__)
 app.config.from_object(config.DevelopmentConfig)
 app.config["SECRET_KEY"] = os.environ["SECRET_KEY"].encode('utf-8')
@@ -25,37 +26,21 @@ app.config["MAIL_PASSWORD"] = os.environ["MAIL_PASSWORD"]
 app.config["CSRF_SECRET_KEY"] = os.environ["CSRF_SECRET_KEY"].encode('utf-8')
 app.config["SEMATEXT_PASSWORD"] = os.environ["SEMATEXT_PASSWORD"]
 
+# logging setup
 handler = SysLogHandler(address=('logsene-syslog-receiver.eu.sematext.com', 514))
             
-class SematextFormatter(logging.Formatter): #use next time
-    def __init__(self, fmt=None, datefmt=None, secret_key=None):
-        super().__init__(fmt=fmt, datefmt=datefmt)
-        self.fmt = fmt or '%(asctime)s %(levelname)s %(message)s'
-        self.datefmt = datefmt or '%Y-%m-%d %H:%M:%S'
-        self.secret_key = secret_key
-
+class SematextFormatter(logging.Formatter):
     def format(self, record):
-        record.secret_key = self.secret_key
-        if has_request_context():
-            record.url = request.url
-            record.remote_addr = request.remote_addr
-        else:
-            record.url = None
-            record.remote_addr = None
-
-        return super().format(record)
+        message = super().format(record)
+        return f"{app.config['SEMATEXT_PASSWORD']}:[{message}]"
     
-formatter = logging.Formatter(app.config["SEMATEXT_PASSWORD"] + ":%(message)s")
+formatter = SematextFormatter("[%(asctime)s] %(levelname)s in %(module)s: %(message)s")
 
 handler.setLevel(logging.INFO)
 handler.setFormatter(formatter)
 app.logger.addHandler(handler)
 app.logger.removeHandler(default_handler)
 app.logger.setLevel(logging.INFO)
-
-for handler in app.logger.handlers:
-    print(handler)
-
 
 mail = Mail(app)
 
@@ -73,6 +58,7 @@ def send_email(recipient, subject, body):
 
 @app.route('/')
 def index():
+    app.logger.info("Home page accessed")
     return render_template("home.html")
 
 @app.route('/signUp', methods=['GET', 'POST'])
