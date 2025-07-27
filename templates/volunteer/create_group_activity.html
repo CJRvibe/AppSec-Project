@@ -12,12 +12,14 @@
 {% endblock %}
 
 {% block content %}
-{% from "includes/form_helper.html" import render_field, invalid_feedback %}
+{% from "includes/form_helper.html" import render_field, invalid_feedback, render_errors %}
+
+{{ render_errors(form) }}
 
 <!-- Disable autocomplete next time -->
 <form method="post" class="needs-validation" novalidate>
     <h1 class="display-6 text-center">Create Interest Group Activity Proposal</h1>
-
+    {{ form.csrf_token }}
     <div class="input-group mt-4 mb-4">
         <span class="input-group-text">{{ form.name.label }}</span>
         {{ form.name(class="form-control", placeholder="Enter the activity name") }}

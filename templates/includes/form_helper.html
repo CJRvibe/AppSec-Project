@@ -15,3 +15,18 @@
 {% macro valid_feedback(message) %}
 <div class="valid-feedback">{{ message }}</div>
 {% endmacro %}
+
+{% macro render_errors(form) %}
+    {% if form.errors %}
+        <div class="errors">
+            {% for field_name, field_errors in form.errors|dictsort if field_errors %}
+                {% for error in field_errors %}
+                    <div class="alert alert-danger alert-dismissable">
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        <strong>{{ form[field_name].label }}:</strong> {{ error }}
+                    </div>
+                {% endfor %}
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endmacro %}

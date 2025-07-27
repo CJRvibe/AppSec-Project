@@ -9,6 +9,7 @@ python-dotenv = "*"
 wtforms = "*"
 mysql-connector-python = "*"
 flask-mail = "*"
+requests = "*"
 
 [dev-packages]
 

@@ -68,9 +68,19 @@
     </tbody>
 </table>
 
-{% if group.get('status') == 'pending' %}
-<div class="mb-2">
-    <div class="d-flex flex-row-reverse">
+
+<div class="row">
+    <div class="col">
+        {% if group.get("status") == "pending" %}
+        <a href="{{url_for('admin.manage_group_proposals')}}" class="btn btn-secondary">Back</a>
+        {% elif group.get("status") == "approved" %}
+        <a href="{{url_for('admin.manage_active_groups')}}" class="btn btn-secondary">Back</a>
+        {% else %}
+        <a href="{{url_for('admin.manage_reject_groups')}}" class="btn btn-secondary">Back</a>
+        {% endif %}
+    </div>
+    {% if group.get('status') == 'pending' %}
+    <div class="col justify-content-end d-flex">
         <form method="POST">
             <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#approve">Approve</button>
             <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#reject">Reject</button>

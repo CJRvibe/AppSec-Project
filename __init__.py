@@ -2,7 +2,10 @@ import dotenv
 dotenv.load_dotenv()
 import json
 import os
-from flask import Flask, render_template, redirect, url_for, request, abort, session, flash
+import logging
+from logging.handlers import SysLogHandler
+from flask import Flask, render_template, redirect, url_for, request, abort, session, flash, has_request_context
+from flask.logging import default_handler
 from flask_mail import Mail, Message, Attachment
 from forms import *
 import db
@@ -16,10 +19,13 @@ from authlib.integrations.flask_client import OAuth
 
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
+# configuration setup
 app = Flask(__name__)
 app.config.from_object(config.DevelopmentConfig)
-app.config["SECRET_KEY"] = os.environ["SECRET_KEY"]
+app.config["SECRET_KEY"] = os.environ["SECRET_KEY"].encode('utf-8')
 app.config["MAIL_PASSWORD"] = os.environ["MAIL_PASSWORD"]
+app.config["CSRF_SECRET_KEY"] = os.environ["CSRF_SECRET_KEY"].encode('utf-8')
+app.config["SEMATEXT_PASSWORD"] = os.environ["SEMATEXT_PASSWORD"]
 app.config['UPLOAD_FOLDER'] = os.path.join('static', 'uploads')
 
 oauth = OAuth(app)
@@ -32,6 +38,22 @@ google = oauth.register(
         'scope': 'openid email profile'
     }
 )
+
+# logging setup
+handler = SysLogHandler(address=('logsene-syslog-receiver.eu.sematext.com', 514))
+            
+class SematextFormatter(logging.Formatter):
+    def format(self, record):
+        message = super().format(record)
+        return f"{app.config['SEMATEXT_PASSWORD']}:[{message}]"
+    
+formatter = SematextFormatter("[%(asctime)s] %(levelname)s in %(module)s: %(message)s")
+
+handler.setLevel(logging.INFO)
+handler.setFormatter(formatter)
+app.logger.addHandler(handler)
+app.logger.removeHandler(default_handler)
+app.logger.setLevel(logging.INFO)
 
 mail = Mail(app)
 
@@ -50,6 +72,7 @@ def send_email(recipient, subject, body):
 
 @app.route('/')
 def index():
+    app.logger.info("Home page accessed")
     return render_template("home.html")
 
 @app.route('/signUp', methods=['GET', 'POST'])
@@ -386,6 +409,36 @@ def inject_profile_pic():
     return {
         'navbar_profile_pic': profile_pic
     }
+
+@app.route("/flagGroup/<int:id>", methods=["POST"])
+def flag_group(id):
+
+    group = db.get_group_by_id(id)
+    if not group:
+        abort(404, description="Group not found")
+    if group.get("status") != "approved":
+        abort(405, description="Method not allowed for this group")
+    
+    flag_form = FlagForm(request.form)
+    if flag_form.validate() and request.method == "POST":
+        reason = flag_form.reason.data
+        db.add_flag_group(id, 1, reason)
+        return redirect(url_for("home"))
+    
+
+# @app.route("/flagActivity/<int:id>", methods=["POST"])
+# def flag_activity(id):
+#     activity = db.get_activity_by_id(id)
+#     if not activity:
+#         abort(404, description="Activity not found")
+#     if activity.get("status") != "approved":
+#         abort(405, description="Method not allowed for this activity")
+    
+#     flag_form = FlagActivityForm(request.form)
+#     if flag_form.validate() and request.method == "POST":
+#         reason = flag_form.reason.data
+#         db.add_flag_activity(id, 1, reason
+
 
 if __name__ == "__main__":
     app.run()
