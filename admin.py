@@ -87,9 +87,15 @@ def approve_activity(id):
 
 @admin.route("/groupActivities/rejectActivity/<int:id>", methods=["POST"])
 def reject_activity(id):
-    db.admin_update_activity_proposal(id, approved=False)
+    activity = db.get_activity_by_id(id)
 
-    return redirect(url_for(".manage_rejected_activities"))
+    if not activity:
+        abort(404, description="Activity not found")
+    elif activity and activity.get("status") != "pending":
+        abort(405, description="Method not allowed for this activity")
+    else:
+        db.admin_update_activity_proposal(id, approved=False)
+        return redirect(url_for(".manage_approved_activities"))
 
 @admin.route('/users', methods=['GET'])
 @login_required
