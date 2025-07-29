@@ -127,7 +127,7 @@ def add_group_proposal(name, topic, description, max_size, is_public, activity_o
 
 def add_activity_tags(cursor, activity_id, tags):
     for tag in tags:
-        cursor.execute("SELECT tag_id FROM tags WHERE tag_id = %s", (tag, ))
+        cursor.execute("SELECT tag_id FROM tags WHERE name = %s", (tag, ))
         result = cursor.fetchone()
         if result:
             tag_id = result[0]

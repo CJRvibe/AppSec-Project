@@ -13,6 +13,10 @@ authlib = "*"
 requests = "*"
 pyotp = "*"
 qrcode = {extras = ["pil"], version = "*"}
+requests = "*"
+authlib = "*"
+flask-limiter = "*"
+email-validator = "*"
 
 [dev-packages]
 

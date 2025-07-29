@@ -39,6 +39,8 @@ CREATE TABLE IF NOT EXISTS `social_sage_db`.`users` (
   `email` VARCHAR(50) NOT NULL,
   `password` VARCHAR(255) NOT NULL,
   `profile_pic` VARCHAR(255) NULL DEFAULT NULL,
+  `email_notif` TINYINT NOT NULL DEFAULT 1,
+  `user_role` TINYINT NULL DEFAULT NULL,
   `user_role` TINYINT NULL DEFAULT NULL ,
   `mfa_secret` VARCHAR(32) NULL DEFAULT NULL,
   `mfa_enabled` TINYINT(1) NOT NULL DEFAULT 0,
@@ -373,7 +375,7 @@ DROP TABLE IF EXISTS `social_sage_db`.`user_interest_activity` ;
 CREATE TABLE IF NOT EXISTS `social_sage_db`.`user_interest_activity` (
   `activity_id` INT NOT NULL,
   `user_id` INT NOT NULL,
-  `join_datetime` DATETIME NOT NULL,
+  `join_datetime` DATETIME NOT NULL DEFAULT NOW(),
   INDEX `fk_user_interest_activity_interest_activity1_idx` (`activity_id` ASC) VISIBLE,
   INDEX `fk_user_interest_activity_users1_idx` (`user_id` ASC) VISIBLE,
   PRIMARY KEY (`activity_id`, `user_id`),

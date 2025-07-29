@@ -1,10 +1,12 @@
-import dotenv
-dotenv.load_dotenv()
-import json
 import os
-from flask import Flask, render_template, redirect, url_for, request, abort, session, flash, send_file
+import logging
+from flask import Flask, render_template, redirect, url_for, request, abort, session, flash, send_file, has_request_context
 from flask_mail import Mail, Message, Attachment
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 from forms import *
+import logging_conf
+from logging.config import dictConfig
 import db
 import config
 import admin
@@ -23,11 +25,17 @@ dotenv.load_dotenv()
 
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
+# configuration setup
 app = Flask(__name__)
 app.config.from_object(config.DevelopmentConfig)
-app.config["SECRET_KEY"] = os.environ["SECRET_KEY"]
+app.config["SECRET_KEY"] = os.environ["SECRET_KEY"].encode('utf-8')
 app.config["MAIL_PASSWORD"] = os.environ["MAIL_PASSWORD"]
+app.config["CSRF_SECRET_KEY"] = os.environ["CSRF_SECRET_KEY"].encode('utf-8')
+app.config["SEMATEXT_PASSWORD"] = os.environ["SEMATEXT_PASSWORD"]
 app.config['UPLOAD_FOLDER'] = os.path.join('static', 'uploads')
+
+dictConfig(logging_conf.LOGGING)
+app_logger = logging.getLogger('app')
 
 oauth = OAuth(app)
 google = oauth.register(
@@ -41,6 +49,13 @@ google = oauth.register(
 )
 
 mail = Mail(app)
+
+limiter = Limiter(
+    get_remote_address,
+    app=app,
+    default_limits=["200 per day", "50 per hour"],
+    storage_uri="memory://",
+)
 
 app.register_blueprint(volunteer.volunteer, url_prefix="/volunteer")
 app.register_blueprint(admin.admin, url_prefix="/admin")
@@ -60,6 +75,7 @@ def generate_pin(length=6):
 
 @app.route('/')
 def index():
+    app_logger.info("Home page accessed")
     return render_template("home.html")
 
 @app.route('/signUp', methods=['GET', 'POST'])
@@ -492,6 +508,61 @@ def toggle_mfa():
         flash('MFA enabled.', 'success')
     
     return redirect(url_for('user_profile'))
+
+# @app.route("/flagGroup/<int:id>", methods=["POST"])
+# def flag_group(id):
+
+#     group = db.get_group_by_id(id)
+#     if not group:
+#         abort(404, description="Group not found")
+#     if group.get("status") != "approved":
+#         abort(405, description="Method not allowed for this group")
+    
+#     flag_form = FlagForm(request.form)
+#     if flag_form.validate() and request.method == "POST":
+#         reason = flag_form.reason.data
+#         db.add_flag_group(id, 1, reason)
+#         return redirect(url_for("home"))
+    
+
+# @app.route("/flagActivity/<int:id>", methods=["POST"])
+# def flag_activity(id):
+#     activity = db.get_activity_by_id(id)
+#     if not activity:
+#         abort(404, description="Activity not found")
+#     if activity.get("status") != "approved":
+#         abort(405, description="Method not allowed for this activity")
+    
+#     flag_form = FlagActivityForm(request.form)
+#     if flag_form.validate() and request.method == "POST":
+#         reason = flag_form.reason.data
+#         db.add_flag_activity(id, 1, reason
+
+
+@app.errorhandler(401)
+def unauthorized_error(error):
+    return render_template('error_page.html', main_message="Unauthorised"), 401
+
+@app.errorhandler(403)
+def forbidden_error(error):
+    return render_template('error_page.html', main_message="Forbidden"), 403
+
+@app.errorhandler(404)
+def not_found_error(error):
+    return render_template('error_page.html', main_message="Resource not found"), 404
+
+@app.errorhandler(405)
+def method_not_allowed_error(error):
+    return render_template('error_page.html', main_message="Method not allowed"), 405
+
+@app.errorhandler(429)
+def too_many_requests_error(error):
+    return render_template('error_page.html', main_message="Too many requests"), 429
+
+@app.errorhandler(500)
+def internal_error(error):
+    return render_template('error_page.html', main_message="Internal server error"), 500
+
 
 if __name__ == "__main__":
     app.run()

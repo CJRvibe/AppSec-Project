@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Website Error{% endblock %}
+{% block links %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/error.css') }}">
+{% endblock %}
+
+{% block navbar %}{% endblock %}
+
+{% block content %}
+<h1>{{ main_message }}</h1>
+<div class="face">
+	<div class="band">
+		<div class="red"></div>
+		<div class="white"></div>
+		<div class="blue"></div>
+	</div>
+	<div class="eyes"></div>
+	<div class="dimples"></div>
+	<div class="mouth"></div>
+</div>
+<div class="mx-auto text-center">
+
+    <h1>Oops! Something went wrong!</h1>
+	
+	{% if not session.get('user_role') %}
+	<a href="{{url_for('index')}}" class="btn btn-primary btn-lg btn-block">Return to Home</a>
+	{% elif session.get('user_role') in (1, 2) %}
+    <a href="{{url_for('explore_groups')}}" class="btn btn-primary btn-lg btn-block">Return to Home</a>
+	{% elif session.get('user_role') == 3 %}
+	<a href="{{url_for('admin.home')}}" class="btn btn-primary btn-lg btn-block">Return to Home</a>
+	{% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}{% endblock %}
