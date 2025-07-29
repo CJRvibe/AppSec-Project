@@ -13,6 +13,8 @@ class Config:
     GOOGLE_DISCOVERY_URL = (
         "https://accounts.google.com/.well-known/openid-configuration"
     )
+    EXECUTOR_TYPE = "thread"
+    EXECUTOR_MAX_WORKERS = 5
 
 
 class DevelopmentConfig(Config):

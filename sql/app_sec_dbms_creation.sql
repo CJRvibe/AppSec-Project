@@ -32,6 +32,7 @@ ENGINE = InnoDB;
 -- Table `social_sage_db`.`users`
 -- -----------------------------------------------------
 DROP TABLE IF EXISTS `social_sage_db`.`users` ;
+
 CREATE TABLE IF NOT EXISTS `social_sage_db`.`users` (
   `user_id` INT NOT NULL AUTO_INCREMENT,
   `first_name` VARCHAR(50) NOT NULL,
@@ -40,6 +41,8 @@ CREATE TABLE IF NOT EXISTS `social_sage_db`.`users` (
   `password` VARCHAR(255) NOT NULL,
   `profile_pic` VARCHAR(255) NULL DEFAULT NULL,
   `email_notif` TINYINT NOT NULL DEFAULT 1,
+  `mfa_secret` VARCHAR(50) NULL DEFAULT NULL,
+  `mfa_enabled` TINYINT NOT NULL DEFAULT 0,
   `user_role` TINYINT NULL DEFAULT NULL,
   `user_role` TINYINT NULL DEFAULT NULL ,
   `mfa_secret` VARCHAR(32) NULL DEFAULT NULL,
