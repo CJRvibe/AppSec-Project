@@ -21,7 +21,14 @@
 <div class="mx-auto text-center">
 
     <h1>Oops! Something went wrong!</h1>
-    <a href="" class="btn btn-primary btn-lg btn-block">Return to Home</a>
+	
+	{% if not session.get('user_role') %}
+	<a href="{{url_for('index')}}" class="btn btn-primary btn-lg btn-block">Return to Home</a>
+	{% elif session.get('user_role') in (1, 2) %}
+    <a href="{{url_for('explore_groups')}}" class="btn btn-primary btn-lg btn-block">Return to Home</a>
+	{% elif session.get('user_role') == 3 %}
+	<a href="{{url_for('admin.home')}}" class="btn btn-primary btn-lg btn-block">Return to Home</a>
+	{% endif %}
 </div>
 {% endblock %}
 

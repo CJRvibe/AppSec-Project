@@ -449,7 +449,7 @@ def not_found_error(error):
 def method_not_allowed_error(error):
     return render_template('error_page.html', main_message="Method not allowed"), 405
 
-@app.error(429)
+@app.errorhandler(429)
 def too_many_requests_error(error):
     return render_template('error_page.html', main_message="Too many requests"), 429
 
