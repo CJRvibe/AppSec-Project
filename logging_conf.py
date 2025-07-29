@@ -2,6 +2,7 @@ import logging
 import os
 from config import Config
 from flask_mail import Mail, Message
+from utils import executor
 from flask import has_request_context, request
 
 
@@ -30,7 +31,7 @@ class SMTPErrorHandler(logging.Handler):
             msg = Message(subject=record.levelname,
                           recipients=[Config.MAIL_USERNAME],
                           body=self.format(record))
-            mail.send(msg)
+            executor.submit(mail.send, msg)
         except Exception as e:
             logging.error(f"Failed to send email: {e}")
 
@@ -45,11 +46,11 @@ LOGGING = {
         },
         "smtp": {
             "()": RequestFormatter,
-            "format": "[%(asctime)s] %(levelname)s: %(message)s",
+            "format": "[%(asctime)s] %(remote_addr)s requested %(url)s\n%(levelname)s in %(module)s: %(message)s",
         },
         "sematext": {
             "()": SematextFormatter,
-            "format": "[%(asctime)s] %(remote_addr)s requested %(url)s | %(levelname)s in %(module)s: %(message)s",
+            "format": "[%(asctime)s] %(remote_addr)s requested %(url)s\n%(levelname)s in %(module)s: %(message)s",
         }
     },
     "handlers": {

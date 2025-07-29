@@ -533,26 +533,33 @@ def toggle_mfa():
 
 @app.errorhandler(401)
 def unauthorized_error(error):
+    app_logger.warning("User %s attempted to access a protected resource without authentication", session.get("user_id"))
+    # add extra stuff to redirect to login
     return render_template('error_page.html', main_message="Unauthorised"), 401
 
 @app.errorhandler(403)
 def forbidden_error(error):
+    app_logger.warning("User %s attempted to access a forbidden resource", session.get("user_id"))
     return render_template('error_page.html', main_message="Forbidden"), 403
 
 @app.errorhandler(404)
 def not_found_error(error):
+    app_logger.warning("User %s attempted to find an invalid URL", session.get("user_id"))
     return render_template('error_page.html', main_message="Resource not found"), 404
 
 @app.errorhandler(405)
 def method_not_allowed_error(error):
+    app_logger.warning("User %s attempted an invalid %s method", session.get("user_id"), request.method)
     return render_template('error_page.html', main_message="Method not allowed"), 405
 
 @app.errorhandler(429)
 def too_many_requests_error(error):
+    app_logger.warning("Too many requests from IP: %s", request.remote_addr)
     return render_template('error_page.html', main_message="Too many requests"), 429
 
 @app.errorhandler(500)
 def internal_error(error):
+    app_logger.exception("An internal error occurred:\n %s", error)
     return render_template('error_page.html', main_message="Internal server error"), 500
 
 

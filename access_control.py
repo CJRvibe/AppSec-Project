@@ -1,12 +1,16 @@
 from functools import wraps
 from flask import session, redirect, url_for, request, abort, flash
 import db
+import logging
+
+app_logger = logging.getLogger("app")
 
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if 'user_id' not in session:
             flash("You must be logged in to access this page.", "warning")
+            app_logger.warning("A non logged in user attempted to access a protected resource")
             return redirect(url_for('login'))
         return f(*args, **kwargs)
     return decorated_function
