@@ -437,6 +437,10 @@ def inject_profile_pic():
 def unauthorized_error(error):
     return render_template('error_page.html', main_message="Unauthorised"), 401
 
+@app.errorhandler(403)
+def forbidden_error(error):
+    return render_template('error_page.html', main_message="Forbidden"), 403
+
 @app.errorhandler(404)
 def not_found_error(error):
     return render_template('error_page.html', main_message="Resource not found"), 404
@@ -444,6 +448,10 @@ def not_found_error(error):
 @app.errorhandler(405)
 def method_not_allowed_error(error):
     return render_template('error_page.html', main_message="Method not allowed"), 405
+
+@app.error(429)
+def too_many_requests_error(error):
+    return render_template('error_page.html', main_message="Too many requests"), 429
 
 @app.errorhandler(500)
 def internal_error(error):
