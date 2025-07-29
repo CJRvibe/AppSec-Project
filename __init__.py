@@ -33,6 +33,7 @@ app.config["SECRET_KEY"] = os.environ["SECRET_KEY"].encode('utf-8')
 app.config["MAIL_PASSWORD"] = os.environ["MAIL_PASSWORD"]
 app.config["CSRF_SECRET_KEY"] = os.environ["CSRF_SECRET_KEY"].encode('utf-8')
 app.config["SEMATEXT_PASSWORD"] = os.environ["SEMATEXT_PASSWORD"]
+app.config["GOOGLE_CLIENT_SECRET"] = os.environ["GOOGLE_CLIENT_SECRET"]
 app.config['UPLOAD_FOLDER'] = os.path.join('static', 'uploads')
 
 dictConfig(logging_conf.LOGGING)

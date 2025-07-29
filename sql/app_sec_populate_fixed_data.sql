@@ -54,9 +54,9 @@ VALUES
     
 INSERT INTO interest_group (group_id, name, topic, description, max_size, is_public, picture, proposal, activity_occurence_id, status_id, owner)
 VALUES
-    (1, "Health and Wellness", "Fitness", "Activities focused on improving health and wellness for seniors.", 30, TRUE, "elderly.jpg", "A new proposal for health and wellness", 1, 1, "1"),
-    (2, "Gardening Enthusiasts", "Gardening", "A group for seniors who love gardening and nature.", 20, TRUE, "elderly.jpg", "Another proposal", 2, 2, "1"),
-    (3, "Culinary Arts", "Cooking", "A group for seniors interested in cooking and sharing recipes.", 15, TRUE, "elderly.jpg", "Last proposal", 3, 3, "1");
+    (1, "Health and Wellness", "Fitness", "Activities focused on improving health and wellness for seniors.", 30, TRUE, "elderly.jpg", "A new proposal for health and wellness", 1, 1, 2),
+    (2, "Gardening Enthusiasts", "Gardening", "A group for seniors who love gardening and nature.", 20, TRUE, "elderly.jpg", "Another proposal", 2, 2, 2),
+    (3, "Culinary Arts", "Cooking", "A group for seniors interested in cooking and sharing recipes.", 15, TRUE, "elderly.jpg", "Last proposal", 3, 3, 2);
 
 
 INSERT INTO interest_activity (activity_id, name, description, start_datetime, end_datetime, max_size, funds, location_code, remarks, picture, status_id, group_id)
