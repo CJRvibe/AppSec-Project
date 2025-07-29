@@ -68,6 +68,7 @@ def remove_activity(group_id, activity_id):
     return redirect(url_for("volunteer.dashboard", group_id=group_id, view="activities"))
 
 @volunteer.route("/createInterestGroupProposal", methods=["GET", "POST"])
+@role_required(2)
 def create_group_proposal():
     # mMUST GET OWNER ID
     proposal_form = InterestGroupProposalForm(request.form)
@@ -86,6 +87,7 @@ def create_group_proposal():
 
 
 @volunteer.route("/createActivityProposal", methods=["GET", "POST"])
+@role_required(2)
 def create_activity_proposal():
     # CHANGE TO GET ACTIVITY_ID
     proposal_form = ActivityProposalForm(request.form)

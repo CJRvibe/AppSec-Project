@@ -282,6 +282,7 @@ groups = [
 ]
 
 @app.route('/exploreGroups')
+@role_required(1, 2)
 def explore_groups():
     query = request.args.get('q', '').strip()
     if query:
@@ -290,7 +291,18 @@ def explore_groups():
         groups = db.get_all_groups()
     return render_template('explore_groups.html', groups=groups, query=query)
 
+@app.route('/myGroups')
+@role_required(1, 2)
+def my_groups():
+    user_id = session.get('user_id')
+    if not user_id:
+        return redirect(url_for('login'))
+
+    joined_groups = db.get_groups_by_user(user_id)
+    return render_template('my_groups.html', groups=joined_groups)
+
 @app.route('/groupHome/<int:group_id>')
+@role_required(1, 2, 3)
 def group_home(group_id):
     view = request.args.get('view', 'activities')
     user_id = session.get('user_id')
@@ -315,6 +327,7 @@ def group_home(group_id):
     )
 
 @app.route('/join_group/<int:group_id>', methods=['POST'])
+@role_required(1, 2)
 def join_group(group_id):
     user_id = session.get('user_id')
     print(f"Joining group: {group_id} as user: {user_id}")
@@ -325,6 +338,7 @@ def join_group(group_id):
     return redirect(url_for('group_home', group_id=group_id))
 
 @app.route('/group/<int:group_id>/activity/<int:activity_id>')
+@role_required(1, 2, 3)
 @group_member_required(param='group_id')
 def view_group_activity(group_id, activity_id):
     group = db.get_group_by_id(group_id)
