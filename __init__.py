@@ -4,6 +4,7 @@ from flask import Flask, render_template, redirect, url_for, request, abort, ses
 from flask_mail import Mail, Message, Attachment
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
+from flask_executor import Executor
 from forms import *
 import logging_conf
 from logging.config import dictConfig
@@ -42,6 +43,7 @@ google = oauth.register(
 )
 
 mail = Mail(app)
+executor = Executor(app)
 
 limiter = Limiter(
     get_remote_address,
