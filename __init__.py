@@ -1,10 +1,7 @@
 import os
 import logging
 from flask import Flask, render_template, redirect, url_for, request, abort, session, flash, send_file, has_request_context
-from flask_mail import Mail, Message, Attachment
-from flask_limiter import Limiter
-from flask_limiter.util import get_remote_address
-from flask_executor import Executor
+from utils import mail, executor, limiter, send_email
 from forms import *
 import logging_conf
 from logging.config import dictConfig
@@ -35,6 +32,10 @@ app.config["CSRF_SECRET_KEY"] = os.environ["CSRF_SECRET_KEY"].encode('utf-8')
 app.config["SEMATEXT_PASSWORD"] = os.environ["SEMATEXT_PASSWORD"]
 app.config['UPLOAD_FOLDER'] = os.path.join('static', 'uploads')
 
+mail.init_app(app)
+executor.init_app(app)
+limiter.init_app(app)
+
 dictConfig(logging_conf.LOGGING)
 app_logger = logging.getLogger('app')
 
@@ -49,16 +50,6 @@ google = oauth.register(
     }
 )
 
-mail = Mail(app)
-executor = Executor(app)
-
-limiter = Limiter(
-    get_remote_address,
-    app=app,
-    default_limits=["200 per day", "50 per hour"],
-    storage_uri="memory://",
-)
-
 app.register_blueprint(volunteer.volunteer, url_prefix="/volunteer")
 app.register_blueprint(admin.admin, url_prefix="/admin")
 app.teardown_appcontext(db.close_db)
@@ -66,11 +57,6 @@ app.teardown_appcontext(db.close_db)
 def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
-def send_email(recipient, subject, body):
-    msg = Message(f"{subject}", recipients=[f'{recipient}'])
-    msg.body = f"{body}"
-    mail.send(msg)
 
 def generate_pin(length=6):
     return ''.join([str(random.randint(0, 9)) for _ in range(length)])
@@ -151,7 +137,7 @@ def forget_password():
             pin = generate_pin()
             session['reset_email'] = email
             session['reset_pin'] = pin
-            send_email(
+            send_email.submit(
                 recipient=email,
                 subject="Your Social Sage Password Reset PIN",
                 body=f"Your password reset PIN is: {pin}\nIf you did not request this, please ignore."
