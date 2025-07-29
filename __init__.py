@@ -60,7 +60,7 @@ def generate_pin(length=6):
 
 @app.route('/')
 def index():
-    return render_template("home.html")
+    return render_template("login.html")
 
 @app.route('/signUp', methods=['GET', 'POST'])
 def sign_up():

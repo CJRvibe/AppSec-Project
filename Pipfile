@@ -9,6 +9,10 @@ python-dotenv = "*"
 wtforms = "*"
 mysql-connector-python = "*"
 flask-mail = "*"
+authlib = "*"
+requests = "*"
+pyotp = "*"
+qrcode = {extras = ["pil"], version = "*"}
 
 [dev-packages]
 
