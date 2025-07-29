@@ -68,6 +68,7 @@ def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+@executor.job
 def send_email(recipient, subject, body):
     msg = Message(f"{subject}", recipients=[f'{recipient}'])
     msg.body = f"{body}"
@@ -140,6 +141,7 @@ def login():
 
 @app.route('/logout')
 def logout():
+    app_logger.info("User %s logged out of session", session.get('user_id'))
     session.clear()
     return redirect(url_for('login'))
 
@@ -152,15 +154,17 @@ def forget_password():
             pin = generate_pin()
             session['reset_email'] = email
             session['reset_pin'] = pin
-            send_email(
+            send_email.submit(
                 recipient=email,
                 subject="Your Social Sage Password Reset PIN",
                 body=f"Your password reset PIN is: {pin}\nIf you did not request this, please ignore."
             )
+            app_logger.info("PIN sent to user ID %s for password reset", user['user_id'])
             flash('A PIN has been sent to your email. Please enter it below.', 'info')
             return redirect(url_for('enter_pin'))
         else:
             flash('Email not found.', 'danger')
+            app_logger.warning("Password reset attempt with non-existent email: %s", email)
     return render_template('forget_password.html')
 
 @app.route('/enterPin', methods=['GET', 'POST'])
