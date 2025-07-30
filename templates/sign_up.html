@@ -3,7 +3,8 @@
 <div class="d-flex justify-content-center align-items-center bg-light" style="min-height: 100vh; padding: 20px;">
     <div class="card p-4 shadow" style="width: 400px; border-radius: 10px;">
         <div class="card-body">
-            <form method="POST" action="{{ url_for('sign_up') }}">
+            <form method="POST" action="{{ url_for('auth.sign_up') }}">
+                {{ form.csrf_token }}
                 <h2 class="card-title text-center text-dark">Sign Up</h2>
                 <p class="text-center text-muted">Create your account</p>
                 <div class="mb-3">
@@ -34,17 +35,12 @@
                         <option value="elderly">Elderly</option>
                     </select>
                 </div>
-                {% with messages = get_flashed_messages(with_categories=true) %}
-                    {% if messages %}
-                        {% for category, msg in messages %}
-                            <div class="mb-3 text-{{ 'danger' if category == 'danger' else category }}">{{ msg }}</div>
-                        {% endfor %}
-                    {% endif %}
-                {% endwith %}
+                {% from "includes/form_helper.html" import render_field, invalid_feedback, render_errors %}
+                {{ render_errors(form) }}
                 <button type="submit" class="btn w-100 text-white" style="background-color: #1E80C1;">Sign Up</button>
                 <div class="mt-3 text-center">
-                    <a href="{{ url_for('login_google') }}" class="btn btn-danger w-100 mb-2">Sign in with Google</a>
-                    <a href="/login" class="text-decoration-none" style="color: #1E80C1;">Already have an account? Sign In</a>
+                    <a href="{{ url_for('auth.login_google') }}" class="btn btn-danger w-100 mb-2">Sign in with Google</a>
+                    <a href= "{{ url_for('auth.login') }}" class="text-decoration-none" style="color: #1E80C1;">Already have an account? Sign In</a>
                 </div>
             </form>
         </div>

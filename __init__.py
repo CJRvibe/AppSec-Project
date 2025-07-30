@@ -1,10 +1,14 @@
+import dotenv
+dotenv.load_dotenv()
+import json
 import os
+from flask import Flask, render_template, redirect, url_for, request, abort, session, flash, send_file
 import logging
-from flask import Flask, render_template, redirect, url_for, request, abort, session, flash, send_file, has_request_context
-from utils import mail, executor, limiter, send_email
-from forms import *
-import logging_conf
 from logging.config import dictConfig
+import logging_conf
+from flask import Flask, render_template, redirect, url_for, request, abort, session, flash, send_file, has_request_context
+from utils import mail, executor, limiter, send_email, oauth
+from forms import *
 import db
 import config
 import admin
@@ -17,16 +21,16 @@ import random
 import pyotp
 import qrcode
 import io
+import auth
 
 dotenv.load_dotenv()
 
 
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
-# configuration setup
 app = Flask(__name__)
 app.config.from_object(config.DevelopmentConfig)
-app.config["SECRET_KEY"] = os.environ["SECRET_KEY"].encode('utf-8')
+app.config["SECRET_KEY"] = os.environ["SECRET_KEY"]
 app.config["MAIL_PASSWORD"] = os.environ["MAIL_PASSWORD"]
 app.config["CSRF_SECRET_KEY"] = os.environ["CSRF_SECRET_KEY"].encode('utf-8')
 app.config["SEMATEXT_PASSWORD"] = os.environ["SEMATEXT_PASSWORD"]
@@ -36,152 +40,25 @@ app.config['UPLOAD_FOLDER'] = os.path.join('static', 'uploads')
 mail.init_app(app)
 executor.init_app(app)
 limiter.init_app(app)
+oauth.init_app(app)
 
 dictConfig(logging_conf.LOGGING)
 app_logger = logging.getLogger('app')
 
-oauth = OAuth(app)
-google = oauth.register(
-    name='google',
-    client_id=app.config["GOOGLE_CLIENT_ID"],
-    client_secret=app.config["GOOGLE_CLIENT_SECRET"],
-    server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
-    client_kwargs={
-        'scope': 'openid email profile'
-    }
-)
-
 app.register_blueprint(volunteer.volunteer, url_prefix="/volunteer")
 app.register_blueprint(admin.admin, url_prefix="/admin")
+app.register_blueprint(auth.auth, url_prefix="/auth")
 app.teardown_appcontext(db.close_db)
 
 def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-def generate_pin(length=6):
-    return ''.join([str(random.randint(0, 9)) for _ in range(length)])
 
 @app.route('/')
 def index():
-    app_logger.info("Home page accessed")
     return render_template("home.html")
 
-@app.route('/signUp', methods=['GET', 'POST'])
-def sign_up():
-    form = SignUpForm(request.form)
-    if request.method == 'POST' and form.validate():
-        first_name = form.first_name.data
-        last_name = form.last_name.data
-        email = form.email.data
-        password = form.password.data
-        password = db.hashed_pw(password)
-        confirm_password = form.confirm_password.data
-        role = form.role.data
-
-        if role == "volunteer":
-            user_role = 1
-        elif role == "elderly":
-            user_role = 2
-        elif role == "admin":
-            user_role = 3
-        else:
-            flash("Invalid role.", "danger")
-            return render_template('sign_up.html')
-
-        if db.insert_user(first_name, last_name, email, password, user_role):
-            flash('User created successfully!', 'success')
-            return redirect(url_for('login'))  
-        
-        elif password != confirm_password:
-            flash('Passwords do not match.', 'danger')
-            return render_template('sign_up.html')
-        
-        else:
-            flash('Email already exists or database error.', 'danger')
-            return render_template('sign_up.html')
-        
-    return render_template('sign_up.html', form=form)
-
-
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    form = LoginForm(request.form)
-    if request.method == 'POST' and form.validate():
-        email = form.email.data
-        password = form.password.data
-        user = db.verify_user(email, password)
-        if user:
-            session['user_id'] = user['user_id']
-            session['email'] = user['email']
-            session['role'] = user['user_role']
-            # If MFA is enabled, prompt for code
-            if user.get('mfa_enabled'):
-                return redirect(url_for('login_mfa'))
-            flash('Logged in successfully!', 'success')
-            return redirect(url_for('explore_groups'))
-    else:
-        flash('Invalid credentials.', 'danger')
-    return render_template('login.html', form=form)
-
-@app.route('/logout')
-def logout():
-    app_logger.info("User %s logged out of session", session.get('user_id'))
-    session.clear()
-    return redirect(url_for('login'))
-
-@app.route('/forgetPassword', methods=['GET', 'POST'])
-def forget_password():
-    if request.method == 'POST':
-        email = request.form.get('email')
-        user = db.get_user_by_email(email)
-        if user:
-            pin = generate_pin()
-            session['reset_email'] = email
-            session['reset_pin'] = pin
-            send_email.submit(
-                recipient=email,
-                subject="Your Social Sage Password Reset PIN",
-                body=f"Your password reset PIN is: {pin}\nIf you did not request this, please ignore."
-            )
-            app_logger.info("PIN sent to user ID %s for password reset", user['user_id'])
-            flash('A PIN has been sent to your email. Please enter it below.', 'info')
-            return redirect(url_for('enter_pin'))
-        else:
-            flash('Email not found.', 'danger')
-            app_logger.warning("Password reset attempt with non-existent email: %s", email)
-    return render_template('forget_password.html')
-
-@app.route('/enterPin', methods=['GET', 'POST'])
-def enter_pin():
-    if 'reset_email' not in session or 'reset_pin' not in session:
-        return redirect(url_for('forget_password'))
-    if request.method == 'POST':
-        entered_pin = request.form.get('pin')
-        if entered_pin == session['reset_pin']:
-            flash('PIN verified. Please enter a new password.', 'success')
-            return redirect(url_for('change_password'))
-        else:
-            flash('Incorrect PIN. Please try again.', 'danger')
-    return render_template('enter_pin.html')
-
-@app.route('/changePassword', methods=['GET', 'POST'])
-def change_password():
-    if 'reset_email' not in session or 'reset_pin' not in session:
-        return redirect(url_for('forget_password'))
-    if request.method == 'POST':
-        password = request.form.get('password')
-        confirm_password = request.form.get('confirm_password')
-        if password and confirm_password and password == confirm_password:
-            hashed = db.hashed_pw(password)
-            db.update_user_password(session['reset_email'], hashed)
-            flash('Your password has been changed successfully!', 'success')
-            session.pop('reset_email')
-            session.pop('reset_pin')
-            return redirect(url_for('login'))
-        else:
-            flash('Passwords do not match or are empty.', 'danger')
-    return render_template('change_password.html')
 
 @app.route('/userProfile', methods=['GET', 'POST'])
 def user_profile():
@@ -372,63 +249,6 @@ def upload_file():
 
     return 'Invalid file', 400
 
-@app.route('/login/google')
-def login_google():
-    redirect_uri = url_for('login_google_callback', _external=True)
-    return google.authorize_redirect(redirect_uri)
-
-@app.route('/login/callback')
-def login_google_callback():
-    token = google.authorize_access_token()
-    user_info = google.userinfo()
-    print("Google user_info:", user_info)  # Debug: see what you get from Google
-    email = user_info.get('email')
-
-    if not email:
-        flash('Google did not return your email address. Please ensure you have granted permission to share your email.', 'danger')
-        return redirect(url_for('login'))
-
-    user = db.get_user_by_email(email)
-
-    if not user:
-        db.insert_user(
-            user_info.get("given_name", ""), 
-            user_info.get("family_name", ""), 
-            email, 
-            '',      
-            None     
-        )
-    user = db.get_user_by_email(email)
-
-    if not user:
-        flash('Error logging in with Google. Please try again.', 'danger')
-        return redirect(url_for('login'))
-
-    session['user_id'] = user['user_id']
-    session['email'] = email
-    session['role'] = user['user_role']
-    flash('Logged in with Google!', 'success')
-
-    if not user['user_role']:
-        return redirect(url_for('choose_role'))
-
-    return redirect(url_for('explore_groups'))
-
-
-@app.route('/chooseRole', methods=['GET', 'POST'])
-def choose_role():
-    user_id = session.get('user_id')
-    if not user_id:
-        return redirect(url_for('login'))
-    if request.method == 'POST':
-        role = request.form.get('role')
-        db.update_user_role(user_id, role)
-        session['role'] = role
-        flash('Role selected successfully!', 'success')
-        return redirect(url_for('explore_groups'))
-    return render_template('choose_role.html')
-
-
 @app.context_processor
 def inject_profile_pic():
     user_id = session.get('user_id')
@@ -439,81 +259,6 @@ def inject_profile_pic():
         'navbar_profile_pic': profile_pic
     }
 
-@app.route('/mfaQrCode')
-@login_required
-def mfa_qr_code():
-    user_id = session['user_id']
-    user_email = session['email']
-    secret = db.get_user_mfa_secret(user_id)
-    if not secret:
-        secret = pyotp.random_base32()
-        db.update_user_mfa_secret(user_id, secret)
-    mfa_uri = pyotp.totp.TOTP(secret).provisioning_uri(name=user_email, issuer_name="Social Sage")
-    img = qrcode.make(mfa_uri)
-    buf = io.BytesIO()
-    img.save(buf)
-    buf.seek(0)
-    return send_file(buf, mimetype='image/png')
-
-@app.route('/setupMfa', methods=['GET', 'POST'])
-@login_required
-def setup_mfa():
-    user_id = session['user_id']
-    user_email = session['email']
-
-    # Only generate secret if none exists
-    secret = db.get_user_mfa_secret(user_id)
-    if not secret:
-        secret = pyotp.random_base32()
-        db.update_user_mfa_secret(user_id, secret)
-
-    if request.method == 'POST':
-        code = request.form.get('code')
-        totp = pyotp.TOTP(secret)
-        if totp.verify(code):
-            db.enable_user_mfa(user_id)
-            flash('MFA enabled successfully!', 'success')
-            return redirect(url_for('user_profile'))
-        else:
-            flash('Invalid code, please try again.', 'danger')
-
-    return render_template('verify_mfa.html')  # This template should include <img src="{{ url_for('mfa_qr_code') }}">
-
-@app.route('/loginMfa', methods=['GET', 'POST'])
-def login_mfa():
-    user_id = session.get('user_id')
-    if not user_id:
-        return redirect(url_for('login'))
-    if request.method == 'POST':
-        code = request.form.get('code')
-        secret = db.get_user_mfa_secret(user_id)
-        totp = pyotp.TOTP(secret)
-        if totp.verify(code):
-            flash('Logged in with MFA!', 'success')
-            return redirect(url_for('explore_groups'))
-        else:
-            flash('Invalid MFA code.', 'danger')
-    return render_template('login_mfa.html')
-
-@app.route('/toggleMfa', methods=['POST'])
-@login_required
-def toggle_mfa():
-    user_id = session['user_id']
-    
-    # Get current MFA status from DB
-    is_mfa_enabled = db.is_user_mfa_enabled(user_id)
-    
-    if is_mfa_enabled:
-        db.disable_user_mfa(user_id)
-        flash('MFA disabled.', 'info')
-    else:
-        secret = db.get_user_mfa_secret(user_id)
-        if not secret:
-            return redirect(url_for('setup_mfa'))  # First time setup (redirect to QR/code setup)
-        db.enable_user_mfa(user_id)
-        flash('MFA enabled.', 'success')
-    
-    return redirect(url_for('user_profile'))
 
 # @app.route("/flagGroup/<int:id>", methods=["POST"])
 # def flag_group(id):

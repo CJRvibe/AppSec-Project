@@ -20,4 +20,12 @@
     {% block scripts %}
     {% endblock %}
 </body>
+<script>
+function clearFlashMessages() {
+    const alerts = document.querySelectorAll('.alert');
+    alerts.forEach(function(alert) {
+        alert.remove();
+    });
+}
+</script>
 </html>

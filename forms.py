@@ -6,6 +6,7 @@ from wtforms.csrf.session import SessionCSRF
 from flask import session
 import os
 import db
+import re
 
 dotenv.load_dotenv()
 
@@ -56,6 +57,45 @@ def end_datetime_check(form, field: DateTimeField):
         raise validators.ValidationError("End date must be within 5 days from the start date.")
     return
 
+def validate_password_strength(form, field):
+    password = field.data
+    if not password:
+        return
+    
+    errors = []
+    if len(password) < 8:
+        errors.append("Password must be at least 8 characters long")
+    if not re.search(r'[A-Z]', password):
+        errors.append("Password must contain at least one uppercase letter")
+    if not re.search(r'[a-z]', password):
+        errors.append("Password must contain at least one lowercase letter")
+    if not re.search(r'\d', password):
+        errors.append("Password must contain at least one number")
+    if not re.search(r'[!@#$%^&*(),.?":{}|<>]', password):
+        errors.append("Password must contain at least one special character")
+    
+    if errors:
+        raise validators.ValidationError(". ".join(errors))
+    
+def validate_name(form, field):
+    name = field.data
+    if not name:
+        return
+    
+    if not re.match(r'^[a-zA-Z\s\'-]+$', name):
+        raise validators.ValidationError("Name can only contain letters, spaces, hyphens, and apostrophes")
+    if len(name.strip()) < 2:
+        raise validators.ValidationError("Name must be at least 2 characters long")
+
+def validate_email_not_exists(form, field):
+    email = field.data
+    if not email:
+        return
+    
+    existing_user = db.get_user_by_email(email)
+    if existing_user:
+        raise validators.ValidationError("An account with this email already exists")
+
 
 class BaseForm(Form):
     class Meta:
@@ -101,34 +141,39 @@ class ActivityProposalForm(BaseForm):
         except json.JSONDecodeError:
             raise validators.ValidationError("Invalid formatting of tags")
 
-class LoginForm(Form):
+
+class LoginForm(BaseForm):
     email = StringField("Email", [
         validators.DataRequired(message="Email is required."),
         validators.Email(message="Please enter a valid email address."),
-        validators.Length(max=120)
+        validators.Length(max=120, message="Email is too long.")
     ])
     password = PasswordField("Password", [
         validators.DataRequired(message="Password is required."),
-        validators.Length(min=8, max=128, message="Password must be at least 8 characters.")
+        validators.Length(min=1, max=128, message="Password is invalid.")
     ])
 
-class SignUpForm(Form):
+class SignUpForm(BaseForm):
     first_name = StringField("First Name", [
         validators.DataRequired(message="First name is required."),
-        validators.Length(min=1, max=50)
+        validators.Length(min=2, max=50, message="First name must be between 2 and 50 characters."),
+        validate_name
     ])
     last_name = StringField("Last Name", [
         validators.DataRequired(message="Last name is required."),
-        validators.Length(min=1, max=50)
+        validators.Length(min=2, max=50, message="Last name must be between 2 and 50 characters."),
+        validate_name
     ])
     email = StringField("Email", [
         validators.DataRequired(message="Email is required."),
         validators.Email(message="Please enter a valid email address."),
-        validators.Length(max=120)
+        validators.Length(max=120, message="Email is too long."),
+        validate_email_not_exists
     ])
     password = PasswordField("Password", [
         validators.DataRequired(message="Password is required."),
-        validators.Length(min=8, max=128, message="Password must be at least 8 characters.")
+        validators.Length(min=8, max=128, message="Password must be between 8 and 128 characters."),
+        validate_password_strength
     ])
     confirm_password = PasswordField("Confirm Password", [
         validators.DataRequired(message="Please confirm your password."),
