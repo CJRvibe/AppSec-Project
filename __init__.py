@@ -26,6 +26,8 @@ dotenv.load_dotenv()
 
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
+CERT_FOLDER = os.path.join(os.path.dirname(__file__), "certs")
+
 # configuration setup
 app = Flask(__name__)
 app.config.from_object(config.DevelopmentConfig)
@@ -572,4 +574,4 @@ def internal_error(error):
 
 
 if __name__ == "__main__":
-    app.run(ssl_context=('certs/cert.pem', 'certs/key.pem'))
+    app.run()
