@@ -108,3 +108,14 @@ def create_activity_proposal():
         print("succesffully added activity proposal")
         return redirect(url_for("index"))
     return render_template("volunteer/create_group_activity.html", form=proposal_form)
+
+@volunteer.route('/dashboard')
+@role_required(2)
+def volunteer_dashboard_groups():
+    user_id = session.get('user_id')
+    if not user_id:
+        return redirect(url_for('login'))
+
+    groups = db.get_groups_by_owner(user_id)
+
+    return render_template('volunteer/group_list_dashboard.html', groups=groups)
