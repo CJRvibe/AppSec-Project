@@ -52,7 +52,7 @@
                         <p class="mb-1"><strong class="text-muted">Role:</strong> {{ user.user_role }}</p>
                     </div>
                     
-                    <form method="POST" action="{{ url_for('toggle_mfa') }}">
+                    <form method="POST" action="{{ url_for('auth.toggle_mfa') }}">
                         <button type="submit" class="btn btn-primary">
                             {% if mfa_enabled %}
                                 Disable MFA

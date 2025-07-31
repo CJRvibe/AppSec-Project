@@ -70,7 +70,6 @@ def remove_activity(group_id, activity_id):
 @volunteer.route("/createInterestGroupProposal", methods=["GET", "POST"])
 @role_required(2)
 def create_group_proposal():
-    # mMUST GET OWNER ID
     proposal_form = InterestGroupProposalForm(request.form)
     if request.method == "POST" and proposal_form.validate():
         db.add_group_proposal(
@@ -80,7 +79,8 @@ def create_group_proposal():
             proposal_form.max_size.data,
             proposal_form.join_type.data,
             proposal_form.activity_occurence.data,
-            proposal_form.reason.data
+            proposal_form.reason.data,
+            session.get("user_id")
         )
         return redirect(url_for("index"))
     return render_template("volunteer/create_interest_group_proposal.html", form=proposal_form)

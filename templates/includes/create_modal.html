@@ -25,3 +25,32 @@
         </div>
     </div>
 {% endmacro %}
+
+{% macro create_modal_flag_form(modal_id, modal_heading, url_redirection) %}
+
+    <!-- The Modal -->
+    <div class="modal" id="{{modal_id}}">
+        <div class="modal-dialog">
+            <div class="modal-content">
+
+                <!-- Modal Header -->
+                <div class="modal-header">
+                    <h4 class="modal-title">{{ modal_heading }}</h4>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <!-- Modal body -->
+                <div class="modal-body">
+                    {{ caller() }}
+                </div>
+
+                <!-- Modal footer -->
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-danger" formaction="{{ url_redirection }}">Report</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+{% endmacro %}

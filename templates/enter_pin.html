@@ -21,7 +21,7 @@
                 </div>
                 <button type="submit" class="btn btn-success w-100">Verify PIN</button>
                 <div class="text-center mt-3">
-                    <a href="/forget_password" class="text-decoration-none" style="color: #1E80C1;">Resend PIN</a>
+                    <a href="{{ url_for('auth.forget_password') }}" class="text-decoration-none" style="color: #1E80C1;">Resend PIN</a>
                 </div>
             </form>
         </div>
