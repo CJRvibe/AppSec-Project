@@ -19,7 +19,11 @@
 {% endblock %}
 
 {% block navbar %}
-{% include "includes/elderly_navbar.html" %}
+    {% if session["role"] == 2 %}
+        {% include "includes/volunteer_navbar.html" %}
+    {% else %}
+        {% include "includes/elderly_navbar.html" %}
+    {% endif %}
 {% endblock %}
 
 {% block content %}

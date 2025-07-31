@@ -457,3 +457,18 @@ def is_user_mfa_enabled(user_id):
     cursor.execute("SELECT mfa_enabled FROM users WHERE user_id = %s", (user_id,))
     result = cursor.fetchone()
     return result and result[0] == 1
+
+def get_groups_by_user(user_id):
+    connection = get_db()
+    cursor = connection.cursor(dictionary=True)
+    
+    query = """
+        SELECT ig.*
+        FROM interest_group ig
+        JOIN user_interest_group uig ON ig.group_id = uig.group_id
+        WHERE uig.user_id = %s AND uig.status_id = (
+            SELECT status_id FROM statuses WHERE title = 'approved'
+        )
+    """
+    cursor.execute(query, (user_id,))
+    return cursor.fetchall()
