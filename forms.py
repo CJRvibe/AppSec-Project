@@ -140,7 +140,10 @@ class ActivityProposalForm(BaseForm):
                     raise validators.ValidationError("Incorrect formating of tags")
         except json.JSONDecodeError:
             raise validators.ValidationError("Invalid formatting of tags")
+        
 
+class FlagForm(BaseForm):
+    reason = StringField("Flag Reason", [validators.DataRequired(), validators.Length(min=1, max=50)])
 
 class LoginForm(BaseForm):
     email = StringField("Email", [

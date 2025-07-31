@@ -472,3 +472,16 @@ def get_groups_by_user(user_id):
     """
     cursor.execute(query, (user_id,))
     return cursor.fetchall()
+
+
+def add_flag_group(group_id, user_id, reason):
+    connection = get_db()
+    cursor = connection.cursor()
+
+    statement = """
+    INSERT INTO flagged_groups (group_id, user_id, status_id, reason)
+    VALUES (%s, %s, 1, %s)
+    """
+
+    cursor.execute(statement, (group_id, user_id, reason))
+    connection.commit()

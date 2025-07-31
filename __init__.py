@@ -172,6 +172,7 @@ def my_groups():
 def group_home(group_id):
     view = request.args.get('view', 'activities')
     user_id = session.get('user_id')
+    flag_form = FlagForm(request.form)
 
     group = db.get_group_by_id(group_id)
     if not group:
@@ -189,7 +190,8 @@ def group_home(group_id):
         group=group,
         view=view,
         activities=activities,
-        has_joined=has_joined
+        has_joined=has_joined,
+        flag_form=flag_form
     )
 
 @app.route('/join_group/<int:group_id>', methods=['POST'])
@@ -260,20 +262,21 @@ def inject_profile_pic():
     }
 
 
-# @app.route("/flagGroup/<int:id>", methods=["POST"])
-# def flag_group(id):
-
-#     group = db.get_group_by_id(id)
-#     if not group:
-#         abort(404, description="Group not found")
-#     if group.get("status") != "approved":
-#         abort(405, description="Method not allowed for this group")
+@app.route("/flagGroup/<int:id>", methods=["POST"])
+@login_required
+@role_required(1, 2)
+def flag_group(id):
+    group = db.get_group_by_id(id)
+    if not group:
+        abort(404, description="Group not found")
+    if group.get("status_id") != 2:
+        abort(405, description="Method not allowed for this group")
     
-#     flag_form = FlagForm(request.form)
-#     if flag_form.validate() and request.method == "POST":
-#         reason = flag_form.reason.data
-#         db.add_flag_group(id, 1, reason)
-#         return redirect(url_for("home"))
+    flag_form = FlagForm(request.form)
+    if flag_form.validate():
+        reason = flag_form.reason.data
+        db.add_flag_group(group["group_id"], session.get("user_id"), reason)
+    return redirect(url_for("explore_groups"))
     
 
 # @app.route("/flagActivity/<int:id>", methods=["POST"])

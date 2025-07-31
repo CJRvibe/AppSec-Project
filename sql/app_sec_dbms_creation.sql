@@ -307,7 +307,7 @@ ENGINE = InnoDB;
 DROP TABLE IF EXISTS `social_sage_db`.`flagged_activities` ;
 
 CREATE TABLE IF NOT EXISTS `social_sage_db`.`flagged_activities` (
-  `flag_id` VARCHAR(45) NOT NULL,
+  `flag_id` INT NOT NULL AUTO_INCREMENT,
   `activity_id` INT NOT NULL,
   `user_id` INT NOT NULL,
   `status_id` TINYINT NOT NULL,
@@ -340,7 +340,7 @@ ENGINE = InnoDB;
 DROP TABLE IF EXISTS `social_sage_db`.`flagged_groups` ;
 
 CREATE TABLE IF NOT EXISTS `social_sage_db`.`flagged_groups` (
-  `flag_id` INT NOT NULL,
+  `flag_id` INT NOT NULL AUTO_INCREMENT,
   `group_id` INT NOT NULL,
   `user_id` INT NOT NULL,
   `status_id` TINYINT NOT NULL,
