@@ -472,3 +472,11 @@ def get_groups_by_user(user_id):
     """
     cursor.execute(query, (user_id,))
     return cursor.fetchall()
+
+def get_groups_by_owner(user_id):
+    connection = get_db()
+    cursor = connection.cursor(dictionary=True)
+
+    statement = "SELECT group_id, name, topic, description, max_size, is_public, picture, proposal, activity_occurence_id, status_id, owner FROM interest_group WHERE owner = %s"
+    cursor.execute(statement, (user_id,))
+    return cursor.fetchall()
