@@ -180,7 +180,7 @@ def resend_pin():
         send_email(
             recipient=email,
             subject="Your Social Sage Password Reset PIN (Resent)",
-            body=f"Your new password reset PIN is: {pin}\nThis PIN will expire in 10 minutes.\nIf you did not request this, please ignore."
+            body=f"Your new password reset PIN is: {pin}\nIf you did not request this, please ignore."
         )
         flash('A new PIN has been sent to your email.', 'info')
     except Exception as e:
