@@ -149,11 +149,6 @@ def enter_pin():
         clear_flash_messages()
         pass
     
-    if 'reset_email' not in session or 'reset_pin' not in session:
-         clear_flash_messages()
-         flash('Invalid session. Please restart the password reset process.', 'danger')
-         return redirect(url_for('.forget_password'))
-    
     if request.method == 'POST':
         clear_flash_messages()
         entered_pin = request.form.get('pin')
