@@ -12,6 +12,10 @@
 
 {% block content %}
 <div class="container mt-4">
+    {% from "includes/create_modal.html" import create_modal_flag_form %}
+    {% from "includes/form_helper.html" import render_field, invalid_feedback, render_errors %}
+
+    render_errors(flag_form)
 
     <!-- Group Header -->
     <div class="d-flex justify-content-between align-items-start mb-3">
@@ -26,11 +30,21 @@
         </div>
 
         <!-- Right: Flag Button -->
-        <form>
-            <button type="submit" class="btn btn-outline-danger">
-                ⚑
-            </button>
-        </form>
+        <div class="d-flex justify-content-end">
+            <form method="post" class="needs-validation" novalidate>
+                {{ flag_form.csrf_token }}
+                <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#flag-activity">
+                    ⚑
+                </button>
+                {% call create_modal_flag_form("flag-activity", "Confirm Group Flagging", url_for("flag_group", id=group.get("group_id"))) %}
+                    <div class="input-group">
+                        <span class="input-group-text">{{ flag_form.reason.label }}</span>
+                        {{ flag_form.reason(class="form-control", placeholder="Enter reason for flagging") }}
+                        {{ invalid_feedback("Enter a reason containing no less than 50 characters") }}
+                    </div>
+                {% endcall %}
+            </form>
+        </div>
     </div>
 
 
@@ -116,4 +130,5 @@
         window.location.href = url.toString();
     }
 </script>
+<script src="{{ url_for('static', filename='scripts/form_validation.js') }}"></script>
 {% endblock %}

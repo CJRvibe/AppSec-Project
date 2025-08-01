@@ -112,15 +112,15 @@ def get_user_by_id(user_id):
     return user
 
 
-def add_group_proposal(name, topic, description, max_size, is_public, activity_occurence, reason):
+def add_group_proposal(name, topic, description, max_size, is_public, activity_occurence, reason, owner):
     connection = get_db()
     cursor = connection.cursor()
-    values = (name, topic, description, max_size, is_public, activity_occurence, reason)
+    values = (name, topic, description, max_size, is_public, activity_occurence, reason, owner)
     statement = """
     INSERT INTO interest_group (name, topic, description, max_size, is_public,
         activity_occurence_id, proposal, status_id, owner)
-    VALUES (%s, %s, %s, %s, %s, %s, %s, 1, 3)
-    """ # change to generate dynamic owner
+    VALUES (%s, %s, %s, %s, %s, %s, %s, 1, %s)
+    """
 
     cursor.execute(statement, values)
     connection.commit()
@@ -471,4 +471,25 @@ def get_groups_by_user(user_id):
         )
     """
     cursor.execute(query, (user_id,))
+    return cursor.fetchall()
+
+
+def add_flag_group(group_id, user_id, reason):
+    connection = get_db()
+    cursor = connection.cursor()
+
+    statement = """
+    INSERT INTO flagged_groups (group_id, user_id, status_id, reason)
+    VALUES (%s, %s, 1, %s)
+    """
+
+    cursor.execute(statement, (group_id, user_id, reason))
+    connection.commit()
+
+def get_groups_by_owner(user_id):
+    connection = get_db()
+    cursor = connection.cursor(dictionary=True)
+
+    statement = "SELECT group_id, name, topic, description, max_size, is_public, picture, proposal, activity_occurence_id, status_id, owner FROM interest_group WHERE owner = %s"
+    cursor.execute(statement, (user_id,))
     return cursor.fetchall()
