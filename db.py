@@ -65,14 +65,14 @@ def close_db(exception=None):
 def get_all_groups():
     connection = get_db()
     cursor = connection.cursor(dictionary=True)
-    statement = "SELECT * FROM interest_group"
+    statement = "SELECT group_id, name, topic, description, max_size, is_public, picture, proposal, activity_occurence_id, status_id, owner FROM interest_group WHERE status_id = 2"
     cursor.execute(statement)
     return cursor.fetchall()
 
 def get_group_by_id(group_id):
     connection = get_db()
     cursor = connection.cursor(dictionary=True)
-    statement = "SELECT * FROM interest_group WHERE group_id = %s"
+    statement = "SELECT group_id, name, topic, description, max_size, is_public, picture, proposal, activity_occurence_id, status_id, owner FROM interest_group WHERE group_id = %s"
     cursor.execute(statement, (group_id,))
     return cursor.fetchone()
 
@@ -82,12 +82,12 @@ def get_activities_by_group_id(group_id, search=None):
     
     if search:
         statement = """
-            SELECT * FROM interest_activity 
+            SELECT activity_id, name, description, start_datetime, end_datetime, max_size, funds, location_code, remarks, picture, status_id, group_id FROM interest_activity 
             WHERE group_id = %s AND LOWER(name) LIKE %s
         """
         cursor.execute(statement, (group_id, f"%{search.lower()}%"))
     else:
-        statement = "SELECT * FROM interest_activity WHERE group_id = %s"
+        statement = "SELECT activity_id, name, description, start_datetime, end_datetime, max_size, funds, location_code, remarks, picture, status_id, group_id FROM interest_activity WHERE group_id = %s"
         cursor.execute(statement, (group_id,))
     
     return cursor.fetchall()
@@ -95,7 +95,7 @@ def get_activities_by_group_id(group_id, search=None):
 def get_activity_by_id(activity_id):
     connection = get_db()
     cursor = connection.cursor(dictionary=True)
-    statement = "SELECT * FROM interest_activity WHERE activity_id = %s"
+    statement = "SELECT activity_id, name, description, start_datetime, end_datetime, max_size, funds, location_code, remarks, picture, status_id, group_id FROM interest_activity WHERE activity_id = %s"
     cursor.execute(statement, (activity_id,))
     return cursor.fetchone()
 
@@ -158,8 +158,8 @@ def search_groups(query):
     connection = get_db()
     cursor = connection.cursor(dictionary=True)
     statement = """
-        SELECT * FROM interest_group
-        WHERE name LIKE %s OR topic LIKE %s OR description LIKE %s
+        SELECT group_id, name, topic, description, max_size, is_public, picture, proposal, activity_occurence_id, status_id, owner FROM interest_group
+        WHERE status_id  = 2 AND name LIKE %s OR topic LIKE %s OR description LIKE %s
     """
     like_query = f"%{query}%"
     cursor.execute(statement, (like_query, like_query, like_query))
@@ -327,7 +327,7 @@ def get_user_profile_pic(user_id):
 def get_user_by_email(email):
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM users WHERE email = %s", (email,))
+    cursor.execute("SELECT user_id, first_name, last_name, email, password, profile_pic, email_notif, mfa_secret, mfa_enabled, user_role FROM users WHERE email = %s", (email,))
     result = cursor.fetchone()
     cursor.close()  
     return result
@@ -352,14 +352,14 @@ def update_user_info(user_id, first_name, last_name, email):
 def get_all_users():
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM users")
+    cursor.execute("SELECT user_id, first_name, last_name, email, password, profile_pic, email_notif, mfa_secret, mfa_enabled, user_role FROM users")
     users = cursor.fetchall()
     return users
 
 def get_users_by_role(role):
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM users WHERE user_role = %s", (role,))
+    cursor.execute("SELECT user_id, first_name, last_name, email, password, profile_pic, email_notif, mfa_secret, mfa_enabled, user_role FROM users WHERE user_role = %s", (role,))
     users = cursor.fetchall()
     return users
 
@@ -493,3 +493,33 @@ def get_groups_by_owner(user_id):
     statement = "SELECT group_id, name, topic, description, max_size, is_public, picture, proposal, activity_occurence_id, status_id, owner FROM interest_group WHERE owner = %s"
     cursor.execute(statement, (user_id,))
     return cursor.fetchall()
+
+#admin dashboard
+
+def get_total_users():
+    cursor = get_db().cursor(dictionary=True)
+    cursor.execute("SELECT COUNT(*) AS total FROM users")
+    return cursor.fetchone()["total"]
+
+def get_total_groups():
+    cursor = get_db().cursor(dictionary=True)
+    cursor.execute("SELECT COUNT(*) AS total FROM interest_group")
+    return cursor.fetchone()["total"]
+
+def get_total_activities():
+    cursor = get_db().cursor(dictionary=True)
+    cursor.execute("SELECT COUNT(*) AS total FROM interest_activity")
+    return cursor.fetchone()["total"]
+
+def get_user_growth_last_7_days():
+    cursor = get_db().cursor(dictionary=True)
+    cursor.execute("""
+        SELECT DATE(date_joined) as day, COUNT(*) as count
+        FROM user_interest_group
+        GROUP BY day
+        ORDER BY day DESC
+        LIMIT 7
+    """)
+    return cursor.fetchall()[::-1]  # reverse for Chart.js order
+
+#admin dashboard end

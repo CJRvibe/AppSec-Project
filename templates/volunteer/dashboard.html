@@ -1,4 +1,9 @@
 {% extends "base.html" %}
+
+{% block navbar %}
+    {% include "includes/volunteer_navbar.html" %}
+{% endblock %}
+
 {% block content %}
 <div class="container mt-4">
     <h2 class="mb-4">Manage Group: {{ group.name }}</h2>
