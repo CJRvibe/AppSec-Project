@@ -317,7 +317,7 @@ def method_not_allowed_error(error):
 @app.errorhandler(429)
 def too_many_requests_error(error):
     app_logger.warning("Too many requests from IP: %s", request.remote_addr)
-    return render_template('error_page.html', main_message="Too many requests"), 429
+    return error.get_response() or (render_template('error_page.html', main_message="Too many requests"), 429)
 
 @app.errorhandler(500)
 def internal_error(error):

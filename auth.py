@@ -5,7 +5,7 @@ import random
 import pyotp
 import qrcode
 import io
-from flask import Blueprint, render_template, redirect, url_for, request, session, flash, send_file
+from flask import Blueprint, render_template, redirect, url_for, request, session, g, flash, send_file
 from forms import LoginForm, SignUpForm
 from access_control import login_required
 from authlib.integrations.flask_client import OAuth
@@ -14,7 +14,7 @@ from utils import mail, executor, limiter, send_email, oauth, google
 from config import Config
 
 auth = Blueprint('auth', __name__)
-
+limiter.limit("1/second")(auth)
 
 
 def generate_pin(length=6):
@@ -24,6 +24,7 @@ def clear_flash_messages():
     session.pop('_flashes', None)
 
 @auth.route('/signUp', methods=['GET', 'POST'])
+@limiter.limit("5/hour;10/day", methods=["POST"])
 def sign_up():
     if request.method == 'GET':
         clear_flash_messages()  
@@ -68,6 +69,7 @@ def sign_up():
     return render_template('sign_up.html', form=form)
 
 @auth.route('/login', methods=['GET', 'POST'])
+@limiter.limit("1/hour", methods=["POST"], deduct_when=lambda response: g.get("login_success", False))
 def login():
     if request.method == 'GET':
         clear_flash_messages()  
@@ -91,6 +93,7 @@ def login():
         session['user_id'] = user['user_id']
         session['email'] = user['email']
         session['role'] = user['user_role']
+        g.login_success = True
         
         if user.get('mfa_enabled'):
             return redirect(url_for('auth.login_mfa'))
@@ -106,56 +109,56 @@ def logout():
     return redirect(url_for('.login'))
 
 @auth.route('/forgetPassword', methods=['GET', 'POST'])
+@limiter.limit("3/minute;10/day", methods=["POST"])
 def forget_password():
     if request.method == 'GET':
-        clear_flash_messages()
+        pass
+        # clear_flash_messages()
     
     if request.method == 'POST':
-        clear_flash_messages()
         email = request.form.get('email')
+        # clear_flash_messages()
         
         if not email:
             flash('Email is required.', 'danger')
             return render_template('forget_password.html')
         
         user = db.get_user_by_email(email)
-        if not user:
-            flash('A PIN has been sent to your email. Please enter it below.', 'danger')
-            return render_template('forget_password.html')
-        
-        else:
+        if user:
             pin = generate_pin()
             session['reset_email'] = email
             session['reset_pin'] = pin
             send_email.submit(
                 recipient=email,
                 subject="Your Social Sage Password Reset PIN",
-                body=f"Your password reset PIN is: {pin}\nIf you did not request this, please ignore."
+                body=f"Your password reset PIN is: {pin}\nIf you did not request this, please change your password immediately and contact us"
             )
-            flash('A PIN has been sent to your email. Please enter it below.', 'info')
-            return redirect(url_for('.enter_pin'))
+        flash('A PIN has been sent to your email if it exists. Please enter it below.', 'info')
+        return redirect(url_for('.enter_pin'))
     
     return render_template('forget_password.html')
 
 @auth.route('/enterPin', methods=['GET', 'POST'])
+@limiter.limit("5/hour;10/day", methods=["POST"])
 def enter_pin():
     if request.method == 'GET':
-        clear_flash_messages()
+        # clear_flash_messages()
+        pass
     
-    if 'reset_email' not in session or 'reset_pin' not in session:
-        clear_flash_messages()
-        flash('Invalid session. Please restart the password reset process.', 'danger')
-        return redirect(url_for('forget_password'))
+    # if 'reset_email' not in session or 'reset_pin' not in session:
+    #     clear_flash_messages()
+    #     flash('Invalid session. Please restart the password reset process.', 'danger')
+    #     return redirect(url_for('.forget_password'))
     
     if request.method == 'POST':
-        clear_flash_messages()
+        # clear_flash_messages()
         entered_pin = request.form.get('pin')
         
         if not entered_pin:
             flash('PIN is required.', 'danger')
             return render_template('enter_pin.html')
         
-        if entered_pin == session['reset_pin']:
+        if entered_pin == session.get('reset_pin') and "reset_email" in session:
             flash('PIN verified. Please enter a new password.', 'success')
             return redirect(url_for('.change_password'))
         else:

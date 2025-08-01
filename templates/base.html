@@ -12,6 +12,18 @@
     {% block navbar %}{% endblock %}
 
     <div class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="my-1">
+                        {% for category, msg in messages %}
+                            <div class="alert alert-{{category}} alert-dismissable">
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                {{ msg }}
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+        {% endwith %}
         {% block content %}{% endblock %}
     </div>
     
