@@ -233,15 +233,12 @@ def change_password():
             return render_template('change_password.html')
         
         hashed = db.hashed_pw(password)
-        if db.update_user_password(session['reset_email'], hashed):
-            flash('Your password has been changed successfully!', 'success')
-            session.pop('reset_email', None)
-            session.pop('reset_pin', None)
-            session.pop('pin_expiry', None)
-            return redirect(url_for('login'))
-        else:
-            flash('Error updating password. Please try again.', 'danger')
-    
+        db.update_user_password(session['reset_email'], hashed)
+        flash('Your password has been changed successfully!', 'success')
+        session.pop('reset_email', None)
+        session.pop('reset_pin', None)
+        session.pop('pin_expiry', None)
+        return redirect(url_for('.login'))
     return render_template('change_password.html')
 
 @auth.route('/login/google')
