@@ -48,9 +48,9 @@ def sign_up():
        
         hashed_password = db.hashed_pw(password)
 
-        if role == "volunteer":
+        if role == "elderly":
             user_role = 1
-        elif role == "elderly":
+        elif role == "volunteer":
             user_role = 2
         else:
             clear_flash_messages()
@@ -98,8 +98,12 @@ def login():
         if user.get('mfa_enabled'):
             return redirect(url_for('auth.login_mfa'))
         
-        flash('Logged in successfully!', 'success')
-        return redirect(url_for('explore_groups'))
+        if user['user_role'] == 3:
+            flash('Logged in successfully!', 'success')
+            return redirect(url_for('admin.home'))
+        else:
+            flash('Logged in successfully!', 'success')
+            return redirect(url_for('explore_groups'))
     
     return render_template('login.html', form=form)
 
@@ -142,16 +146,16 @@ def forget_password():
 @limiter.limit("5/hour;10/day", methods=["POST"])
 def enter_pin():
     if request.method == 'GET':
-        # clear_flash_messages()
+        clear_flash_messages()
         pass
     
-    # if 'reset_email' not in session or 'reset_pin' not in session:
-    #     clear_flash_messages()
-    #     flash('Invalid session. Please restart the password reset process.', 'danger')
-    #     return redirect(url_for('.forget_password'))
+    if 'reset_email' not in session or 'reset_pin' not in session:
+         clear_flash_messages()
+         flash('Invalid session. Please restart the password reset process.', 'danger')
+         return redirect(url_for('.forget_password'))
     
     if request.method == 'POST':
-        # clear_flash_messages()
+        clear_flash_messages()
         entered_pin = request.form.get('pin')
         
         if not entered_pin:
