@@ -13,21 +13,27 @@
     </div>
 </div>
 
-<div class="row text-center">
-    <div class="col p-2 bg-secondary rounded">
-        <h2>No.of Users</h2>
-        <p>54</p>
-        <p>that is 54% more than last week!</p>
+<div class="row text-center mb-4">
+    <div class="col p-3 bg-secondary rounded text-white mx-2">
+        <h4>Users</h4>
+        <p class="fs-2">{{ user_count }}</p>
     </div>
-    <div class="col p-2 bg-secondary rounded mx-2">
-        <h2>No. of Groups</h2>
-        <p>3</p>
-        <p>15 new groups approved this week</p>
+    <div class="col p-3 bg-secondary rounded text-white mx-2">
+        <h4>Groups</h4>
+        <p class="fs-2">{{ group_count }}</p>
     </div>
-    <div class="col p-2 bg-secondary rounded">
-        <h2>No.of activities</h2>
-        <p>3</p>
-        <p>5 activities conducted this week</p>
+    <div class="col p-3 bg-secondary rounded text-white mx-2">
+        <h4>Activities</h4>
+        <p class="fs-2">{{ activity_count }}</p>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col">
+        <div class="card p-3">
+            <h5 class="card-title">User Join Trend (Last 7 Days)</h5>
+            <canvas id="growthChart" width="400" height="200"></canvas>
+        </div>
     </div>
 </div>
 
@@ -52,4 +58,33 @@
     </div>
     
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+const ctx = document.getElementById('growthChart').getContext('2d');
+const growthChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: {{ growth_dates | tojson }},
+        datasets: [{
+            label: 'Users Joined',
+            data: {{ growth_counts | tojson }},
+            borderColor: 'rgba(75, 192, 192, 1)',
+            fill: false,
+            tension: 0.3
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: { display: true }
+        },
+        scales: {
+            y: { beginAtZero: true }
+        }
+    }
+});
+</script>
 {% endblock %}

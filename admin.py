@@ -18,7 +18,23 @@ def check_is_admin():
 @admin.route("/")
 def home():
     app_logger.info("Admin %s accessed admin home", session.get("user_id"))
-    return render_template("admin/admin_home.html")
+    user_count = db.get_total_users()
+    group_count = db.get_total_groups()
+    activity_count = db.get_total_activities()
+    growth_data = db.get_user_growth_last_7_days()
+
+    # Prepare chart data
+    dates = [row["day"].strftime("%Y-%m-%d") for row in growth_data]
+    counts = [row["count"] for row in growth_data]
+
+    return render_template(
+        "admin/admin_home.html",
+        user_count=user_count,
+        group_count=group_count,
+        activity_count=activity_count,
+        growth_dates=dates,
+        growth_counts=counts
+    )
 
 
 @admin.route("/interestGroups/proposals")
