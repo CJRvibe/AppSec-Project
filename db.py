@@ -523,3 +523,74 @@ def get_user_growth_last_7_days():
     return cursor.fetchall()[::-1]  # reverse for Chart.js order
 
 #admin dashboard end
+
+def get_group_member_count(group_id):
+    connection = get_db()
+    cursor = connection.cursor()
+    query = """
+        SELECT COUNT(*) FROM user_interest_group
+        WHERE group_id = %s AND status_id = 2
+    """
+    cursor.execute(query, (group_id,))
+    (count,) = cursor.fetchone()
+    return count
+
+def register_user_for_activity(user_id, activity_id):
+    connection = get_db()
+    cursor = connection.cursor()
+
+    query = """
+        INSERT INTO user_interest_activity (user_id, activity_id, join_datetime)
+        VALUES (%s, %s, NOW())
+        ON DUPLICATE KEY UPDATE join_datetime = VALUES(join_datetime)
+    """
+    cursor.execute(query, (user_id, activity_id))
+    connection.commit()
+
+def is_user_registered_for_activity(user_id, activity_id):
+    connection = get_db()
+    cursor = connection.cursor(dictionary=True)
+
+    query = """
+        SELECT user_id, activity_id, join_datetime FROM user_interest_activity
+        WHERE user_id = %s AND activity_id = %s
+    """
+    cursor.execute(query, (user_id, activity_id))
+    return cursor.fetchone() is not None
+
+def get_activity_registration_count(activity_id):
+    connection = get_db()
+    cursor = connection.cursor()
+
+    query = """
+        SELECT COUNT(*) FROM user_interest_activity
+        WHERE activity_id = %s
+    """
+    cursor.execute(query, (activity_id,))
+    result = cursor.fetchone()
+    return result[0] if result else 0
+
+def leave_group(user_id, group_id):
+    connection = get_db()
+    cursor = connection.cursor()
+
+    statement = """
+        DELETE FROM user_interest_group
+        WHERE user_id = %s AND group_id = %s
+    """
+    cursor.execute(statement, (user_id, group_id))
+    connection.commit()
+
+def get_user_group_status_id(user_id, group_id):
+    connection = get_db()
+    cursor = connection.cursor(dictionary=True)
+
+    query = """
+        SELECT status_id
+        FROM user_interest_group
+        WHERE user_id = %s AND group_id = %s
+    """
+    cursor.execute(query, (user_id, group_id))
+    result = cursor.fetchone()
+
+    return result['status_id'] if result else None

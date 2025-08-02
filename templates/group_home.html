@@ -15,7 +15,7 @@
     {% from "includes/create_modal.html" import create_modal_flag_form %}
     {% from "includes/form_helper.html" import render_field, invalid_feedback, render_errors %}
 
-    render_errors(flag_form)
+    {{render_errors(flag_form)}}
 
     <!-- Group Header -->
     <div class="d-flex justify-content-between align-items-start mb-3">
@@ -49,17 +49,34 @@
 
 
     <div class="d-flex justify-content-end mb-3">
-    {% if session.user_id %}
-        {% if not has_joined %}
-        <form action="{{ url_for('join_group', group_id=group.group_id) }}" method="post">
-            <button type="submit" class="btn btn-success float-end">Join Group</button>
-        </form>
+        {% if session.user_id %}
+            {% if join_status_id == 2 %}
+                <!-- Approved and Joined: Show Leave -->
+                <form method="POST" action="{{ url_for('leave_group', group_id=group.group_id) }}">
+                    <button type="submit" class="btn btn-danger mt-3" onclick="return confirm('Are you sure you want to leave this group?')">
+                        Leave Group
+                    </button>
+                </form>
+
+            {% elif join_status_id == 1 %}
+                <!-- Join Request Pending -->
+                <button class="btn btn-outline-secondary mt-3" disabled>⏳ Join Request Pending</button>
+
+            {% elif group.max_size is none or member_count < group.max_size %}
+                <!-- Not Joined: Space Available -->
+                <form method="POST" action="{{ url_for('join_group', group_id=group.group_id) }}">
+                    <button type="submit" class="btn btn-success mt-3">Join Group</button>
+                </form>
+
+            {% else %}
+                <!-- Not Joined: Group Full -->
+                <button class="btn btn-secondary mt-3" disabled>Group Full</button>
+            {% endif %}
         {% else %}
-        <button class="btn btn-outline-success float-end" disabled>✔ Joined</button>
+            <!-- User Not Logged In -->
+            <a href="{{ url_for('login') }}" class="btn btn-outline-secondary mt-3">Log in to Join</a>
         {% endif %}
-    {% else %}
-        <a href="{{ url_for('login') }}" class="btn btn-outline-secondary">Log in to Join</a>
-    {% endif %}
+    </div>
 </div>
 
     <p class="lead">{{ group.description or 'No description provided.' }}</p>
