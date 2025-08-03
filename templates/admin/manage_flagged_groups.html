@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% block title %}Admin - Manage flag groups{% endblock %}
+
+{% block navbar %}
+{% include "includes/admin_navbar.html" %}
+{% endblock %}
+
+{% block content %}
+<table class="table table-hover table-striped text-center table-bordered mt-4">
+    <thead>
+        <tr>
+            <th>Flag ID</th>
+            <th>Group</th>
+            <th>Reason</th>
+            <th>Reported By</th>
+            <th>Status</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for flag in flagged_groups %}
+        <tr>
+            <td>{{ flag.get("flag_id") }}</td>
+            <td>{{ flag.get("group_name") }}</td>
+            <td>{{ flag.get("reason") }}</td>
+            <td>{{ flag.get("email") }}</td>
+            <td>{{ flag.get("status_id") }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

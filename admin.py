@@ -193,7 +193,7 @@ def reject_activity(id):
         abort(405, description="Method not allowed for this activity")
     else:
         db.admin_update_activity_proposal(id, approved=False)
-        app_logger.info("Admin %s rejected activity", session.get("user_id"), activity.get("activity_id"))
+        app_logger.info("Admin %s rejected %s", session.get("user_id"), activity.get("activity_id"))
 
         group = db.admin_get_group_by_id(activity.get("group_id")) or {}
         user = db.get_user_by_id(group.get("owner")) or {}
@@ -230,6 +230,13 @@ def admin_view_users():
         roles=roles,
         selected_role=selected_role
     )
+
+
+@admin.route("/interestGroups/flaggedRequests")
+def manage_flagged_groups():
+    flagged_groups = db.admin_get_flagged_groups()
+    app_logger.info("Admin %s accessed information for all flag group requests", session.get("user_id"))
+    return render_template("admin/manage_flagged_groups.html", flagged_groups=flagged_groups)
 
 @admin.route('/users/<int:user_id>/suspend', methods=['POST'])
 def suspend_user(user_id):

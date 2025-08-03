@@ -301,6 +301,20 @@ def admin_update_activity_proposal(id, approved=False):
     cursor.execute(statement, (status, id))
     connection.commit()
 
+
+def admin_get_flagged_groups():
+    connection = get_db()
+    cursor = connection.cursor(dictionary=True)
+    statement = """
+    SELECT fg.flag_id, fg.group_id, ig.name group_name, fg.reason, fg.user_id, u.email, fg.status_id
+    FROM flagged_groups fg
+    INNER JOIN interest_group ig ON fg.group_id = ig.group_id
+    INNER JOIN users u ON fg.user_id = u.user_id
+    """
+
+    cursor.execute(statement)
+    return cursor.fetchall()
+
 def update_user_profile_pic(user_id, profile_pic):
     conn = get_db()
     cursor = conn.cursor()
