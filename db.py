@@ -103,7 +103,7 @@ def get_user_by_id(user_id):
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
     cursor.execute("""
-        SELECT u.first_name, u.last_name, u.email, r.user_role, u.profile_pic
+        SELECT u.first_name, u.last_name, u.email, r.user_role, u.profile_pic, u.email_notif
         FROM users u
         LEFT JOIN user_role r ON u.user_role = r.role_id
         WHERE u.user_id = %s
@@ -173,7 +173,7 @@ def admin_get_group_by_id(id: int):
     SELECT
         ig.group_id, ig.name, ig.topic, ig.description,
         ig.max_size, ig.is_public, ig.picture, ac.title occurence,
-        s.title status, u.email, ig.proposal
+        s.title status, u.email, ig.proposal, ig.owner, u.email owner_email
     FROM interest_group ig
     INNER JOIN activity_occurences ac ON ig.activity_occurence_id = ac.activity_occurence_id
     INNER JOIN statuses s ON s.status_id = ig.status_id
@@ -209,7 +209,7 @@ def admin_get_groups(type="approved"):
     elif type == "rejected": status_id = 3
 
     statement = """
-    SELECT ig.group_id, ig.name, ig.topic, ig.max_size, ig.is_public, ac.title occurence
+    SELECT ig.group_id, ig.name, ig.topic, ig.max_size, ig.is_public, ig.owner, ac.title occurence
     FROM interest_group ig
     INNER JOIN activity_occurences ac ON ig.activity_occurence_id = ac.activity_occurence_id
     INNER JOIN statuses s ON ig.status_id = s.status_id

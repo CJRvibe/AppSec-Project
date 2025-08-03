@@ -30,6 +30,7 @@
     <thead>
         <tr>
             <th>ID</th>
+            <th>Owner</th>
             <th>Name</th>
             <th>Topic</th>
             <th>Max Size</th>
@@ -42,6 +43,7 @@
         {% for group in groups %}
         <tr>
             <td>{{ group.get("group_id") }}</td>
+            <td>{{ group.get("owner") }}</td>
             <td>{{ group.get("name") }}</td>
             <td>{{ group.get("topic") }}</td>
             <td>{{ group.get("max_size") }}</td>

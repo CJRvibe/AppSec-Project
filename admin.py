@@ -1,12 +1,14 @@
 from flask import Flask, render_template, redirect, url_for, request, abort, session, Blueprint
 from access_control import login_required, role_required
-from utils import mail, limiter
+from utils import mail, limiter, send_email
 from access_control import role_required
 import logging
 import db
 
 admin = Blueprint("admin", __name__, template_folder="templates")
 app_logger = logging.getLogger("app")
+
+update_limit = limiter.shared_limit("20/hour;50/day", methods=["POST"], scope="group and activity proposal update")
 
 @admin.before_request # access control for admin
 def check_is_admin():
@@ -69,6 +71,7 @@ def view_group(id):
 
 
 @admin.route("/interestGroups/approveGroupProposal/<int:id>", methods=["POST"])
+@update_limit
 def approve_group_proposal(id):
     group = db.admin_get_group_by_id(id)
 
@@ -79,10 +82,19 @@ def approve_group_proposal(id):
     else:
         db.admin_update_group_proposal(id, approved=True)
         app_logger.info("Admin %s approved proposal of group %s", session.get("user_id"), group.get("group_id"))
+        user = db.get_user_by_id(group.get("owner")) or {}
+        if user.get("email_notif"):
+            try:
+                send_email.submit(user.get("email"), f"Group {group.get('group_id')} Approved", f"Your pending proposal for group {group.get('name')} has successfully been approved")
+                app_logger.info(f"Email successfully send to User {group.get('owner')} to notify of group approval")
+            except Exception as e:
+                app_logger.exception(e)
+
         return redirect(url_for(".manage_active_groups"))
 
 
 @admin.route("/interestGroups/rejectGroupProposal/<int:id>", methods=["POST"])
+@update_limit
 def reject_group_proposal(id):
     group = db.admin_get_group_by_id(id)
 
@@ -93,13 +105,22 @@ def reject_group_proposal(id):
     else:
         db.admin_update_group_proposal(id, approved=False)
         app_logger.info("Admin %s rejected proposal of group %s", session.get("user_id"), group.get("group_id"))
+
+        user = db.get_user_by_id(group.get("owner")) or {}
+        if user.get("email_notif"):
+            try:
+                send_email.submit(user.get('email'), f"Group {group.get('group_id')} Rejected", f"Your pending proposal for group {group.get('name')} has been rejected. Please try again and ensure all information is as accurate as possible.")
+                app_logger.info(f"Email successfully send to User {group.get('owner')} to notify of group rejection")
+            except Exception as e:
+                app_logger.exception(e)
+
         return redirect(url_for(".manage_reject_groups"))
 
 
 @admin.route("/groupActivities")
 def manage_approved_activities():
     activities = db.admin_get_group_activities(type="approved")
-    app_logger.info("Admin %s accessed approved group activities", session.get("user_id"))
+    app_logger.info("Admin %s accessed approved group activities", session.get('user_id'))
     return render_template("admin/manage_activities.html", activities=activities, type="approved")
 
 
@@ -128,6 +149,7 @@ def view_activity(id):
 
 
 @admin.route("/groupActivities/approveActivity/<int:id>", methods=["POST"])
+@update_limit
 def approve_activity(id):
     activity = db.get_activity_by_id(id)
 
@@ -138,10 +160,20 @@ def approve_activity(id):
     else:
         db.admin_update_activity_proposal(id, approved=True)
         app_logger.info("Admin %s approved activity %s", session.get("user_id"), activity.get("activity_id"))
+
+        group = db.admin_get_group_by_id(activity.get("group_id")) or {}
+        user = db.get_user_by_id(group.get("owner")) or {}
+        if user.get("email_notif"):
+            try:
+                send_email.submit(user.get("email"), f"Activity {activity.get('activity_id')} Approved", f"Your pending proposal for group {activity.get('name')} has successfully been approved")
+                app_logger.info(f"Email successfully send to User {group.get('owner')} to notify of activity approval")
+            except Exception as e:
+                app_logger.exception(e)
         return redirect(url_for(".manage_approved_activities"))
 
 
 @admin.route("/groupActivities/rejectActivity/<int:id>", methods=["POST"])
+@update_limit
 def reject_activity(id):
     activity = db.get_activity_by_id(id)
 
@@ -152,7 +184,17 @@ def reject_activity(id):
     else:
         db.admin_update_activity_proposal(id, approved=False)
         app_logger.info("Admin %s rejected activity", session.get("user_id"), activity.get("activity_id"))
-        return redirect(url_for(".manage_approved_activities"))
+
+        group = db.admin_get_group_by_id(activity.get("group_id")) or {}
+        user = db.get_user_by_id(group.get("owner")) or {}
+        if user.get("email_notif"):
+            try:
+                send_email.submit(user.get("email"), f"Activity {activity.get('activity_id')} Rejected", f"Your pending proposal for group {activity.get('name')} has been rejected. Please try again and ensure all information is as accurate as possible.")
+                app_logger.info(f"Email successfully send to User {group.get('owner')} to notify of activity rejection")
+            except Exception as e:
+                app_logger.exception(e)
+        
+        return redirect(url_for(".manage_rejected_activities"))
 
 @admin.route('/users', methods=['GET'])
 def admin_view_users():
