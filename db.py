@@ -138,19 +138,22 @@ def add_activity_tags(cursor, activity_id, tags):
         cursor.execute("INSERT INTO activity_tags VALUES (%s, %s)", (activity_id, tag_id))
 
 
-def add_activity_proposal(name, description, start_datetime, end_datetime, max_size, funds, location, tags, remarks):
-    # MUST CHANGE TO GET ACTIVITY_ID
+def add_activity_proposal(name, description, start_datetime, end_datetime, max_size, funds, location, tags, remarks, group_id):
     connection = get_db()
     cursor = connection.cursor()
-    main_values = (name, description, start_datetime, end_datetime, max_size, funds, location, remarks)
+    main_values = (name, description, start_datetime, end_datetime, max_size, funds, location, remarks, group_id)
 
     main_statement = """
-    INSERT INTO interest_activity (name, description, start_datetime, end_datetime, max_size, funds,
-        location_code, remarks, status_id, group_id)
-    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, 1, 3)
+    INSERT INTO interest_activity (
+        name, description, start_datetime, end_datetime, max_size, funds,
+        location_code, remarks, status_id, group_id
+    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, 1, %s)
     """
     cursor.execute(main_statement, main_values)
-    add_activity_tags(connection.cursor(), cursor.lastrowid, tags)
+    activity_id = cursor.lastrowid
+
+    add_activity_tags(connection.cursor(), activity_id, tags)
+
     connection.commit()
 
 

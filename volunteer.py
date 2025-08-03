@@ -86,10 +86,15 @@ def create_group_proposal():
     return render_template("volunteer/create_interest_group_proposal.html", form=proposal_form)
 
 
-@volunteer.route("/createActivityProposal", methods=["GET", "POST"])
+@volunteer.route("/createActivityProposal/<int:group_id>", methods=["GET", "POST"])
 @role_required(2)
-def create_activity_proposal():
-    # CHANGE TO GET ACTIVITY_ID
+def create_activity_proposal(group_id):
+    # Check if group is approved
+    group = db.get_group_by_id(group_id)
+    if not group or group["status_id"] != 2:
+        flash("You can only create activities for approved groups.", "danger")
+        return redirect(url_for("volunteer.dashboard"))
+
     proposal_form = ActivityProposalForm(request.form)
     if request.method == "POST" and proposal_form.validate():
         decoded_tags = json.loads(proposal_form.tags.data)
@@ -103,11 +108,14 @@ def create_activity_proposal():
             proposal_form.funds.data,
             proposal_form.location.data,
             tags,
-            proposal_form.remarks.data
+            proposal_form.remarks.data,
+            group_id
         )
-        print("succesffully added activity proposal")
-        return redirect(url_for("index"))
-    return render_template("volunteer/create_group_activity.html", form=proposal_form)
+        flash("Activity proposal submitted successfully.", "success")
+        return redirect(url_for("volunteer.dashboard"))
+    
+    return render_template("volunteer/create_group_activity.html", form=proposal_form, group=group)
+
 
 @volunteer.route('/dashboard')
 @role_required(2)

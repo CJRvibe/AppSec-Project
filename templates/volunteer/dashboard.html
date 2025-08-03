@@ -32,7 +32,13 @@
                 <form class="w-50">
                     <input type="text" class="form-control" placeholder="Search activities...">
                 </form>
-                <a href="{{ url_for('volunteer.create_group_proposal', group_id=group.group_id) }}" class="btn btn-success">Add Activity</a>
+                <a href="{% if group.status_id == 2 %}{{ url_for('volunteer.create_activity_proposal', group_id=group.group_id) }}{% else %}#{% endif %}"
+                    class="btn btn-success {% if group.status_id != 2 %}disabled{% endif %}">
+                    Add Activity
+                </a>
+                {% if group.status_id != 2 %}
+                <small class="text-muted">Group must be approved before adding activities.</small>
+                {% endif %}
             </div>
             <div class="list-group">
                 {% for activity in activities %}
