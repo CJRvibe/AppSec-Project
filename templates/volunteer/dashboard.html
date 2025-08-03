@@ -33,7 +33,7 @@
                     <input type="text" class="form-control" placeholder="Search activities...">
                 </form>
                 <a href="{% if group.status_id == 2 %}{{ url_for('volunteer.create_activity_proposal', group_id=group.group_id) }}{% else %}#{% endif %}"
-                    class="btn btn-success {% if group.status_id != 2 %}disabled{% endif %}">
+                class="btn btn-success {% if group.status_id != 2 %}disabled{% endif %}">
                     Add Activity
                 </a>
                 {% if group.status_id != 2 %}
@@ -42,11 +42,21 @@
             </div>
             <div class="list-group">
                 {% for activity in activities %}
-                <div class="list-group-item d-flex justify-content-between">
+                <div class="list-group-item d-flex justify-content-between align-items-center">
                     <div>{{ activity.name }}</div>
-                    <form method="POST" action="{{ url_for('volunteer.remove_activity', group_id=group.group_id, activity_id=activity.activity_id) }}">
-                        <button class="btn btn-danger btn-sm" onclick="return confirm('Remove this activity?')">Remove</button>
-                    </form>
+                    <div class="d-flex gap-2">
+                        {% if group.status_id != 2 %}
+                            <button class="btn btn-outline-secondary btn-sm" disabled>Group Not Approved</button>
+                        {% elif activity.status_id == 1 %}
+                            <a href="{{ url_for('view_group_activity', group_id=group.group_id, activity_id=activity.activity_id) }}"
+                            class="btn btn-outline-primary btn-sm">View</a>
+                            <form method="POST" action="{{ url_for('volunteer.remove_activity', group_id=group.group_id, activity_id=activity.activity_id) }}">
+                                <button class="btn btn-danger btn-sm" onclick="return confirm('Remove this activity?')">Remove</button>
+                            </form>
+                        {% else %}
+                            <button class="btn btn-secondary btn-sm" disabled>⏳ Pending Approval</button>
+                        {% endif %}
+                    </div>
                 </div>
                 {% endfor %}
             </div>
