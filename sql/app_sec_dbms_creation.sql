@@ -29,19 +29,6 @@ ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table `social_sage_db`.`statuses`
--- -----------------------------------------------------
-DROP TABLE IF EXISTS `social_sage_db`.`statuses` ;
-
-CREATE TABLE IF NOT EXISTS `social_sage_db`.`statuses` (
-  `status_id` TINYINT NOT NULL AUTO_INCREMENT,
-  `title` VARCHAR(50) NOT NULL,
-  PRIMARY KEY (`status_id`),
-  UNIQUE INDEX `title_UNIQUE` (`title` ASC) VISIBLE)
-ENGINE = InnoDB;
-
-
--- -----------------------------------------------------
 -- Table `social_sage_db`.`users`
 -- -----------------------------------------------------
 DROP TABLE IF EXISTS `social_sage_db`.`users` ;
@@ -57,21 +44,15 @@ CREATE TABLE IF NOT EXISTS `social_sage_db`.`users` (
   `mfa_secret` VARCHAR(50) NULL DEFAULT NULL,
   `mfa_enabled` TINYINT NOT NULL DEFAULT 0,
   `user_role` TINYINT NULL DEFAULT NULL,
-  `status_id` TINYINT NOT NULL,
+  `is_suspended` TINYINT NOT NULL DEFAULT 0,
   PRIMARY KEY (`user_id`),
   INDEX `fk_user_role_idx` (`user_role` ASC) VISIBLE,
   UNIQUE INDEX `email_UNIQUE` (`email` ASC) VISIBLE,
-  INDEX `fk_users_statuses1_idx` (`status_id` ASC) VISIBLE,
   CONSTRAINT `fk_user_role`
     FOREIGN KEY (`user_role`)
     REFERENCES `social_sage_db`.`user_role` (`role_id`)
     ON DELETE NO ACTION
-    ON UPDATE CASCADE,
-  CONSTRAINT `fk_users_statuses1`
-    FOREIGN KEY (`status_id`)
-    REFERENCES `social_sage_db`.`statuses` (`status_id`)
-    ON DELETE NO ACTION
-    ON UPDATE NO ACTION)
+    ON UPDATE CASCADE)
 ENGINE = InnoDB;
 
 
@@ -84,6 +65,19 @@ CREATE TABLE IF NOT EXISTS `social_sage_db`.`activity_occurences` (
   `activity_occurence_id` INT NOT NULL AUTO_INCREMENT,
   `title` VARCHAR(50) NOT NULL,
   PRIMARY KEY (`activity_occurence_id`),
+  UNIQUE INDEX `title_UNIQUE` (`title` ASC) VISIBLE)
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table `social_sage_db`.`statuses`
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS `social_sage_db`.`statuses` ;
+
+CREATE TABLE IF NOT EXISTS `social_sage_db`.`statuses` (
+  `status_id` TINYINT NOT NULL AUTO_INCREMENT,
+  `title` VARCHAR(50) NOT NULL,
+  PRIMARY KEY (`status_id`),
   UNIQUE INDEX `title_UNIQUE` (`title` ASC) VISIBLE)
 ENGINE = InnoDB;
 
