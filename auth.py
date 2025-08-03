@@ -24,7 +24,7 @@ def clear_flash_messages():
     session.pop('_flashes', None)
 
 @auth.route('/signUp', methods=['GET', 'POST'])
-@limiter.limit("5/hour;10/day", methods=["POST"])
+@limiter.limit("3/hour;7/day", methods=["POST"])
 def sign_up():
     if request.method == 'GET':
         clear_flash_messages()  
@@ -180,7 +180,7 @@ def resend_pin():
     pin = generate_pin()
     
     try:
-        send_email(
+        send_email.submit(
             recipient=email,
             subject="Your Social Sage Password Reset PIN (Resent)",
             body=f"Your new password reset PIN is: {pin}\nIf you did not request this, please ignore."
@@ -199,7 +199,7 @@ def change_password():
     if 'reset_email' not in session or 'reset_pin' not in session:
         clear_flash_messages()
         flash('Invalid session. Please restart the password reset process.', 'danger')
-        return redirect(url_for('forget_password'))
+        return redirect(url_for('.forget_password'))
     
     if request.method == 'POST':
         clear_flash_messages()

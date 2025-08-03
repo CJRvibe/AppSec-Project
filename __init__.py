@@ -150,76 +150,234 @@ groups = [
 @app.route('/exploreGroups')
 @role_required(1, 2)
 def explore_groups():
-    query = request.args.get('q', '').strip()
-    if query:
-        groups = db.search_groups(query)
-    else:
-        groups = db.get_all_groups()
-    return render_template('explore_groups.html', groups=groups, query=query)
+    try:
+        query = request.args.get('q', '')
+        query = query.strip() if query else ''
+
+        if len(query) > 100:
+            app_logger.warning("Suspiciously long search query from user %s", session.get("user_id"))
+            abort(400)
+
+        if query:
+            groups = db.search_groups(query)
+        else:
+            groups = db.get_all_groups()
+
+        approved_groups = [g for g in groups if g.get('status_id') == 2]
+
+        return render_template('explore_groups.html', groups=approved_groups, query=query)
+
+    except Exception as e:
+        app_logger.exception("Error in explore_groups route for user %s: %s", session.get("user_id"), str(e))
+        abort(500)
 
 @app.route('/myGroups')
 @role_required(1, 2)
 def my_groups():
-    user_id = session.get('user_id')
-    if not user_id:
-        return redirect(url_for('login'))
+    try:
+        user_id = session.get('user_id')
+        if not user_id:
+            app_logger.warning("Access attempt to /myGroups without user session")
+            abort(401)
 
-    joined_groups = db.get_groups_by_user(user_id)
-    return render_template('my_groups.html', groups=joined_groups)
+        joined_groups = db.get_groups_by_user(user_id)
+        if joined_groups is None:
+            app_logger.error("Group fetch failed for user %s", user_id)
+            abort(500)
+
+        approved_groups = [g for g in joined_groups if g.get('status_id') == 2]
+
+        return render_template('my_groups.html', groups=approved_groups)
+
+    except Exception as e:
+        app_logger.exception("Unexpected error in /myGroups by user %s: %s", session.get("user_id"), str(e))
+        abort(500)
 
 @app.route('/groupHome/<int:group_id>')
 @role_required(1, 2, 3)
 def group_home(group_id):
-    view = request.args.get('view', 'activities')
-    user_id = session.get('user_id')
-    flag_form = FlagForm(request.form)
+    try:
+        view = request.args.get('view', 'activities')
+        if view not in ['activities', 'forum']:
+            view = 'activities'
 
-    group = db.get_group_by_id(group_id)
-    if not group:
-        abort(404)
+        user_id = session.get('user_id')
+        flag_form = FlagForm(request.form)
 
-    has_joined = db.check_user_joined_group(user_id, group_id) if user_id else False
+        group = db.get_group_by_id(group_id)
+        if not group:
+            abort(404)
 
-    if group['is_public'] == 1 or has_joined:
-        activities = db.get_activities_by_group_id(group_id)
-    else:
-        activities = []
+        join_status_id = db.get_user_group_status_id(user_id, group_id) if user_id else None
+        has_joined = join_status_id == 2
 
-    return render_template(
-        "group_home.html",
-        group=group,
-        view=view,
-        activities=activities,
-        has_joined=has_joined,
-        flag_form=flag_form
-    )
+        if group['is_public'] != 1 and not has_joined:
+            abort(403)
+
+        activities = db.get_activities_by_group_id(group_id) if group['is_public'] == 1 or has_joined else []
+        member_count = db.get_group_member_count(group_id)
+
+        return render_template(
+            "group_home.html",
+            group=group,
+            view=view,
+            activities=activities,
+            has_joined=has_joined,
+            join_status_id=join_status_id,
+            flag_form=flag_form,
+            member_count=member_count
+        )
+
+    except KeyError as e:
+        app_logger.warning("Missing key while rendering group_home for group_id=%s: %s", group_id, str(e))
+        abort(500)
+
+    except Exception as e:
+        app_logger.exception("Unexpected error at group_home for group_id=%s: %s", group_id, str(e))
+        abort(500)
 
 @app.route('/join_group/<int:group_id>', methods=['POST'])
 @role_required(1, 2)
 def join_group(group_id):
-    user_id = session.get('user_id')
-    print(f"Joining group: {group_id} as user: {user_id}")
-    if not user_id:
-        return redirect(url_for('login'))
+    try:
+        user_id = session.get('user_id')
+        if not user_id:
+            app_logger.warning("Join attempt without login for group %s", group_id)
+            abort(401)
 
-    db.join_group(user_id, group_id)
-    return redirect(url_for('group_home', group_id=group_id))
+        group = db.get_group_by_id(group_id)
+        if not group:
+            app_logger.warning("Join attempt for non-existent group ID %s by user %s", group_id, user_id)
+            abort(404)
+
+        if group.get("status_id") != 2:
+            flash("This group is not approved for joining.", "danger")
+            app_logger.info("User %s tried to join unapproved group ID %s", user_id, group_id)
+            return redirect(url_for('explore_groups'))
+
+        member_count = db.get_group_member_count(group_id)
+        max_size = group.get("max_size")
+
+        if max_size is not None and member_count >= max_size:
+            flash("This group is full and cannot accept more members.", "danger")
+            app_logger.info("User %s tried to join full group ID %s", user_id, group_id)
+            return redirect(url_for('group_home', group_id=group_id))
+
+        db.join_group(user_id, group_id)
+        app_logger.info("User %s successfully joined group %s", user_id, group_id)
+        flash("You have successfully joined the group!", "success")
+        return redirect(url_for('group_home', group_id=group_id))
+
+    except Exception as e:
+        app_logger.exception("Unexpected error during join_group for user %s and group %s: %s", session.get("user_id"), group_id, str(e))
+        abort(500)
+
+@app.route('/leave_group/<int:group_id>', methods=['POST'])
+@role_required(1, 2)
+def leave_group(group_id):
+    try:
+        user_id = session.get('user_id')
+        if not user_id:
+            app_logger.warning("Unauthenticated leave attempt for group %s", group_id)
+            abort(401)
+
+        group = db.get_group_by_id(group_id)
+        if not group:
+            app_logger.warning("User %s attempted to leave non-existent group %s", user_id, group_id)
+            abort(404)
+
+        status_id = db.get_user_group_status_id(user_id, group_id)
+        if status_id != 2:
+            app_logger.warning("User %s attempted to leave group %s without being a full member", user_id, group_id)
+            flash("You are not an approved member of this group.", "warning")
+            return redirect(url_for('my_groups'))
+
+        db.leave_group(user_id, group_id)
+        app_logger.info("User %s left group %s", user_id, group_id)
+        flash('You have successfully left the group.', 'info')
+        return redirect(url_for('my_groups'))
+
+    except Exception as e:
+        app_logger.exception("Error while user %s tried to leave group %s: %s", session.get("user_id"), group_id, str(e))
+        abort(500)
 
 @app.route('/group/<int:group_id>/activity/<int:activity_id>')
 @role_required(1, 2, 3)
 @group_member_required(param='group_id')
 def view_group_activity(group_id, activity_id):
-    group = db.get_group_by_id(group_id)
-    if not group:
-        abort(404)
+    try:
+        group = db.get_group_by_id(group_id)
+        if not group:
+            app_logger.warning("Group %s not found when accessed by user %s", group_id, session.get("user_id"))
+            abort(404)
 
-    activity = db.get_activity_by_id(activity_id)
-    if not activity or activity['group_id'] != group_id:
-        abort(404)
+        flag_form = FlagForm(request.form)
+        activity = db.get_activity_by_id(activity_id)
+        if not activity:
+            app_logger.warning("Activity %s not found for group %s", activity_id, group_id)
+            abort(404)
 
-    return render_template('activity.html', activity=activity, group=group)
+        if activity['group_id'] != group_id:
+            app_logger.warning(
+                "Activity %s does not belong to group %s (actual group: %s) - user %s attempted access",
+                activity_id, group_id, activity['group_id'], session.get("user_id")
+            )
+            abort(403)
 
+        registration_count = db.get_activity_registration_count(activity_id)
+        is_full = activity["max_size"] is not None and registration_count >= activity["max_size"]
 
+        return render_template(
+            'activity.html',
+            activity=activity,
+            group=group,
+            registration_count=registration_count,
+            is_full=is_full, 
+            flag_form=flag_form
+        )
+
+    except Exception as e:
+        app_logger.exception(
+            "Unexpected error viewing activity %s of group %s by user %s: %s",
+            activity_id, group_id, session.get("user_id"), str(e)
+        )
+        abort(500)
+
+@app.route('/register_activity/<int:activity_id>', methods=['POST'])
+@role_required(1, 2)
+def register_activity(activity_id):
+    try:
+        user_id = session.get('user_id')
+        if not user_id:
+            flash("You must be logged in to register.", "warning")
+            return redirect(url_for('login'))
+
+        activity = db.get_activity_by_id(activity_id)
+        if not activity:
+            app_logger.warning("Activity ID %s not found during registration attempt by user %s", activity_id, user_id)
+            abort(404)
+
+        group_id = activity.get("group_id")
+        if not db.has_user_joined_group(user_id, group_id):
+            app_logger.warning("User %s tried to register for activity %s without being in group %s", user_id, activity_id, group_id)
+            abort(403)
+
+        if db.is_user_registered_for_activity(user_id, activity_id):
+            flash("You are already registered for this activity.", "info")
+            return redirect(request.referrer or url_for('home'))
+
+        current_count = db.get_activity_registration_count(activity_id)
+        if activity["max_size"] is not None and current_count >= activity["max_size"]:
+            flash("This activity has reached its maximum capacity.", "danger")
+            return redirect(request.referrer or url_for('home'))
+
+        db.register_user_for_activity(user_id, activity_id)
+        flash("Successfully registered for the activity!", "success")
+        return redirect(request.referrer or url_for('home'))
+
+    except Exception as e:
+        app_logger.exception("Error during activity registration (user: %s, activity: %s): %s", user_id, activity_id, str(e))
+        abort(500)
 
 @app.route("/test-discussion")
 def discussion_forum():
@@ -276,21 +434,35 @@ def flag_group(id):
     if flag_form.validate():
         reason = flag_form.reason.data
         db.add_flag_group(group["group_id"], session.get("user_id"), reason)
-    return redirect(url_for("explore_groups"))
+        flash(f"Successfully submit a flag request for group {group.get('name')}", "success")
+        app_logger.info("User %s submitted a flag request to group %s", session.get("user_id"), group.get("group_id"))
+    else:
+        flash("Error when submitting a flag request, please try again")
+    
+    return redirect(url_for("group_home", group_id=id))
     
 
-# @app.route("/flagActivity/<int:id>", methods=["POST"])
-# def flag_activity(id):
-#     activity = db.get_activity_by_id(id)
-#     if not activity:
-#         abort(404, description="Activity not found")
-#     if activity.get("status") != "approved":
-#         abort(405, description="Method not allowed for this activity")
+@app.route("/flagActivity/<int:id>", methods=["POST"])
+@login_required
+@role_required(1, 2)
+def flag_activity(id):
+    activity = db.get_activity_by_id(id)
+    print(activity.get("status_id"))
+    if not activity:
+        abort(404, description="Activity not found")
+    if activity.get("status_id") != 2:
+        abort(405, description="Method not allowed for this activity")
     
-#     flag_form = FlagActivityForm(request.form)
-#     if flag_form.validate() and request.method == "POST":
-#         reason = flag_form.reason.data
-#         db.add_flag_activity(id, 1, reason
+    flag_form = FlagForm(request.form)
+    if flag_form.validate() and request.method == "POST":
+        reason = flag_form.reason.data
+        db.add_flag_activity(activity.get("activity_id"), session.get("user_id"), reason)
+        flash(f"Successfully sent a flag request for activity {activity.get('name')}", "success")
+        app_logger.info("User %s submitted a flag request to activity %s", session.get("user_id"), activity.get("activity_id"))
+    else:
+        flash("Error when submitting a request, please try again")
+    
+    return redirect(url_for("view_group_activity", group_id=activity.get("group_id"), activity_id=id))
 
 
 @app.errorhandler(401)
@@ -324,6 +496,15 @@ def internal_error(error):
     app_logger.exception("An internal error occurred:\n %s", error)
     return render_template('error_page.html', main_message="Internal server error"), 500
 
-
 if __name__ == "__main__":
     app.run()
+
+
+#HTTPS cert (Lucas)
+# if __name__ == "__main__":
+#     app.run(
+#         host="127.0.0.1",
+#         port=5000,
+#         ssl_context=('certs/127.0.0.1+1.pem', 'certs/127.0.0.1+1-key.pem'),
+#         debug=True
+#     )

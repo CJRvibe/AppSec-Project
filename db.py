@@ -103,7 +103,7 @@ def get_user_by_id(user_id):
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
     cursor.execute("""
-        SELECT u.first_name, u.last_name, u.email, r.user_role, u.profile_pic
+        SELECT u.first_name, u.last_name, u.email, r.user_role, u.profile_pic, u.email_notif
         FROM users u
         LEFT JOIN user_role r ON u.user_role = r.role_id
         WHERE u.user_id = %s
@@ -138,19 +138,22 @@ def add_activity_tags(cursor, activity_id, tags):
         cursor.execute("INSERT INTO activity_tags VALUES (%s, %s)", (activity_id, tag_id))
 
 
-def add_activity_proposal(name, description, start_datetime, end_datetime, max_size, funds, location, tags, remarks):
-    # MUST CHANGE TO GET ACTIVITY_ID
+def add_activity_proposal(name, description, start_datetime, end_datetime, max_size, funds, location, tags, remarks, group_id):
     connection = get_db()
     cursor = connection.cursor()
-    main_values = (name, description, start_datetime, end_datetime, max_size, funds, location, remarks)
+    main_values = (name, description, start_datetime, end_datetime, max_size, funds, location, remarks, group_id)
 
     main_statement = """
-    INSERT INTO interest_activity (name, description, start_datetime, end_datetime, max_size, funds,
-        location_code, remarks, status_id, group_id)
-    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, 1, 3)
+    INSERT INTO interest_activity (
+        name, description, start_datetime, end_datetime, max_size, funds,
+        location_code, remarks, status_id, group_id
+    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, 1, %s)
     """
     cursor.execute(main_statement, main_values)
-    add_activity_tags(connection.cursor(), cursor.lastrowid, tags)
+    activity_id = cursor.lastrowid
+
+    add_activity_tags(connection.cursor(), activity_id, tags)
+
     connection.commit()
 
 
@@ -173,7 +176,7 @@ def admin_get_group_by_id(id: int):
     SELECT
         ig.group_id, ig.name, ig.topic, ig.description,
         ig.max_size, ig.is_public, ig.picture, ac.title occurence,
-        s.title status, u.email, ig.proposal
+        s.title status, u.email, ig.proposal, ig.owner, u.email owner_email
     FROM interest_group ig
     INNER JOIN activity_occurences ac ON ig.activity_occurence_id = ac.activity_occurence_id
     INNER JOIN statuses s ON s.status_id = ig.status_id
@@ -209,7 +212,7 @@ def admin_get_groups(type="approved"):
     elif type == "rejected": status_id = 3
 
     statement = """
-    SELECT ig.group_id, ig.name, ig.topic, ig.max_size, ig.is_public, ac.title occurence
+    SELECT ig.group_id, ig.name, ig.topic, ig.max_size, ig.is_public, ig.owner, ac.title occurence
     FROM interest_group ig
     INNER JOIN activity_occurences ac ON ig.activity_occurence_id = ac.activity_occurence_id
     INNER JOIN statuses s ON ig.status_id = s.status_id
@@ -498,6 +501,19 @@ def add_flag_group(group_id, user_id, reason):
     cursor.execute(statement, (group_id, user_id, reason))
     connection.commit()
 
+
+def add_flag_activity(activity_id, user_id, reason):
+    connection = get_db()
+    cursor = connection.cursor()
+
+    statement = """
+    INSERT INTO flagged_activities (activity_id, user_id, status_id, reason)
+    VALUES (%s, %s, 1, %s)
+    """
+
+    cursor.execute(statement, (activity_id, user_id, reason))
+    connection.commit()
+
 def get_groups_by_owner(user_id):
     connection = get_db()
     cursor = connection.cursor(dictionary=True)
@@ -568,3 +584,74 @@ def update_user_suspension_status(user_id, is_suspended):
         return False
     finally:
         cursor.close()
+
+def get_group_member_count(group_id):
+    connection = get_db()
+    cursor = connection.cursor()
+    query = """
+        SELECT COUNT(*) FROM user_interest_group
+        WHERE group_id = %s AND status_id = 2
+    """
+    cursor.execute(query, (group_id,))
+    (count,) = cursor.fetchone()
+    return count
+
+def register_user_for_activity(user_id, activity_id):
+    connection = get_db()
+    cursor = connection.cursor()
+
+    query = """
+        INSERT INTO user_interest_activity (user_id, activity_id, join_datetime)
+        VALUES (%s, %s, NOW())
+        ON DUPLICATE KEY UPDATE join_datetime = VALUES(join_datetime)
+    """
+    cursor.execute(query, (user_id, activity_id))
+    connection.commit()
+
+def is_user_registered_for_activity(user_id, activity_id):
+    connection = get_db()
+    cursor = connection.cursor(dictionary=True)
+
+    query = """
+        SELECT user_id, activity_id, join_datetime FROM user_interest_activity
+        WHERE user_id = %s AND activity_id = %s
+    """
+    cursor.execute(query, (user_id, activity_id))
+    return cursor.fetchone() is not None
+
+def get_activity_registration_count(activity_id):
+    connection = get_db()
+    cursor = connection.cursor()
+
+    query = """
+        SELECT COUNT(*) FROM user_interest_activity
+        WHERE activity_id = %s
+    """
+    cursor.execute(query, (activity_id,))
+    result = cursor.fetchone()
+    return result[0] if result else 0
+
+def leave_group(user_id, group_id):
+    connection = get_db()
+    cursor = connection.cursor()
+
+    statement = """
+        DELETE FROM user_interest_group
+        WHERE user_id = %s AND group_id = %s
+    """
+    cursor.execute(statement, (user_id, group_id))
+    connection.commit()
+
+def get_user_group_status_id(user_id, group_id):
+    connection = get_db()
+    cursor = connection.cursor(dictionary=True)
+
+    query = """
+        SELECT status_id
+        FROM user_interest_group
+        WHERE user_id = %s AND group_id = %s
+    """
+    cursor.execute(query, (user_id, group_id))
+    result = cursor.fetchone()
+
+    return result['status_id'] if result else None

@@ -36,8 +36,8 @@
         {% for activity in activities %}
         <tr>
             <td>{{ activity.get("activity_id") }}</td>
-            <td>{{ activity.get("name") }}</td>
             <td>{{ activity.get("group_name") }}</td>
+            <td>{{ activity.get("name") }}</td>
             <td>{{ activity.get("max_size") }}</td>
             <td>{{ activity.get("start_datetime") }}</td>
             <td>{{ activity.get("end_datetime") }}</td>
