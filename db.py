@@ -486,6 +486,19 @@ def add_flag_group(group_id, user_id, reason):
     cursor.execute(statement, (group_id, user_id, reason))
     connection.commit()
 
+
+def add_flag_activity(activity_id, user_id, reason):
+    connection = get_db()
+    cursor = connection.cursor()
+
+    statement = """
+    INSERT INTO flagged_activities (activity_id, user_id, status_id, reason)
+    VALUES (%s, %s, 1, %s)
+    """
+
+    cursor.execute(statement, (activity_id, user_id, reason))
+    connection.commit()
+
 def get_groups_by_owner(user_id):
     connection = get_db()
     cursor = connection.cursor(dictionary=True)

@@ -33,10 +33,10 @@
         <div class="d-flex justify-content-end">
             <form method="post" class="needs-validation" novalidate>
                 {{ flag_form.csrf_token }}
-                <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#flag-activity">
+                <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#flag-group">
                     ⚑
                 </button>
-                {% call create_modal_flag_form("flag-activity", "Confirm Group Flagging", url_for("flag_group", id=group.get("group_id"))) %}
+                {% call create_modal_flag_form("flag-group", "Confirm Group Flagging", url_for("flag_group", id=group.get("group_id"))) %}
                     <div class="input-group">
                         <span class="input-group-text">{{ flag_form.reason.label }}</span>
                         {{ flag_form.reason(class="form-control", placeholder="Enter reason for flagging") }}

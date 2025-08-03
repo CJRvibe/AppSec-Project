@@ -29,6 +29,11 @@
 {% block content %}
 <div class="container mt-4">
 
+    {% from "includes/create_modal.html" import create_modal_flag_form %}
+    {% from "includes/form_helper.html" import render_field, invalid_feedback, render_errors %}
+
+    {{render_errors(flag_form)}}
+
     <!-- Hero Banner -->
     <div class="activity-hero text-center mb-5"
         style="background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), 
@@ -47,10 +52,18 @@
             <div class="activity-details">
                 <div class="d-flex justify-content-between align-items-center">
                     <h4>About the Activity</h4>
-                    <form>
-                        <button type="submit" class="btn btn-outline-danger btn-sm" title="Report this activity">
+                    <form method="post" class="needs-validation" novalidate>
+                        {{ flag_form.csrf_token }}
+                        <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#flag-activity">
                             ⚑
                         </button>
+                        {% call create_modal_flag_form("flag-activity", "Confirm Activity Flagging", url_for("flag_activity", id=activity.get("activity_id"))) %}
+                            <div class="input-group">
+                                <span class="input-group-text">{{ flag_form.reason.label }}</span>
+                                {{ flag_form.reason(class="form-control", placeholder="Enter reason for flagging") }}
+                                {{ invalid_feedback("Enter a reason containing no less than 50 characters") }}
+                            </div>
+                        {% endcall %}
                     </form>
                 </div>
 
@@ -88,4 +101,8 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='scripts/form_validation.js') }}"></script>
 {% endblock %}

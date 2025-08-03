@@ -151,7 +151,7 @@ def view_activity(id):
 @admin.route("/groupActivities/approveActivity/<int:id>", methods=["POST"])
 @update_limit
 def approve_activity(id):
-    activity = db.get_activity_by_id(id)
+    activity = db.admin_get_group_activity(id)
 
     if not activity:
         abort(404, description="Activity not found")
@@ -175,7 +175,7 @@ def approve_activity(id):
 @admin.route("/groupActivities/rejectActivity/<int:id>", methods=["POST"])
 @update_limit
 def reject_activity(id):
-    activity = db.get_activity_by_id(id)
+    activity = db.admin_get_group_activity(id)
 
     if not activity:
         abort(404, description="Activity not found")

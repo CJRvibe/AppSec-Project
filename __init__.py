@@ -247,6 +247,7 @@ def view_group_activity(group_id, activity_id):
     if not group:
         abort(404)
 
+    flag_form = FlagForm(request.form)
     activity = db.get_activity_by_id(activity_id)
     if not activity or activity['group_id'] != group_id:
         abort(404)
@@ -254,7 +255,7 @@ def view_group_activity(group_id, activity_id):
     registration_count = db.get_activity_registration_count(activity_id)
     is_full = activity["max_size"] is not None and registration_count >= activity["max_size"]
 
-    return render_template('activity.html', activity=activity, group=group, registration_count=registration_count, is_full=is_full)
+    return render_template('activity.html', activity=activity, group=group, registration_count=registration_count, is_full=is_full, flag_form=flag_form)
 
 @app.route('/register_activity/<int:activity_id>', methods=['POST'])
 @role_required(1, 2)
@@ -336,21 +337,35 @@ def flag_group(id):
     if flag_form.validate():
         reason = flag_form.reason.data
         db.add_flag_group(group["group_id"], session.get("user_id"), reason)
-    return redirect(url_for("explore_groups"))
+        flash(f"Successfully submit a flag request for group {group.get('name')}", "success")
+        app_logger.info("User %s submitted a flag request to group %s", session.get("user_id"), group.get("group_id"))
+    else:
+        flash("Error when submitting a flag request, please try again")
+    
+    return redirect(url_for("group_home", group_id=id))
     
 
-# @app.route("/flagActivity/<int:id>", methods=["POST"])
-# def flag_activity(id):
-#     activity = db.get_activity_by_id(id)
-#     if not activity:
-#         abort(404, description="Activity not found")
-#     if activity.get("status") != "approved":
-#         abort(405, description="Method not allowed for this activity")
+@app.route("/flagActivity/<int:id>", methods=["POST"])
+@login_required
+@role_required(1, 2)
+def flag_activity(id):
+    activity = db.get_activity_by_id(id)
+    print(activity.get("status_id"))
+    if not activity:
+        abort(404, description="Activity not found")
+    if activity.get("status_id") != 2:
+        abort(405, description="Method not allowed for this activity")
     
-#     flag_form = FlagActivityForm(request.form)
-#     if flag_form.validate() and request.method == "POST":
-#         reason = flag_form.reason.data
-#         db.add_flag_activity(id, 1, reason
+    flag_form = FlagForm(request.form)
+    if flag_form.validate() and request.method == "POST":
+        reason = flag_form.reason.data
+        db.add_flag_activity(activity.get("activity_id"), session.get("user_id"), reason)
+        flash(f"Successfully sent a flag request for activity {activity.get('name')}", "success")
+        app_logger.info("User %s submitted a flag request to activity %s", session.get("user_id"), activity.get("activity_id"))
+    else:
+        flash("Error when submitting a request, please try again")
+    
+    return redirect(url_for("view_group_activity", group_id=activity.get("group_id"), activity_id=id))
 
 
 @app.errorhandler(401)
