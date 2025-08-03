@@ -29,20 +29,20 @@ def hashed_pw(password):
     return hashed_pw
 
 def insert_user(first_name, last_name, email, password, user_role):
+    """Insert a new user with default status"""
     conn = get_db()
-    cursor = conn.cursor(dictionary=True)
+    cursor = conn.cursor()
     try:
         cursor.execute(
-            "INSERT INTO users (first_name, last_name, email, password, user_role) VALUES (%s, %s, %s, %s, %s)",
-            (first_name, last_name, email, password, user_role)
+            """INSERT INTO users (first_name, last_name, email, password, user_role, status_id, is_suspended) 
+               VALUES (%s, %s, %s, %s, %s, %s, %s)""",
+            (first_name, last_name, email, password, user_role, 1, 0)  # status_id=1 (Active), is_suspended=0 (Not suspended)
         )
         conn.commit()
         return True
-    except mysql.connector.IntegrityError as e:
-        print("IntegrityError inserting user:", e)
-        return False
     except Exception as e:
         print("Error inserting user:", e)
+        conn.rollback()
         return False
     finally:
         cursor.close()
@@ -100,14 +100,15 @@ def get_activity_by_id(activity_id):
     return cursor.fetchone()
 
 def get_user_by_id(user_id):
+    """Get user by ID including suspension status"""
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
-    cursor.execute("""
-        SELECT u.first_name, u.last_name, u.email, r.user_role, u.profile_pic, u.email_notif
-        FROM users u
-        LEFT JOIN user_role r ON u.user_role = r.role_id
-        WHERE u.user_id = %s
-    """, (user_id,))
+    cursor.execute(
+        """SELECT user_id, first_name, last_name, email, user_role, 
+                    is_suspended, mfa_enabled 
+            FROM users WHERE user_id = %s""", 
+        (user_id,)
+    )
     user = cursor.fetchone()
     return user
 
@@ -303,16 +304,12 @@ def admin_update_activity_proposal(id, approved=False):
 def update_user_profile_pic(user_id, profile_pic):
     conn = get_db()
     cursor = conn.cursor()
-    try:
-        cursor.execute(
-            "UPDATE users SET profile_pic = %s WHERE user_id = %s",
-            (profile_pic, user_id)
-        )
-        conn.commit()
-        return True
-    except Exception as e:
-        print("Error saving profile picture:", e)
-        return False
+    cursor.execute(
+        "UPDATE users SET profile_pic = %s WHERE user_id = %s",
+        (profile_pic, user_id)
+    )
+    conn.commit()
+    return True
 
 def get_user_profile_pic(user_id):
     conn = get_db()
@@ -331,21 +328,15 @@ def get_user_by_email(email):
     """Get user by email including suspension status"""
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
-    try:
-        cursor.execute(
-            """SELECT user_id, first_name, last_name, email, user_role, 
-                      is_suspended, mfa_enabled 
-               FROM users WHERE email = %s""", 
-            (email,)
-        )
-        user = cursor.fetchone()
-        print(f"DEBUG DB - get_user_by_email result: {user}")
-        return user
-    except Exception as e:
-        print(f"Error getting user by email: {e}")
-        return None
-    finally:
-        cursor.close()
+    cursor.execute(
+        """SELECT user_id, first_name, last_name, email, user_role, 
+                    is_suspended, mfa_enabled 
+            FROM users WHERE email = %s""", 
+        (email,)
+    )
+    user = cursor.fetchone()
+    return user
+
 
 def update_user_role(user_id, role):
     conn = get_db()
@@ -365,11 +356,30 @@ def update_user_info(user_id, first_name, last_name, email):
 
 
 def get_all_users():
+    """Get all users including suspension status"""
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT user_id, first_name, last_name, email, password, profile_pic, email_notif, mfa_secret, mfa_enabled, user_role FROM users")
+    cursor.execute(
+        """SELECT user_id, first_name, last_name, email, user_role, 
+                    is_suspended, mfa_enabled 
+            FROM users"""
+    )
     users = cursor.fetchall()
     return users
+
+def get_users_by_role(role):
+    """Get users by role including suspension status"""
+    conn = get_db()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute(
+        """SELECT user_id, first_name, last_name, email, user_role, 
+                    is_suspended, mfa_enabled 
+            FROM users WHERE user_role = %s""", 
+        (role,)
+    )
+    users = cursor.fetchall()
+    return users
+
 
 def get_users_by_role(role):
     conn = get_db()
@@ -552,39 +562,6 @@ def get_user_growth_last_7_days():
 
 #admin dashboard end
 
-def get_user_suspension_status(user_id):
-    """Get user suspension status directly"""
-    conn = get_db()
-    cursor = conn.cursor()
-    try:
-        cursor.execute("SELECT is_suspended FROM users WHERE user_id = %s", (user_id,))
-        result = cursor.fetchone()
-        suspension_status = result[0] if result else False
-        print(f"DEBUG DB - get_user_suspension_status for user {user_id}: {suspension_status}")
-        return suspension_status
-    except Exception as e:
-        print(f"Error getting suspension status: {e}")
-        return False
-    finally:
-        cursor.close()
-
-def update_user_suspension_status(user_id, is_suspended):
-    """Update user suspension status"""
-    conn = get_db()
-    cursor = conn.cursor()
-    try:
-        cursor.execute(
-            "UPDATE users SET is_suspended = %s WHERE user_id = %s",
-            (is_suspended, user_id)
-        )
-        conn.commit()
-        return True
-    except Exception as e:
-        print("Error updating suspension status:", e)
-        return False
-    finally:
-        cursor.close()
-
 def get_group_member_count(group_id):
     connection = get_db()
     cursor = connection.cursor()
@@ -655,3 +632,25 @@ def get_user_group_status_id(user_id, group_id):
     result = cursor.fetchone()
 
     return result['status_id'] if result else None
+
+def update_user_suspension_status(user_id, is_suspended):
+    """Update user suspension status (0 = active, 1 = suspended)"""
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute(
+        "UPDATE users SET is_suspended = %s WHERE user_id = %s",
+        (is_suspended, user_id)
+    )
+    conn.commit()
+        
+    cursor.execute("SELECT is_suspended FROM users WHERE user_id = %s", (user_id,))
+    result = cursor.fetchone()
+        
+def get_user_suspension_status(user_id):
+    """Get user suspension status directly"""
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT is_suspended FROM users WHERE user_id = %s", (user_id,))
+    result = cursor.fetchone()
+    suspension_status = result[0] if result else False
+    return suspension_status

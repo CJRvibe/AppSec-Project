@@ -49,7 +49,15 @@
 
                     <!-- Role Info -->
                     <div class="mt-4">
-                        <p class="mb-1"><strong class="text-muted">Role:</strong> {{ user.user_role }}</p>
+                        <p class="mb-1"><strong class="text-muted">Role:</strong>
+                            {% if user.user_role == 1 %}
+                                Elderly
+                            {% elif user.user_role == 2 %}
+                                Volunteer
+                            {% else %}
+                                Admin
+                            {% endif %}
+                        </p>
                     </div>
                     
                     <form method="POST" action="{{ url_for('auth.toggle_mfa') }}">

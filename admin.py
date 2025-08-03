@@ -234,7 +234,7 @@ def admin_view_users():
 @admin.route('/users/<int:user_id>/suspend', methods=['POST'])
 def suspend_user(user_id):
     current_user_id = session.get('user_id')
-
+    
     if user_id == current_user_id:
         flash('You cannot suspend your own account.', 'danger')
         return redirect(url_for('admin.admin_view_users'))
@@ -248,15 +248,13 @@ def suspend_user(user_id):
         flash('Cannot suspend other administrators.', 'danger')
         return redirect(url_for('admin.admin_view_users'))
     
-
     current_status = db.get_user_suspension_status(user_id)
-    new_status = not current_status
+    new_status = 0 if current_status == 1 else 1  
+    
     
     if db.update_user_suspension_status(user_id, new_status):
-        action = "suspended" if new_status else "reactivated"
+        action = "suspended" if new_status == 1 else "activated"
         flash(f'User {user["first_name"]} {user["last_name"]} has been {action}.', 'success')
-        app_logger.info("Admin %s %s user %s (%s)", session.get("user_id"), action, user_id, user["email"])
-    else:
-        flash('Error updating user status. Please try again.', 'danger')
+
     
     return redirect(url_for('admin.admin_view_users'))
