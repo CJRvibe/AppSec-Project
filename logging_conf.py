@@ -11,6 +11,7 @@ class RequestFormatter(logging.Formatter):
         if has_request_context():
             record.url = request.url
             record.remote_addr = request.remote_addr
+            record.http_method = request.method
         else:
             record.url = None
             record.remote_addr = None
@@ -46,11 +47,11 @@ LOGGING = {
         },
         "smtp": {
             "()": RequestFormatter,
-            "format": "[%(asctime)s] %(remote_addr)s requested %(url)s\n%(levelname)s in %(module)s: %(message)s",
+            "format": "[%(asctime)s] %(remote_addr)s %(http_method)s requested %(url)s\n%(levelname)s in %(module)s: %(message)s",
         },
         "sematext": {
             "()": SematextFormatter,
-            "format": "[%(asctime)s] %(remote_addr)s requested %(url)s\n%(levelname)s in %(module)s: %(message)s",
+            "format": "[%(asctime)s] %(remote_addr)s %(http_method)s requested %(url)s\n%(levelname)s in %(module)s: %(message)s",
         }
     },
     "handlers": {
