@@ -64,8 +64,8 @@
             {% if session.get('user_id') %}
                 <a href="{{ url_for('explore_groups') }}" class="btn btn-light btn-lg">Start Exploring Groups</a>
             {% else %}
-                <a href="{{ url_for('login') }}" class="btn btn-light btn-lg me-3">Login</a>
-                <a href="{{ url_for('register') }}" class="btn btn-outline-light btn-lg">Sign Up</a>
+                <a href="{{ url_for('auth.login') }}" class="btn btn-light btn-lg me-3">Login</a>
+                <a href="{{ url_for('auth.sign_up') }}" class="btn btn-outline-light btn-lg">Sign Up</a>
             {% endif %}
         </div>
         <div class="scroll-down">

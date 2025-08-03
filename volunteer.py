@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, redirect, url_for, session, request, abort, flash
 from forms import *
+from utils import limiter
 import json
 import db
 
@@ -33,6 +34,7 @@ def dashboard(group_id):
 
 @volunteer.route("/dashboard/<int:group_id>/approve_user/<int:user_id>", methods=["POST"])
 @role_required(2)
+@limiter.limit("20/hour;60/day")
 def approve_user(group_id, user_id):
     user = session.get("user_id")
     group = db.get_group_by_id(group_id)
@@ -45,6 +47,7 @@ def approve_user(group_id, user_id):
 
 @volunteer.route("/dashboard/<int:group_id>/remove_user/<int:user_id>", methods=["POST"])
 @role_required(2)
+@limiter.limit("1/second;20/hour;60/day")
 def remove_user(group_id, user_id):
     user = session.get("user_id")
     group = db.get_group_by_id(group_id)
@@ -69,6 +72,7 @@ def remove_activity(group_id, activity_id):
 
 @volunteer.route("/createInterestGroupProposal", methods=["GET", "POST"])
 @role_required(2)
+@limiter.limit("3/hour;7/day", methods=["POST"])
 def create_group_proposal():
     proposal_form = InterestGroupProposalForm(request.form)
     if request.method == "POST" and proposal_form.validate():
@@ -82,12 +86,13 @@ def create_group_proposal():
             proposal_form.reason.data,
             session.get("user_id")
         )
-        return redirect(url_for("index"))
+        return redirect(url_for("explore_groups"))
     return render_template("volunteer/create_interest_group_proposal.html", form=proposal_form)
 
 
 @volunteer.route("/createActivityProposal", methods=["GET", "POST"])
 @role_required(2)
+@limiter.limit("5/hour;10/day", methods=["POST"])
 def create_activity_proposal():
     # CHANGE TO GET ACTIVITY_ID
     proposal_form = ActivityProposalForm(request.form)
@@ -106,7 +111,7 @@ def create_activity_proposal():
             proposal_form.remarks.data
         )
         print("succesffully added activity proposal")
-        return redirect(url_for("index"))
+        return redirect(url_for("explore_groups"))
     return render_template("volunteer/create_group_activity.html", form=proposal_form)
 
 @volunteer.route('/dashboard')
