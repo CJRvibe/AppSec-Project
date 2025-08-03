@@ -1,4 +1,4 @@
-from flask import Flask, render_template, redirect, url_for, request, abort, session, Blueprint
+from flask import Flask, render_template, redirect, url_for, request, abort, session, Blueprint, flash
 from access_control import login_required, role_required
 from utils import mail, limiter
 from access_control import role_required
@@ -158,8 +158,8 @@ def reject_activity(id):
 def admin_view_users():
     roles = [
         {"label": "All", "value": ""},
-        {"label": "Volunteer", "value": 1},
-        {"label": "Elderly", "value": 2},
+        {"label": "Elderly", "value": 1},
+        {"label": "Volunteer", "value": 2},
         {"label": "Admin", "value": 3}
     ]
 
@@ -178,3 +178,33 @@ def admin_view_users():
         roles=roles,
         selected_role=selected_role
     )
+
+@admin.route('/users/<int:user_id>/suspend', methods=['POST'])
+def suspend_user(user_id):
+    current_user_id = session.get('user_id')
+
+    if user_id == current_user_id:
+        flash('You cannot suspend your own account.', 'danger')
+        return redirect(url_for('admin.admin_view_users'))
+    
+    user = db.get_user_by_id(user_id)
+    if not user:
+        flash('User not found.', 'danger')
+        return redirect(url_for('admin.admin_view_users'))
+    
+    if user.get('user_role') == 3:
+        flash('Cannot suspend other administrators.', 'danger')
+        return redirect(url_for('admin.admin_view_users'))
+    
+
+    current_status = db.get_user_suspension_status(user_id)
+    new_status = not current_status
+    
+    if db.update_user_suspension_status(user_id, new_status):
+        action = "suspended" if new_status else "reactivated"
+        flash(f'User {user["first_name"]} {user["last_name"]} has been {action}.', 'success')
+        app_logger.info("Admin %s %s user %s (%s)", session.get("user_id"), action, user_id, user["email"])
+    else:
+        flash('Error updating user status. Please try again.', 'danger')
+    
+    return redirect(url_for('admin.admin_view_users'))

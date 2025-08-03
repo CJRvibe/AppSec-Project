@@ -10,9 +10,9 @@
         <div class="card-body">
 
             <div class="d-flex justify-content-between align-items-center mb-4">
-                <h3 class="mb-0 fw-bold text-primary">Users List</h3>
+                <h3 class="mb-0 fw-bold text-primary">Users Management</h3>
             </div>
-
+            
             <!-- Filter Form -->
             <form method="get" class="mb-4">
                 <div class="row g-3 align-items-end">
@@ -22,7 +22,7 @@
                     <div class="col-md-3">
                         <select class="form-select" name="role" id="role">
                             {% for role in roles %}
-                                <option value="{{ role.value }}" {% if selected_role|int == role.value %}selected{% endif %}>
+                                <option value="{{ role.value }}" {% if selected_role|string == role.value|string %}selected{% endif %}>
                                     {{ role.label }}
                                 </option>
                             {% endfor %}
@@ -44,24 +44,63 @@
                             <th>Last Name</th>
                             <th>Email</th>
                             <th>Role</th>
+                            <th>Status</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for user in users %}
-                            <tr>
+                            <tr class="{% if user.get('is_suspended') %}table-warning{% endif %}">
                                 <td>{{ user.user_id }}</td>
                                 <td>{{ user.first_name }}</td>
                                 <td>{{ user.last_name }}</td>
                                 <td>{{ user.email }}</td>
                                 <td>
                                     {% if user.user_role == 1 %}
-                                        <span class="badge bg-success">Volunteer</span>
+                                        <span class="badge bg-success">Elderly</span>
                                     {% elif user.user_role == 2 %}
-                                        <span class="badge bg-info text-dark">Elderly</span>
+                                        <span class="badge bg-info text-dark">Volunteer</span>
                                     {% elif user.user_role == 3 %}
                                         <span class="badge bg-danger">Admin</span>
                                     {% else %}
                                         <span class="badge bg-secondary">Unknown</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if user.get('is_suspended') %}
+                                        <span class="badge bg-warning text-dark">Suspended</span>
+                                    {% else %}
+                                        <span class="badge bg-success">Active</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if user.user_id != session.user_id and user.user_role != 3 %}
+                                        <form action="{{ url_for('admin.suspend_user', user_id=user.user_id) }}" 
+                                              method="post" class="d-inline">
+                                            {% if user.get('is_suspended') %}
+                                                <button type="submit" 
+                                                        class="btn btn-sm btn-outline-success" 
+                                                        onclick="return confirm('Are you sure you want to activate this user?')">
+                                                    <i class="fas fa-user-check"></i> Activate
+                                                </button>
+                                            {% else %}
+                                                <button type="submit" 
+                                                        class="btn btn-sm btn-outline-warning" 
+                                                        onclick="return confirm('Are you sure you want to suspend this user?')">
+                                                    <i class="fas fa-user-times"></i> Suspend
+                                                </button>
+                                            {% endif %}
+                                        </form>
+                                    {% else %}
+                                        <span class="text-muted">
+                                            {% if user.user_id == session.user_id %}
+                                                (You)
+                                            {% elif user.user_role == 3 %}
+                                                (Admin)
+                                            {% else %}
+                                                N/A
+                                            {% endif %}
+                                        </span>
                                     {% endif %}
                                 </td>
                             </tr>
@@ -70,7 +109,7 @@
                 </table>
                 {% if not users %}
                     <div class="text-center text-muted py-3">
-                        <i class="bi bi-person-x fs-3"></i>
+                        <i class="fas fa-user-x fs-3"></i>
                         <p class="mt-2 mb-0">No users found for this role.</p>
                     </div>
                 {% endif %}

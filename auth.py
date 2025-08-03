@@ -69,7 +69,6 @@ def sign_up():
     return render_template('sign_up.html', form=form)
 
 @auth.route('/login', methods=['GET', 'POST'])
-@limiter.limit("1/hour", methods=["POST"], deduct_when=lambda response: g.get("login_success", False))
 def login():
     if request.method == 'GET':
         clear_flash_messages()  
@@ -88,6 +87,10 @@ def login():
         
         if not user:
             flash('Invalid email or password.', 'danger')
+            return render_template('login.html', form=form)
+        
+        if user.get('is_suspended'):
+            flash('Your account has been suspended. Please contact support for assistance at socialsage.management@gmail.com', 'danger')
             return render_template('login.html', form=form)
         
         session['user_id'] = user['user_id']
@@ -271,6 +274,10 @@ def login_google_callback():
 
         if not user:
             flash('Error logging in with Google. Please try again.', 'danger')
+            return redirect(url_for('.login'))
+        
+        if user.get('is_suspended'):
+            flash('Your account has been suspended. Please contact support for assistance at', 'danger')
             return redirect(url_for('.login'))
 
         session['user_id'] = user['user_id']

@@ -325,12 +325,24 @@ def get_user_profile_pic(user_id):
         cursor.close()
 
 def get_user_by_email(email):
+    """Get user by email including suspension status"""
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT user_id, first_name, last_name, email, password, profile_pic, email_notif, mfa_secret, mfa_enabled, user_role FROM users WHERE email = %s", (email,))
-    result = cursor.fetchone()
-    cursor.close()  
-    return result
+    try:
+        cursor.execute(
+            """SELECT user_id, first_name, last_name, email, user_role, 
+                      is_suspended, mfa_enabled 
+               FROM users WHERE email = %s""", 
+            (email,)
+        )
+        user = cursor.fetchone()
+        print(f"DEBUG DB - get_user_by_email result: {user}")
+        return user
+    except Exception as e:
+        print(f"Error getting user by email: {e}")
+        return None
+    finally:
+        cursor.close()
 
 def update_user_role(user_id, role):
     conn = get_db()
@@ -523,3 +535,36 @@ def get_user_growth_last_7_days():
     return cursor.fetchall()[::-1]  # reverse for Chart.js order
 
 #admin dashboard end
+
+def get_user_suspension_status(user_id):
+    """Get user suspension status directly"""
+    conn = get_db()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("SELECT is_suspended FROM users WHERE user_id = %s", (user_id,))
+        result = cursor.fetchone()
+        suspension_status = result[0] if result else False
+        print(f"DEBUG DB - get_user_suspension_status for user {user_id}: {suspension_status}")
+        return suspension_status
+    except Exception as e:
+        print(f"Error getting suspension status: {e}")
+        return False
+    finally:
+        cursor.close()
+
+def update_user_suspension_status(user_id, is_suspended):
+    """Update user suspension status"""
+    conn = get_db()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            "UPDATE users SET is_suspended = %s WHERE user_id = %s",
+            (is_suspended, user_id)
+        )
+        conn.commit()
+        return True
+    except Exception as e:
+        print("Error updating suspension status:", e)
+        return False
+    finally:
+        cursor.close()
