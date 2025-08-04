@@ -367,6 +367,7 @@ def inject_profile_pic():
 @app.route("/flagGroup/<int:id>", methods=["POST"])
 @login_required
 @role_required(1, 2)
+@limiter.limit("5/hour;15/day", methods=["POST"])
 def flag_group(id):
     group = db.get_group_by_id(id)
     if not group:
@@ -389,6 +390,7 @@ def flag_group(id):
 @app.route("/flagActivity/<int:id>", methods=["POST"])
 @login_required
 @role_required(1, 2)
+@limiter.limit("5/hour;15/day", methods=["POST"])
 def flag_activity(id):
     activity = db.get_activity_by_id(id)
     print(activity.get("status_id"))
