@@ -5,7 +5,7 @@ import random
 import pyotp
 import qrcode
 import io
-from flask import Blueprint, render_template, redirect, url_for, request, session, g, flash, send_file
+from flask import Blueprint, render_template, redirect, url_for, request, session, g, flash, send_file, abort
 from forms import LoginForm, SignUpForm
 from access_control import login_required
 from authlib.integrations.flask_client import OAuth
@@ -76,6 +76,9 @@ def login():
     form = LoginForm(request.form)
     if request.method == 'POST':
         clear_flash_messages()
+
+        if user.get('is_suspended') == 1:
+            abort(403, description="Your account has been suspended. Please contact support for assistance at socialsage.management@gmail.com")
         
         if not form.validate():
             flash('Please check your email and password and try again.', 'danger')
@@ -87,10 +90,6 @@ def login():
         
         if not user:
             flash('Invalid email or password.', 'danger')
-            return render_template('login.html', form=form)
-        
-        if user.get('is_suspended'):
-            flash('Your account has been suspended. Please contact support for assistance at socialsage.management@gmail.com', 'danger')
             return render_template('login.html', form=form)
         
         session['user_id'] = user['user_id']
@@ -235,7 +234,6 @@ def change_password():
         flash('Your password has been changed successfully!', 'success')
         session.pop('reset_email', None)
         session.pop('reset_pin', None)
-        session.pop('pin_expiry', None)
         return redirect(url_for('.login'))
     return render_template('change_password.html')
 
@@ -248,50 +246,49 @@ def login_google():
 @auth.route('/login/callback')
 def login_google_callback():
     clear_flash_messages()
-    try:
-        token = google.authorize_access_token()
-        user_info = google.userinfo()
-        email = user_info.get('email')
+    token = google.authorize_access_token()
+    user_info = google.userinfo()
+    email = user_info.get('email')
 
-        if not email:
-            flash('Google did not return your email address. Please ensure you have granted permission to share your email.', 'danger')
-            return redirect(url_for('.login'))
-
-        user = db.get_user_by_email(email)
-
-        if not user:
-            if db.insert_user(
-                user_info.get("given_name", ""), 
-                user_info.get("family_name", ""), 
-                email, 
-                '',
-                None
-            ):
-                user = db.get_user_by_email(email)
-            else:
-                flash('Error creating account with Google. Please try again.', 'danger')
-                return redirect(url_for('.login'))
-
-        if not user:
-            flash('Error logging in with Google. Please try again.', 'danger')
-            return redirect(url_for('.login'))
-        
-        if user.get('is_suspended'):
-            flash('Your account has been suspended. Please contact support for assistance at', 'danger')
-            return redirect(url_for('.login'))
-
-        session['user_id'] = user['user_id']
-        session['email'] = email
-        session['role'] = user['user_role']
-
-        if not user['user_role']:
-            return redirect(url_for('choose_role'))
-
-        return redirect(url_for('explore_groups'))
-    
-    except Exception as e:
-        flash('Error during Google authentication. Please try again.', 'danger')
+    if not email:
+        flash('Google did not return your email address. Please ensure you have granted permission to share your email.', 'danger')
         return redirect(url_for('.login'))
+
+    user = db.get_user_by_email(email)
+
+    if not user:
+        # Remove status_id parameter since column doesn't exist
+        if db.insert_user(
+            user_info.get("given_name", ""), 
+            user_info.get("family_name", ""), 
+            email, 
+            '',  
+            None  
+        ):
+            user = db.get_user_by_email(email)
+            if not user:
+                flash('Error retrieving user account after creation. Please try again.', 'danger')
+                return redirect(url_for('.login'))
+        else:
+            flash('Error creating account with Google. Please try again.', 'danger')
+            return redirect(url_for('.login'))
+
+    if not user:
+        flash('Error logging in with Google. Please try again.', 'danger')
+        return redirect(url_for('.login'))
+    
+    if user.get('is_suspended') == 1:
+        abort(403, description="Your account has been suspended. Please contact support for assistance at socialsage.management@gmail.com")
+
+    session['user_id'] = user['user_id']
+    session['email'] = email
+    session['role'] = user['user_role']
+
+    if not user['user_role']:
+        return redirect(url_for('.choose_role'))
+
+    return redirect(url_for('explore_groups'))
+
 
 @auth.route('/chooseRole', methods=['GET', 'POST'])
 def choose_role():
@@ -299,6 +296,11 @@ def choose_role():
         clear_flash_messages()
     
     user_id = session.get('user_id')
+    
+    if not user_id:
+        flash('Please log in first.', 'danger')
+        return redirect(url_for('auth.login'))
+    
     if request.method == 'POST':
         clear_flash_messages()
         role = request.form.get('role')
@@ -306,6 +308,8 @@ def choose_role():
         if role not in ['1', '2']:
             flash('Invalid role selected.', 'danger')
             return render_template('choose_role.html')
+        
+        print(f"DEBUG - Attempting to update role for user {user_id} to {role}")
         
         if db.update_user_role(user_id, role):
             session['role'] = int(role)
