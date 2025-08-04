@@ -1,6 +1,7 @@
 import dotenv
 dotenv.load_dotenv()
 import os
+import logging
 import random
 import pyotp
 import qrcode
@@ -14,8 +15,8 @@ from utils import mail, executor, limiter, send_email, oauth, google
 from config import Config
 
 auth = Blueprint('auth', __name__)
+app_logger = logging.getLogger("app")
 limiter.limit("1/second")(auth)
-
 
 def generate_pin(length=6):
     return ''.join([str(random.randint(0, 9)) for _ in range(length)])
@@ -59,6 +60,8 @@ def sign_up():
 
         if db.insert_user(first_name, last_name, email, hashed_password, user_role):
             clear_flash_messages()
+            user = db.get_user_by_email(email)
+            app_logger("A new account has been created with ID %s", user["user_id"])
             flash('Account created successfully! Please log in.', 'success')
             return redirect(url_for('auth.login'))
         else:
@@ -68,8 +71,14 @@ def sign_up():
         
     return render_template('sign_up.html', form=form)
 
+
+def login_success():
+    return g.login_success
+
 @auth.route('/login', methods=['GET', 'POST'])
+@limiter.limit("5/hour;15/day", methods=["POST"], deduct_when=lambda response: login_success)
 def login():
+    g.login_success = False
     if request.method == 'GET':
         clear_flash_messages()  
     
@@ -81,50 +90,54 @@ def login():
             flash('Please check your email and password and try again.', 'danger')
             return render_template('login.html', form=form)
         
-        g.login_success = True
         email = form.email.data
         password = form.password.data
         user = db.verify_user(email, password)
         
+        
         if not user:
             flash('Invalid email or password.', 'danger')
+            app_logger.info("An unknown user attempted to login but provided invalid credentials")
             return render_template('login.html', form=form)
         
         if user.get('is_suspended'):
             flash('Your account has been suspended. Please contact support for assistance at socialsage.management@gmail.com', 'danger')
+            app_logger.warning("Suspended user %s attempted to login to the system", user["user_id"])
             return render_template('login.html', form=form)
         
         session['user_id'] = user['user_id']
         session['email'] = user['email']
         session['role'] = user['user_role']
+        g.login_success = True
         
         if user.get('mfa_enabled'):
+            app_logger.info("User %s successfully cleared first login and have been redirected to MFA", user["user_id"])
             return redirect(url_for('auth.login_mfa'))
         
         if user['user_role'] == 3:
             flash('Logged in successfully!', 'success')
+            app_logger.info("Admin %s successfully logged in to the system", user["user_id"])
             return redirect(url_for('admin.home'))
         else:
             flash('Logged in successfully!', 'success')
+            app_logger.info("User %s successfully logged into the system", user["user_id"])
             return redirect(url_for('explore_groups'))
     
     return render_template('login.html', form=form)
 
 @auth.route('/logout')
+@login_required
 def logout():
+    app_logger.info("User %s logged out of the system", session.get("user_id"))
     session.clear()
     return redirect(url_for('.login'))
 
 @auth.route('/forgetPassword', methods=['GET', 'POST'])
 @limiter.limit("3/minute;10/day", methods=["POST"])
 def forget_password():
-    if request.method == 'GET':
-        pass
-        # clear_flash_messages()
     
     if request.method == 'POST':
         email = request.form.get('email')
-        # clear_flash_messages()
         
         if not email:
             flash('Email is required.', 'danger')
@@ -140,6 +153,7 @@ def forget_password():
                 subject="Your Social Sage Password Reset PIN",
                 body=f"Your password reset PIN is: {pin}\nIf you did not request this, please change your password immediately and contact us"
             )
+            app_logger.info("User %s is attempting ro reset his password. An email has been sent to them", user["user_id"])
         flash('A PIN has been sent to your email if it exists. Please enter it below.', 'info')
         return redirect(url_for('.enter_pin'))
     
@@ -162,13 +176,18 @@ def enter_pin():
         
         if entered_pin == session.get('reset_pin') and "reset_email" in session:
             flash('PIN verified. Please enter a new password.', 'success')
+            user = db.get_user_by_email(session["reset_email"])
+            app_logger.info("User %s has entered the correct pin to reset his password, and been redirected to password change page", user["user_id"])
+
             return redirect(url_for('.change_password'))
         else:
+            # JIANHAO NEEDS TO CHANGE TS
             flash('Incorrect PIN. Please try again.', 'danger')
     
     return render_template('enter_pin.html')
 
 @auth.route('/resendPin', methods=['POST'])
+@limiter.limit("1/minute", methods=["POST"])
 def resend_pin():
     clear_flash_messages()
     
@@ -185,8 +204,11 @@ def resend_pin():
             subject="Your Social Sage Password Reset PIN (Resent)",
             body=f"Your new password reset PIN is: {pin}\nIf you did not request this, please ignore."
         )
+        user = db.get_user_by_email(session["reset_email"])
+        app_logger.info("User %s has requested for a new pin to be sent to their email", user["user_id"])
         flash('A new PIN has been sent to your email.', 'info')
     except Exception as e:
+        app_logger.exception(e)
         flash('Error sending email. Please try again.', 'danger')
     
     return redirect(url_for('enter_pin'))
@@ -233,8 +255,12 @@ def change_password():
         hashed = db.hashed_pw(password)
         db.update_user_password(session['reset_email'], hashed)
         flash('Your password has been changed successfully!', 'success')
+        user = db.get_user_by_email(session["reset_email"])
+
         session.pop('reset_email', None)
         session.pop('reset_pin', None)
+
+        app_logger.info("User has successfully reset his password", user["user_id"])
         return redirect(url_for('.login'))
     return render_template('change_password.html')
 
@@ -288,6 +314,7 @@ def login_google_callback():
     if not user['user_role']:
         return redirect(url_for('.choose_role'))
 
+    app_logger.info("User %s has successfully logged in through Google SSO", session["user_id"])
     return redirect(url_for('explore_groups'))
 
 
@@ -315,6 +342,7 @@ def choose_role():
         if db.update_user_role(user_id, role):
             session['role'] = int(role)
             flash('Role selected successfully!', 'success')
+            app_logger.info("User %s has successfully created a new account via Google SSO", session["user_id"])
             return redirect(url_for('explore_groups'))
         else:
             flash('Error updating role. Please try again.', 'danger')
@@ -323,6 +351,7 @@ def choose_role():
 
 
 @auth.route('/loginMfa', methods=['GET', 'POST'])
+@limiter.limit("3/minute", methods=["POST"])
 def login_mfa():
     if request.method == 'GET':
         clear_flash_messages()
@@ -347,6 +376,7 @@ def login_mfa():
         totp = pyotp.TOTP(secret)
         if totp.verify(code):
             flash('Logged in with MFA!', 'success')
+            app_logger.info("User %s successfully logged in with MFA", session["user_id"])
             return redirect(url_for('explore_groups'))
         else:
             flash('Invalid MFA code.', 'danger')
@@ -367,6 +397,7 @@ def mfa_qr_code():
     buf = io.BytesIO()
     img.save(buf)
     buf.seek(0)
+    app_logger.info("User %s generated a MFA QR code", session["user_id"])
     return send_file(buf, mimetype='image/png')
 
 @auth.route('/setupMfa', methods=['GET', 'POST'])
@@ -386,6 +417,7 @@ def setup_mfa():
         if totp.verify(code):
             db.enable_user_mfa(user_id)
             flash('MFA enabled successfully!', 'success')
+            app_logger.info("User %s successfully setup MFA on their account", session["user_id"])
             return redirect(url_for('user_profile'))
         else:
             flash('Invalid code, please try again.', 'danger')
@@ -406,6 +438,7 @@ def toggle_mfa():
     else:
         secret = db.get_user_mfa_secret(user_id)
         if not secret:
+            app_logger.info("User %s is attempting to setup MFA", session["user_id"])
             return redirect(url_for('.setup_mfa'))
         db.enable_user_mfa(user_id)
         flash('MFA enabled.', 'success')
