@@ -29,19 +29,18 @@ def hashed_pw(password):
     return hashed_pw
 
 def insert_user(first_name, last_name, email, password, user_role):
-    """Insert a new user with default status"""
+    """Insert a new user without status_id"""
     conn = get_db()
     cursor = conn.cursor()
     try:
         cursor.execute(
-            """INSERT INTO users (first_name, last_name, email, password, user_role, status_id, is_suspended) 
-               VALUES (%s, %s, %s, %s, %s, %s, %s)""",
-            (first_name, last_name, email, password, user_role, 1, 0)  # status_id=1 (Active), is_suspended=0 (Not suspended)
+            """INSERT INTO users (first_name, last_name, email, password, user_role, is_suspended) 
+               VALUES (%s, %s, %s, %s, %s, %s)""",
+            (first_name, last_name, email, password, user_role, 0)
         )
         conn.commit()
         return True
     except Exception as e:
-        print("Error inserting user:", e)
         conn.rollback()
         return False
     finally:
@@ -353,10 +352,19 @@ def get_user_by_email(email):
 
 
 def update_user_role(user_id, role):
+    """Update user role and return success status"""
     conn = get_db()
     cursor = conn.cursor()
-    cursor.execute("UPDATE users SET user_role = %s WHERE user_id = %s", (role, user_id))
-    conn.commit()
+    try:
+        cursor.execute("UPDATE users SET user_role = %s WHERE user_id = %s", (role, user_id))
+        conn.commit()
+        return cursor.rowcount > 0
+        
+    except Exception as e:
+        conn.rollback()
+        return False
+    finally:
+        cursor.close()
 
 
 def update_user_info(user_id, first_name, last_name, email):

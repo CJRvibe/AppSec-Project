@@ -260,14 +260,18 @@ def login_google_callback():
         user = db.get_user_by_email(email)
 
         if not user:
+            # Remove status_id parameter since column doesn't exist
             if db.insert_user(
                 user_info.get("given_name", ""), 
                 user_info.get("family_name", ""), 
                 email, 
-                '',
-                None
+                '',  # Empty password for Google users
+                None  # No role assigned yet
             ):
                 user = db.get_user_by_email(email)
+                if not user:
+                    flash('Error retrieving user account after creation. Please try again.', 'danger')
+                    return redirect(url_for('.login'))
             else:
                 flash('Error creating account with Google. Please try again.', 'danger')
                 return redirect(url_for('.login'))
@@ -276,8 +280,8 @@ def login_google_callback():
             flash('Error logging in with Google. Please try again.', 'danger')
             return redirect(url_for('.login'))
         
-        if user.get('is_suspended'):
-            flash('Your account has been suspended. Please contact support for assistance at', 'danger')
+        if user.get('is_suspended') == 1:
+            flash('Your account has been suspended. Please contact support for assistance at socialsage.management@gmail.com', 'danger')
             return redirect(url_for('.login'))
 
         session['user_id'] = user['user_id']
@@ -285,11 +289,12 @@ def login_google_callback():
         session['role'] = user['user_role']
 
         if not user['user_role']:
-            return redirect(url_for('choose_role'))
+            return redirect(url_for('.choose_role'))
 
         return redirect(url_for('explore_groups'))
     
     except Exception as e:
+        print(f"Google OAuth error: {e}")
         flash('Error during Google authentication. Please try again.', 'danger')
         return redirect(url_for('.login'))
 
@@ -299,6 +304,11 @@ def choose_role():
         clear_flash_messages()
     
     user_id = session.get('user_id')
+    
+    if not user_id:
+        flash('Please log in first.', 'danger')
+        return redirect(url_for('auth.login'))
+    
     if request.method == 'POST':
         clear_flash_messages()
         role = request.form.get('role')
@@ -306,6 +316,8 @@ def choose_role():
         if role not in ['1', '2']:
             flash('Invalid role selected.', 'danger')
             return render_template('choose_role.html')
+        
+        print(f"DEBUG - Attempting to update role for user {user_id} to {role}")
         
         if db.update_user_role(user_id, role):
             session['role'] = int(role)
