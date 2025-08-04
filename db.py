@@ -104,7 +104,7 @@ def get_user_by_id(user_id):
     cursor = conn.cursor(dictionary=True)
     cursor.execute(
         """SELECT user_id, first_name, last_name, email, user_role, 
-                    is_suspended, mfa_enabled, email_notif
+                    is_suspended, mfa_enabled, email_notif, profile_pic
             FROM users WHERE user_id = %s""", 
         (user_id,)
     )
@@ -341,7 +341,19 @@ def admin_update_group_flag_request(id, approved=False):
 
     cursor.execute(statement, (status, id))
 
+def get_user_profile_pic(user_id):
+    """Get user profile picture filename"""
+    conn = get_db()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT profile_pic FROM users WHERE user_id = %s", (user_id,))
+    result = cursor.fetchone()
+    if result and result['profile_pic']:
+        return result['profile_pic']
+    else:
+        return None
+ 
 def update_user_profile_pic(user_id, profile_pic):
+    """Update user profile picture filename"""
     conn = get_db()
     cursor = conn.cursor()
     cursor.execute(
@@ -349,20 +361,12 @@ def update_user_profile_pic(user_id, profile_pic):
         (profile_pic, user_id)
     )
     conn.commit()
-    return True
-
-def get_user_profile_pic(user_id):
-    conn = get_db()
-    cursor = conn.cursor(dictionary=True)
-    try:
-        cursor.execute("SELECT profile_pic FROM users WHERE user_id = %s", (user_id,))
-        result = cursor.fetchone()
-        if result and result['profile_pic']:
-            return result['profile_pic']
-        else:
-            return None
-    finally:
-        cursor.close()
+    if cursor.rowcount > 0:
+        print(f"DEBUG - Profile pic updated successfully for user {user_id}")
+        return True
+    else:
+        print(f"DEBUG - No rows affected when updating profile pic for user {user_id}")
+        return False
 
 def get_user_by_email(email):
     """Get user by email including suspension status"""
@@ -729,3 +733,20 @@ def get_user_suspension_status(user_id):
     result = cursor.fetchone()
     suspension_status = result[0] if result else False
     return suspension_status
+
+def is_mfa_properly_setup(user_id):
+    """Check if MFA is properly configured with a secret"""
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT mfa_secret FROM users WHERE user_id = %s", (user_id,))
+    result = cursor.fetchone()
+    return result and result[0] is not None and result[0] != ''
+
+def disable_user_mfa(user_id):
+    """Disable MFA and clear the secret for security"""
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("UPDATE users SET mfa_enabled = 0, mfa_secret = NULL WHERE user_id = %s", (user_id,))
+    conn.commit()
+    print(f"DEBUG - MFA disabled for user {user_id}")
+    return True

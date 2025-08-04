@@ -17,10 +17,10 @@
 
                         <!-- Profile Picture -->
                         <div class="mt-4 mb-3">
-                            <img src="{% if user.profile_pic %}{{ url_for('static', filename='uploads/' ~ user.profile_pic) }}{% else %}{{ url_for('static', filename='img/default_icon.png') }}{% endif %}"
-                                 alt="Profile Picture"
-                                 class="rounded-circle border border-secondary shadow"
-                                 style="width: 140px; height: 140px; object-fit: cover;">
+                            <img src="{% if user.profile_pic %}{{ url_for('static', filename='uploads/' ~ user.profile_pic) }}?v={{ user.user_id }}{% else %}{{ url_for('static', filename='img/default_icon.png') }}{% endif %}"
+                                alt="Profile Picture"
+                                class="rounded-circle border border-secondary shadow"
+                                style="width: 140px; height: 140px; object-fit: cover;">
                         </div>
                     </div>
 

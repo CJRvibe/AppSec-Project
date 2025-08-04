@@ -23,6 +23,37 @@ def generate_pin(length=6):
 def clear_flash_messages():
     session.pop('_flashes', None)
 
+def validate_mfa_setup(user_id):
+    """
+    Validate that MFA is properly set up before enabling
+    Returns True if MFA can be safely enabled
+    """
+    secret = db.get_user_mfa_secret(user_id)
+    return secret is not None
+
+@auth.route('/validateMfaCode', methods=['POST'])
+@login_required
+def validate_mfa_code():
+    """
+    AJAX endpoint to validate MFA code without enabling MFA
+    Used for testing the setup before actual enablement
+    """
+    user_id = session['user_id']
+    code = request.form.get('code')
+    
+    if not code:
+        return {'success': False, 'message': 'Code is required'}
+    
+    secret = db.get_user_mfa_secret(user_id)
+    if not secret:
+        return {'success': False, 'message': 'MFA not configured'}
+    
+    totp = pyotp.TOTP(secret)
+    if totp.verify(code):
+        return {'success': True, 'message': 'Code is valid'}
+    else:
+        return {'success': False, 'message': 'Invalid code'}
+
 @auth.route('/signUp', methods=['GET', 'POST'])
 @limiter.limit("3/hour;7/day", methods=["POST"])
 def sign_up():
@@ -85,7 +116,7 @@ def sign_up():
             )
             clear_flash_messages()
             flash('A verification code has been sent to your email. Please check your inbox.', 'info')
-            return redirect(url_for('auth.verify_email'))
+            return redirect(url_for('.verify_email'))
         except Exception as e:
             clear_flash_messages()
             flash('Error sending verification email. Please try again.', 'danger')
@@ -101,7 +132,7 @@ def verify_email():
         
         if 'pending_user' not in session:
             flash('No pending verification found. Please sign up again.', 'danger')
-            return redirect(url_for('auth.sign_up'))
+            return redirect(url_for('.sign_up'))
     
     if request.method == 'POST':
         clear_flash_messages()
@@ -113,7 +144,7 @@ def verify_email():
         
         if 'pending_user' not in session:
             flash('Verification session expired. Please sign up again.', 'danger')
-            return redirect(url_for('auth.sign_up'))
+            return redirect(url_for('.sign_up'))
         
         pending_user = session['pending_user']
         
@@ -128,7 +159,7 @@ def verify_email():
                 session.pop('pending_user', None)
                 clear_flash_messages()
                 flash('Account created successfully! Please log in.', 'success')
-                return redirect(url_for('auth.login'))
+                return redirect(url_for('.login'))
             else:
                 flash('Error creating account. Please try again.', 'danger')
                 return render_template('verify_email.html')
@@ -145,7 +176,7 @@ def resend_verification_code():
     
     if 'pending_user' not in session:
         flash('No pending verification found. Please sign up again.', 'danger')
-        return redirect(url_for('auth.sign_up'))
+        return redirect(url_for('.sign_up'))
     
     pending_user = session['pending_user']
     
@@ -160,7 +191,7 @@ def resend_verification_code():
     )
     flash('A new verification code has been sent to your email.', 'success')
     
-    return redirect(url_for('auth.verify_email'))
+    return redirect(url_for('.verify_email'))
 
 @auth.route('/login', methods=['GET', 'POST'])
 def login():
@@ -193,7 +224,7 @@ def login():
         session['role'] = user['user_role']
         
         if user.get('mfa_enabled'):
-            return redirect(url_for('auth.login_mfa'))
+            return redirect(url_for('.login_mfa'))
         
         if user['user_role'] == 3:
             flash('Logged in successfully!', 'success')
@@ -476,32 +507,35 @@ def setup_mfa():
 
     if request.method == 'POST':
         code = request.form.get('code')
+        
+        if not code:
+            flash('MFA code is required.', 'danger')
+            return render_template('verify_mfa.html')
+        
         totp = pyotp.TOTP(secret)
         if totp.verify(code):
             db.enable_user_mfa(user_id)
-            flash('MFA enabled successfully!', 'success')
+            flash('MFA enabled successfully! Your account is now more secure.', 'success')
             return redirect(url_for('user_profile'))
         else:
-            flash('Invalid code, please try again.', 'danger')
+            flash('Invalid code. Please check your authenticator app and try again.', 'danger')
+            return render_template('verify_mfa.html')
 
-    return render_template('verify_mfa.html') 
+    return render_template('verify_mfa.html')
 
 @auth.route('/toggleMfa', methods=['POST'])
 @login_required
 def toggle_mfa():
     user_id = session['user_id']
-    
-    # Get current MFA status from DB
     is_mfa_enabled = db.is_user_mfa_enabled(user_id)
     
     if is_mfa_enabled:
+        # Disable MFA - this is safe to do directly
         db.disable_user_mfa(user_id)
         flash('MFA disabled.', 'info')
     else:
-        secret = db.get_user_mfa_secret(user_id)
-        if not secret:
-            return redirect(url_for('.setup_mfa'))
-        db.enable_user_mfa(user_id)
-        flash('MFA enabled.', 'success')
+        # For enabling MFA, ALWAYS redirect to setup page
+        # Never enable MFA directly without verification
+        return redirect(url_for('.setup_mfa'))
     
     return redirect(url_for('user_profile'))
