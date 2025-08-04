@@ -76,14 +76,12 @@ def login():
     form = LoginForm(request.form)
     if request.method == 'POST':
         clear_flash_messages()
-
-        if user.get('is_suspended') == 1:
-            abort(403, description="Your account has been suspended. Please contact support for assistance at socialsage.management@gmail.com")
         
         if not form.validate():
             flash('Please check your email and password and try again.', 'danger')
             return render_template('login.html', form=form)
         
+        g.login_success = True
         email = form.email.data
         password = form.password.data
         user = db.verify_user(email, password)
@@ -92,10 +90,13 @@ def login():
             flash('Invalid email or password.', 'danger')
             return render_template('login.html', form=form)
         
+        if user.get('is_suspended'):
+            flash('Your account has been suspended. Please contact support for assistance at socialsage.management@gmail.com', 'danger')
+            return render_template('login.html', form=form)
+        
         session['user_id'] = user['user_id']
         session['email'] = user['email']
         session['role'] = user['user_role']
-        g.login_success = True
         
         if user.get('mfa_enabled'):
             return redirect(url_for('auth.login_mfa'))
@@ -278,7 +279,7 @@ def login_google_callback():
         return redirect(url_for('.login'))
     
     if user.get('is_suspended') == 1:
-        abort(403, description="Your account has been suspended. Please contact support for assistance at socialsage.management@gmail.com")
+        abort(403, description = "Your account has been suspended. Please contact support for assistance at socialsage.management@gmail.com")
 
     session['user_id'] = user['user_id']
     session['email'] = email
