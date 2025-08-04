@@ -546,7 +546,7 @@ def setup_mfa():
         totp = pyotp.TOTP(secret)
         if totp.verify(code):
             db.enable_user_mfa(user_id)
-            flash('MFA enabled successfully!', 'success')
+            flash('MFA enabled successfully! Your account is now more secure.', 'success')
             app_logger.info("User %s successfully setup MFA on their account", session["user_id"])
             return redirect(url_for('user_profile'))
         else:
@@ -562,15 +562,9 @@ def toggle_mfa():
     is_mfa_enabled = db.is_user_mfa_enabled(user_id)
     
     if is_mfa_enabled:
-        # Disable MFA - this is safe to do directly
         db.disable_user_mfa(user_id)
         flash('MFA disabled.', 'info')
     else:
-        secret = db.get_user_mfa_secret(user_id)
-        if not secret:
-            app_logger.info("User %s is attempting to setup MFA", session["user_id"])
-            return redirect(url_for('.setup_mfa'))
-        db.enable_user_mfa(user_id)
-        flash('MFA enabled.', 'success')
+        return redirect(url_for('.setup_mfa'))
     
     return redirect(url_for('user_profile'))
