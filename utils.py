@@ -11,7 +11,7 @@ executor = Executor()
 limiter = Limiter(
     get_remote_address,
     default_limits=["200 per day", "50 per hour"],
-    meta_limits=["2/hour", "4/day"],
+    meta_limits=["4/hour", "7/day"],
     storage_uri="memory://",
 )
 
