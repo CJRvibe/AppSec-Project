@@ -45,7 +45,13 @@ def sign_up():
         password = form.password.data
         role = form.role.data
 
-       
+        # Check if email already exists
+        existing_user = db.get_user_by_email(email)
+        if existing_user:
+            clear_flash_messages()
+            flash('An account with this email already exists.', 'danger')
+            return render_template('sign_up.html', form=form)
+
         hashed_password = db.hashed_pw(password)
 
         if role == "elderly":
@@ -57,16 +63,104 @@ def sign_up():
             flash("Invalid role selected.", "danger")
             return render_template('sign_up.html', form=form)
 
-        if db.insert_user(first_name, last_name, email, hashed_password, user_role):
+        # Generate verification code
+        verification_code = generate_pin()
+        
+        # Store user data temporarily in session
+        session['pending_user'] = {
+            'first_name': first_name,
+            'last_name': last_name,
+            'email': email,
+            'password': hashed_password,
+            'user_role': user_role,
+            'verification_code': verification_code
+        }
+        
+        # Send verification email
+        try:
+            send_email.submit(
+                recipient=email,
+                subject="Social Sage - Email Verification",
+                body=f"Welcome to Social Sage!\n\nYour email verification code is: {verification_code}\n\nPlease enter this code to complete your registration.\n\nIf you did not create an account, please ignore this email."
+            )
             clear_flash_messages()
-            flash('Account created successfully! Please log in.', 'success')
-            return redirect(url_for('auth.login'))
-        else:
+            flash('A verification code has been sent to your email. Please check your inbox.', 'info')
+            return redirect(url_for('auth.verify_email'))
+        except Exception as e:
             clear_flash_messages()
-            flash('Error creating account. Please try again.', 'danger')
+            flash('Error sending verification email. Please try again.', 'danger')
             return render_template('sign_up.html', form=form)
         
     return render_template('sign_up.html', form=form)
+
+@auth.route('/verifyEmail', methods=['GET', 'POST'])
+@limiter.limit("5/hour;10/day", methods=["POST"])
+def verify_email():
+    if request.method == 'GET':
+        clear_flash_messages()
+        
+        if 'pending_user' not in session:
+            flash('No pending verification found. Please sign up again.', 'danger')
+            return redirect(url_for('auth.sign_up'))
+    
+    if request.method == 'POST':
+        clear_flash_messages()
+        entered_code = request.form.get('code')
+        
+        if not entered_code:
+            flash('Verification code is required.', 'danger')
+            return render_template('verify_email.html')
+        
+        if 'pending_user' not in session:
+            flash('Verification session expired. Please sign up again.', 'danger')
+            return redirect(url_for('auth.sign_up'))
+        
+        pending_user = session['pending_user']
+        
+        if entered_code == pending_user['verification_code']:
+            if db.insert_user(
+                pending_user['first_name'],
+                pending_user['last_name'],
+                pending_user['email'],
+                pending_user['password'],
+                pending_user['user_role']
+            ):
+                session.pop('pending_user', None)
+                clear_flash_messages()
+                flash('Account created successfully! Please log in.', 'success')
+                return redirect(url_for('auth.login'))
+            else:
+                flash('Error creating account. Please try again.', 'danger')
+                return render_template('verify_email.html')
+        else:
+            flash('Invalid verification code. Please try again.', 'danger')
+            return render_template('verify_email.html')
+    
+    return render_template('verify_email.html')
+
+@auth.route('/resendVerificationCode', methods=['POST'])
+@limiter.limit("3/hour", methods=["POST"])
+def resend_verification_code():
+    clear_flash_messages()
+    
+    if 'pending_user' not in session:
+        flash('No pending verification found. Please sign up again.', 'danger')
+        return redirect(url_for('auth.sign_up'))
+    
+    pending_user = session['pending_user']
+    
+    # Generate new verification code
+    new_code = generate_pin()
+    session['pending_user']['verification_code'] = new_code
+    
+    send_email.submit(
+        recipient=pending_user['email'],
+        subject="Social Sage - Email Verification (Resent)",
+        body=f"Your new email verification code is: {new_code}\n\nPlease enter this code to complete your registration.\n\nIf you did not create an account, please ignore this email."
+    )
+    flash('A new verification code has been sent to your email.', 'success')
+    
+    return redirect(url_for('auth.verify_email'))
 
 @auth.route('/login', methods=['GET', 'POST'])
 def login():
