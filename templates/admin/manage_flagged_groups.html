@@ -14,6 +14,7 @@
             <th>Reason</th>
             <th>Reported By</th>
             <th>Status</th>
+            <th>Action</th>
         </tr>
     </thead>
     <tbody>
@@ -24,6 +25,7 @@
             <td>{{ flag.get("reason") }}</td>
             <td>{{ flag.get("email") }}</td>
             <td>{{ flag.get("status_id") }}</td>
+            <td></td>
         </tr>
         {% endfor %}
     </tbody>

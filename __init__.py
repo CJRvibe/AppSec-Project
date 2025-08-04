@@ -1,8 +1,7 @@
 import dotenv
 dotenv.load_dotenv()
-import json
+
 import os
-from flask import Flask, render_template, redirect, url_for, request, abort, session, flash, send_file
 import logging
 from logging.config import dictConfig
 import logging_conf
@@ -14,13 +13,7 @@ import config
 import admin
 import volunteer
 from werkzeug.utils import secure_filename
-from datetime import datetime, timedelta
 from access_control import login_required, role_required, group_member_required
-from authlib.integrations.flask_client import OAuth
-import random
-import pyotp
-import qrcode
-import io
 import auth
 
 dotenv.load_dotenv()

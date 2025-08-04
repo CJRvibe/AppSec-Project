@@ -104,7 +104,7 @@ def get_user_by_id(user_id):
     cursor = conn.cursor(dictionary=True)
     cursor.execute(
         """SELECT user_id, first_name, last_name, email, user_role, 
-                    is_suspended, mfa_enabled 
+                    is_suspended, mfa_enabled, email_notif
             FROM users WHERE user_id = %s""", 
         (user_id,)
     )
@@ -229,7 +229,7 @@ def admin_get_group_activity(id):
 
     statement = """
     SELECT ia.activity_id, ig.name group_name, ia.name, ia.description, ia.start_datetime, ia.end_datetime,
-           ia.max_size, ia.funds, al.name location, ia.remarks, s.title status
+           ia.max_size, ia.funds, al.name location, ia.remarks, s.title status, ia.group_id
     FROM interest_activity ia
     INNER JOIN interest_group ig ON ia.group_id = ig.group_id
     INNER JOIN activity_location al ON ia.location_code = al.location_code
@@ -313,6 +313,33 @@ def admin_get_flagged_groups():
 
     cursor.execute(statement)
     return cursor.fetchall()
+
+
+def admin_get_flagged_group(id):
+    connection = get_db()
+    cursor = connection.cursor()
+    statement = """
+    SELECT fg.flag_id, fg.status_id, fg.user_id
+    FROM flagged_groups fg
+    INNER JOIN users u ON u.user_id = fg.flag_id
+    WHERE flag_id = %s
+    """
+
+    cursor.execute(statement)
+    return cursor.fetchone()
+
+
+def admin_update_group_flag_request(id, approved=False):
+    connection = get_db()
+    cursor = connection.cursor()
+    status = 2 if approved else 3
+    statement = """
+    UPDATE flagged_groups
+    SET status_id = %s
+    WHERE flag_id = %s
+    """
+
+    cursor.execute(statement, (status, id))
 
 def update_user_profile_pic(user_id, profile_pic):
     conn = get_db()
