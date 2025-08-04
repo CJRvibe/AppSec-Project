@@ -21,6 +21,9 @@
 <div class="mx-auto text-center">
 
     <h1>Oops! Something went wrong!</h1>
+	{% if description %}
+	<p>{{ description }}</p>
+	{% endif %}
 	
 	{% if not session.get('role') %}
 	<a href="{{url_for('index')}}" class="btn btn-primary btn-lg btn-block">Return to Home</a>

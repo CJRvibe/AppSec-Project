@@ -548,6 +548,32 @@ def get_groups_by_user(user_id):
     return cursor.fetchall()
 
 
+def count_flag_group_request(user_id):
+    connection = get_db()
+    cursor = connection.cursor()
+    statement = f"""
+    SELECT COUNT(*)
+    FROM flagged_groups
+    WHERE user_id = %s AND status_id = 1
+    """
+
+    cursor.execute(statement, (user_id, ))
+    return cursor.fetchone()[0]
+
+
+def count_flag_activity_request(user_id):
+    connection = get_db()
+    cursor = connection.cursor()
+    statement = f"""
+    SELECT COUNT(*)
+    FROM flagged_activities
+    WHERE user_id = %s AND status_id = 1
+    """
+
+    cursor.execute(statement, (user_id, ))
+    return cursor.fetchone()[0]
+
+
 def add_flag_group(group_id, user_id, reason):
     connection = get_db()
     cursor = connection.cursor()

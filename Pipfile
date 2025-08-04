@@ -16,6 +16,7 @@ qrcode = {extras = ["pil"], version = "*"}
 flask-limiter = "*"
 email-validator = "*"
 flask-executor = "*"
+flask-wtf = "*"
 
 [dev-packages]
 

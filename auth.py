@@ -76,9 +76,6 @@ def login():
     form = LoginForm(request.form)
     if request.method == 'POST':
         clear_flash_messages()
-
-        if user.get('is_suspended') == 1:
-            abort(403, description="Your account has been suspended. Please contact support for assistance at socialsage.management@gmail.com")
         
         if not form.validate():
             flash('Please check your email and password and try again.', 'danger')
@@ -91,6 +88,9 @@ def login():
         if not user:
             flash('Invalid email or password.', 'danger')
             return render_template('login.html', form=form)
+        
+        if user.get('is_suspended') == 1:
+            abort(403, description="Your account has been suspended. Please contact support for assistance at socialsage.management@gmail.com")
         
         session['user_id'] = user['user_id']
         session['email'] = user['email']

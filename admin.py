@@ -93,7 +93,6 @@ def approve_group_proposal(id):
         db.admin_update_group_proposal(id, approved=True)
         app_logger.info("Admin %s approved proposal of group %s", session.get("user_id"), group.get("group_id"))
         user = db.get_user_by_id(group["owner"])
-        print(user)
 
         if user["email_notif"]:
             send_email.submit(user["email"], f"Group {group['group_id']} Approved", f"Your pending proposal for group {group['name']} has successfully been approved")
@@ -232,22 +231,45 @@ def manage_flagged_groups():
     app_logger.info("Admin %s accessed information for all flag group requests", session.get("user_id"))
     return render_template("admin/manage_flagged_groups.html", flagged_groups=flagged_groups)
 
+# NOT IMPLEMENTED YET
+@admin.route("/interestGroups/flaggedRequests/approve/<int:id>", methods=["POST"])
+def approve_group_flag(id: int):
+    flag_group = db.admin_get_flagged_group(id)
+    if not flag_group:
+        abort(404, description="Flagged request not found")
+    elif flag_group and flag_group["status_id"] != 1:
+        abort(405, description="Method not allowed for this flag request")
+    else:
+        db.admin_update_group_flag_request(id, approved=True)
+        app_logger.info("Admin %s approved flag request %s from user %s", session.get("user_id"), flag_group.get("flag_id"), flag_group.get("user_id"))
 
-# @admin.route("/interestGroups/flaggedRequests/approve/<int:id>", methods=["POST"])
-# def approve_group_flag(id: int):
-#     flag_group = db.admin_get_flagged_group(id)
-#     if not flag_group:
-#         abort(404, description="Flagged request not found")
-#     elif flag_group and flag_group["status_id"] != 1:
-#         abort(405, description="Method not allowed for this flag request")
-#     else:
-#         db.admin_update_group_flag_request(id, approved=True)
-#         app_logger.info("Admin %s approved flag request %s from user %s", session.get("user_id"), flag_group.get("flag_id"), flag_group.get("user_id"))
+        user = db.get_user_by_id(flag_group["user_id"])
+        if user["email_notif"]:
+            group = db.admin_get_group_by_id(flag_group["group_id"])
+            send_email.submit(user["email"], f"Flag Request {flag_group['flag_id']} Approved", f"Your pending flag request against the group {group['name']} has successfully been approved")
+            app_logger.info(f"Email successfully send to User {group['owner']} to notify of flag group approval")
 
-#         user = db.get_user_by_id()
-#         if user.get("email_notif"): pass
+        return redirect(url_for(".manage_flagged_groups"))
 
+# NOT IMPLEMENTED YET
+@admin.route("/interestGroups/flaggedRequests/reject/<int:id>", methods=["POST"])
+def reject_group_flag(id: int):
+    flag_group = db.admin_get_flagged_group(id)
+    if not flag_group:
+        abort(404, description="Flagged request not found")
+    elif flag_group and flag_group["status_id"] != 1:
+        abort(405, description="Method not allowed for this flag request")
+    else:
+        db.admin_update_group_flag_request(id, approved=False)
+        app_logger.info("Admin %s rejected flag request %s from user %s", session.get("user_id"), flag_group.get("flag_id"), flag_group.get("user_id"))
 
+        user = db.get_user_by_id(flag_group["user_id"])
+        if user["email_notif"]:
+            group = db.admin_get_group_by_id(flag_group["group_id"])
+            send_email.submit(user["email"], f"Flag Request {flag_group['flag_id']} Rejected", f"Your pending flag request against the group {group['name']} has been rejected.")
+            app_logger.info(f"Email successfully send to User {group['owner']} to notify of flag group rejection")
+
+        return redirect(url_for(".manage_flagged_groups"))
 
 
 @admin.route('/users/<int:user_id>/suspend', methods=['POST'])

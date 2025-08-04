@@ -148,6 +148,7 @@ groups = [
 ]
 
 @app.route('/exploreGroups')
+@login_required
 @role_required(1, 2)
 def explore_groups():
     query = request.args.get('q', '')
@@ -374,15 +375,18 @@ def flag_group(id):
         abort(404, description="Group not found")
     if group.get("status_id") != 2:
         abort(405, description="Method not allowed for this group")
-    
-    flag_form = FlagForm(request.form)
-    if flag_form.validate():
-        reason = flag_form.reason.data
-        db.add_flag_group(group["group_id"], session.get("user_id"), reason)
-        flash(f"Successfully submit a flag request for group {group.get('name')}", "success")
-        app_logger.info("User %s submitted a flag request to group %s", session.get("user_id"), group.get("group_id"))
+
+    if db.count_flag_group_request(session["user_id"]) >= 3:
+        flash("You can only have 3 pending flag requests against interest group at any time")
     else:
-        flash("Error when submitting a flag request, please try again")
+        flag_form = FlagForm(request.form)
+        if flag_form.validate():
+            reason = flag_form.reason.data
+            db.add_flag_group(group["group_id"], session.get("user_id"), reason)
+            flash(f"Successfully submit a flag request for group {group.get('name')}", "success")
+            app_logger.info("User %s submitted a flag request to group %s", session.get("user_id"), group.get("group_id"))
+        else:
+            flash("Error when submitting a flag request, please try again")
     
     return redirect(url_for("group_home", group_id=id))
     
@@ -393,20 +397,22 @@ def flag_group(id):
 @limiter.limit("5/hour;15/day", methods=["POST"])
 def flag_activity(id):
     activity = db.get_activity_by_id(id)
-    print(activity.get("status_id"))
     if not activity:
         abort(404, description="Activity not found")
     if activity.get("status_id") != 2:
         abort(405, description="Method not allowed for this activity")
-    
-    flag_form = FlagForm(request.form)
-    if flag_form.validate() and request.method == "POST":
-        reason = flag_form.reason.data
-        db.add_flag_activity(activity.get("activity_id"), session.get("user_id"), reason)
-        flash(f"Successfully sent a flag request for activity {activity.get('name')}", "success")
-        app_logger.info("User %s submitted a flag request to activity %s", session.get("user_id"), activity.get("activity_id"))
+
+    if db.count_flag_activity_request(session["user_id"]) >= 5:
+        flash("You can only have 5 pending flag requests against interest activities at any time")
     else:
-        flash("Error when submitting a request, please try again")
+        flag_form = FlagForm(request.form)
+        if flag_form.validate() and request.method == "POST":
+            reason = flag_form.reason.data
+            db.add_flag_activity(activity.get("activity_id"), session.get("user_id"), reason)
+            flash(f"Successfully sent a flag request for activity {activity.get('name')}", "success")
+            app_logger.info("User %s submitted a flag request to activity %s", session.get("user_id"), activity.get("activity_id"))
+        else:
+            flash("Error when submitting a request, please try again")
     
     return redirect(url_for("view_group_activity", group_id=activity.get("group_id"), activity_id=id))
 
@@ -420,32 +426,32 @@ def bad_request_error(error):
 def unauthorized_error(error):
     app_logger.warning("User %s attempted to access a protected resource without authentication", session.get("user_id"))
     # add extra stuff to redirect to login
-    return render_template('error_page.html', main_message="Unauthorised"), 401
+    return render_template('error_page.html', main_message="Unauthorised", description=error.description), 401
 
 @app.errorhandler(403)
 def forbidden_error(error):
     app_logger.warning("User %s attempted to access a forbidden resource", session.get("user_id"))
-    return render_template('error_page.html', main_message="Forbidden"), 403
+    return render_template('error_page.html', main_message="Forbidden", description=error.description), 403
 
 @app.errorhandler(404)
 def not_found_error(error):
     app_logger.warning("User %s attempted to find an invalid URL", session.get("user_id"))
-    return render_template('error_page.html', main_message="Resource not found"), 404
+    return render_template('error_page.html', main_message="Resource not found", description=error.description), 404
 
 @app.errorhandler(405)
 def method_not_allowed_error(error):
     app_logger.warning("User %s attempted an invalid %s method", session.get("user_id"), request.method)
-    return render_template('error_page.html', main_message="Method not allowed"), 405
+    return render_template('error_page.html', main_message="Method not allowed", description=error.description), 405
 
 @app.errorhandler(429)
 def too_many_requests_error(error):
     app_logger.warning("Too many requests from IP: %s", request.remote_addr)
-    return error.get_response() or (render_template('error_page.html', main_message="Too many requests"), 429)
+    return (render_template('error_page.html', main_message="Too many requests", description=error.description), 429)
 
 @app.errorhandler(500)
 def internal_error(error):
     app_logger.exception("An internal error occurred:\n %s", error)
-    return render_template('error_page.html', main_message="Internal server error"), 500
+    return render_template('error_page.html', main_message="Internal server error", description=None), 500
 
 if __name__ == "__main__":
     app.run()
