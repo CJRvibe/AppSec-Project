@@ -565,6 +565,7 @@ def toggle_mfa():
         db.disable_user_mfa(user_id)
         flash('MFA disabled.', 'info')
     else:
+        app_logger.info("User %s is attempting to setup MFA", session["user_id"])
         return redirect(url_for('.setup_mfa'))
     
     return redirect(url_for('user_profile'))
