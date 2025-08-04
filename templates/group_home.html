@@ -21,11 +21,18 @@
     <div class="d-flex justify-content-between align-items-start mb-3">
         <!-- Left: Group Image and Info -->
         <div class="d-flex align-items-center">
-            <img src="{{ url_for('static', filename='img/' ~ group.picture or 'img/default_group.jpg') }}"
+            <img src="{{ url_for('static', filename='uploads/groups/' ~ group.picture or 'img/default_group.jpg') }}"
                 class="rounded" style="width: 100px; height: 100px; object-fit: cover;">
             <div class="ms-3">
                 <h2 class="mb-0">{{ group.name }}</h2>
-                <p class="text-muted">By {{ group.owner or 'Group Admin' }}</p>
+                <p class="text-muted">
+                    By
+                    {% if group.owner %}
+                        {{ owner.first_name }} {{ owner.last_name }}
+                    {% else %}
+                        Group Admin
+                    {% endif %}
+                </p>
             </div>
         </div>
 
@@ -109,7 +116,7 @@
             <div class="col">
                 <a href="{{ url_for('view_group_activity', group_id=group.group_id, activity_id=activity.activity_id) }}" class="text-decoration-none text-dark">
                     <div class="card h-100 shadow">
-                        <img src="{{ url_for('static', filename='img/' ~ activity.picture or 'img/default_activity.jpg') }}"
+                        <img src="{{ url_for('static', filename='uploads/activities/' ~ activity.picture or 'img/default_activity.jpg') }}"
                             class="card-img-top" alt="{{ activity.name }}">
                         <div class="card-body">
                             <small class="text-muted">{{ activity["category"] }}</small>
