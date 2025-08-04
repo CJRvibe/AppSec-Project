@@ -112,14 +112,14 @@ def get_user_by_id(user_id):
     return user
 
 
-def add_group_proposal(name, topic, description, max_size, is_public, activity_occurence, reason, owner):
+def add_group_proposal(name, topic, description, max_size, is_public, activity_occurence, reason, owner, picture):
     connection = get_db()
     cursor = connection.cursor()
-    values = (name, topic, description, max_size, is_public, activity_occurence, reason, owner)
+    values = (name, topic, description, max_size, is_public, activity_occurence, reason, owner, picture)
     statement = """
     INSERT INTO interest_group (name, topic, description, max_size, is_public,
-        activity_occurence_id, proposal, status_id, owner)
-    VALUES (%s, %s, %s, %s, %s, %s, %s, 1, %s)
+        activity_occurence_id, proposal, status_id, owner, picture)
+    VALUES (%s, %s, %s, %s, %s, %s, %s, 1, %s, %s)
     """
 
     cursor.execute(statement, values)
@@ -138,16 +138,16 @@ def add_activity_tags(cursor, activity_id, tags):
         cursor.execute("INSERT INTO activity_tags VALUES (%s, %s)", (activity_id, tag_id))
 
 
-def add_activity_proposal(name, description, start_datetime, end_datetime, max_size, funds, location, tags, remarks, group_id):
+def add_activity_proposal(name, description, start_datetime, end_datetime, max_size, funds, location, tags, remarks, group_id, picture):
     connection = get_db()
     cursor = connection.cursor()
-    main_values = (name, description, start_datetime, end_datetime, max_size, funds, location, remarks, group_id)
+    main_values = (name, description, start_datetime, end_datetime, max_size, funds, location, remarks, group_id, picture)
 
     main_statement = """
     INSERT INTO interest_activity (
         name, description, start_datetime, end_datetime, max_size, funds,
-        location_code, remarks, status_id, group_id
-    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, 1, %s)
+        location_code, remarks, status_id, group_id, picture
+    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, 1, %s, %s)
     """
     cursor.execute(main_statement, main_values)
     activity_id = cursor.lastrowid

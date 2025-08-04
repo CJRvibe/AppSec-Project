@@ -15,7 +15,7 @@
 {{ render_errors(form) }}
 
 <!-- disable autocomplete next time -->
-<form method="post" class="needs-validation" novalidate>
+<form method="post" class="needs-validation" novalidate enctype="multipart/form-data">
     <h1 class="display-6 text-center">Create Interest Group Proposal</h1>
     {{ form.csrf_token }}
     <div class="input-group mt-4 mb-4">
@@ -61,6 +61,10 @@
         <span class="input-group-text">{{ form.reason.label }}</span>
         {{ form.reason(class="form-control", placeholder="Give an elaboration to why you want to start this interest group") }}
         {{ invalid_feedback("Enter a proposal reason with no less than 1000 characters") }}
+    </div>
+
+    <div class="mb-3">
+        {{ render_field(form.picture, class="form-control") }}
     </div>
 
     <input type="submit" value="Submit" class="btn btn-primary">

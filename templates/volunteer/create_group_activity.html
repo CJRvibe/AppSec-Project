@@ -17,7 +17,7 @@
 {{ render_errors(form) }}
 
 <!-- Disable autocomplete next time -->
-<form method="post" class="needs-validation" novalidate>
+<form method="post" class="needs-validation" novalidate enctype="multipart/form-data">
     <h1 class="display-6 text-center">Create Interest Group Activity Proposal</h1>
     {{ form.csrf_token }}
     <div class="input-group mt-4 mb-4">
@@ -70,6 +70,10 @@
     <div class="input-group mb-4">
         <span class="input-group-text">{{ form.remarks.label }}</span>
         {{ form.remarks(class="form-control", placeholder="Enter any additional remarks") }}
+    </div>
+
+    <div class="mb-3">
+        {{ render_field(form.picture, class="form-control") }}
     </div>
 
     <input type="submit" value="Submit" class="btn btn-primary">

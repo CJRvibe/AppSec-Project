@@ -28,7 +28,7 @@
     <div class="col">
         <a href="{{ url_for('group_home', group_id=group.group_id) }}" class="text-decoration-none">
             <div class="card h-100 shadow">
-                <img src="{{ url_for('static', filename='img/' ~group.picture) }}" 
+                <img src="{{ url_for('static', filename='uploads/groups/' ~ group.picture) }}" 
                      class="card-img-top uniform-img" alt="Group Image">
                 <div class="card-body d-flex flex-column justify-content-end small-info">
                     <small class="text-muted">{{ group.topic }}</small>

@@ -25,6 +25,8 @@ import auth
 
 dotenv.load_dotenv()
 
+UPLOAD_FOLDER_GROUPS = os.path.join("static", "uploads", "groups")
+UPLOAD_FOLDER_ACTIVITIES = os.path.join("static", "uploads", "activities")
 
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
@@ -35,7 +37,12 @@ app.config["MAIL_PASSWORD"] = os.environ["MAIL_PASSWORD"]
 app.config["CSRF_SECRET_KEY"] = os.environ["CSRF_SECRET_KEY"].encode('utf-8')
 app.config["SEMATEXT_PASSWORD"] = os.environ["SEMATEXT_PASSWORD"]
 app.config["GOOGLE_CLIENT_SECRET"] = os.environ["GOOGLE_CLIENT_SECRET"]
-app.config['UPLOAD_FOLDER'] = os.path.join('static', 'uploads')
+app.config["UPLOAD_FOLDER_GROUPS"] = UPLOAD_FOLDER_GROUPS
+app.config["UPLOAD_FOLDER_ACTIVITIES"] = UPLOAD_FOLDER_ACTIVITIES
+app.config['MAX_CONTENT_LENGTH'] = 2 * 1024 * 1024  # 2MB
+
+os.makedirs(UPLOAD_FOLDER_GROUPS, exist_ok=True)
+os.makedirs(UPLOAD_FOLDER_ACTIVITIES, exist_ok=True)
 
 mail.init_app(app)
 executor.init_app(app)
@@ -196,7 +203,7 @@ def my_groups():
 @app.route('/groupHome/<int:group_id>')
 @role_required(1, 2, 3)
 def group_home(group_id):
-    try:
+    #try:
         view = request.args.get('view', 'activities')
         if view not in ['activities', 'forum']:
             view = 'activities'
@@ -211,11 +218,9 @@ def group_home(group_id):
         join_status_id = db.get_user_group_status_id(user_id, group_id) if user_id else None
         has_joined = join_status_id == 2
 
-        if group['is_public'] != 1 and not has_joined:
-            abort(403)
-
         activities = db.get_activities_by_group_id(group_id) if group['is_public'] == 1 or has_joined else []
         member_count = db.get_group_member_count(group_id)
+        owner = db.get_user_by_id(group["owner"])
 
         return render_template(
             "group_home.html",
@@ -225,16 +230,17 @@ def group_home(group_id):
             has_joined=has_joined,
             join_status_id=join_status_id,
             flag_form=flag_form,
-            member_count=member_count
+            member_count=member_count,
+            owner = owner,
         )
 
-    except KeyError as e:
-        app_logger.warning("Missing key while rendering group_home for group_id=%s: %s", group_id, str(e))
-        abort(500)
+    # except KeyError as e:
+    #     app_logger.warning("Missing key while rendering group_home for group_id=%s: %s", group_id, str(e))
+    #     abort(500)
 
-    except Exception as e:
-        app_logger.exception("Unexpected error at group_home for group_id=%s: %s", group_id, str(e))
-        abort(500)
+    # except Exception as e:
+    #     app_logger.exception("Unexpected error at group_home for group_id=%s: %s", group_id, str(e))
+    #     abort(500)
 
 @app.route('/join_group/<int:group_id>', methods=['POST'])
 @role_required(1, 2)

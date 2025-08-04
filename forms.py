@@ -4,6 +4,7 @@ import dotenv
 from wtforms import Form, StringField, IntegerField, RadioField, SelectField, DateField, DateTimeField, TextAreaField, validators, PasswordField
 from wtforms.csrf.session import SessionCSRF
 from flask import session
+from flask_wtf.file import FileField, FileAllowed
 import os
 import db
 import re
@@ -117,6 +118,7 @@ class InterestGroupProposalForm(BaseForm):
     join_type = RadioField("Group Join Type", [validators.DataRequired()], choices=JOIN_TYPE)
     activity_occurence = SelectField("Activity Occurrence", [validators.DataRequired()], choices=get_activity_occurence(), default="")
     reason = TextAreaField("Proposal Elaboration", [validators.length(min=1, max=1000), validators.DataRequired()])
+    picture = FileField("Group Picture", validators=[FileAllowed(["jpg", "jpeg", "png", "gif"], "Images only!")])
 
 
 class ActivityProposalForm(BaseForm):
@@ -129,6 +131,7 @@ class ActivityProposalForm(BaseForm):
     location = SelectField("Location", [validators.DataRequired()], choices=get_activity_location(), default="")
     tags = TextAreaField("Group Tags", [validators.length(min=1, max=300), validators.Optional()])
     remarks = TextAreaField("Additional remarks", [validators.Optional(), validators.length(min=1, max=300)])
+    picture = FileField("Activity Picture", validators=[FileAllowed(["jpg", "jpeg", "png", "gif"], "Images only!")])
 
     def validate_tags(form, field):
         try:
