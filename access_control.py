@@ -11,7 +11,7 @@ def login_required(f):
         if 'user_id' not in session:
             flash("You must be logged in to access this page.", "warning")
             app_logger.warning("A non logged in user attempted to access a protected resource")
-            return redirect(url_for('login'))
+            return redirect(url_for('auth.login'))
         return f(*args, **kwargs)
     return decorated_function
 
