@@ -9,17 +9,23 @@ import db
 import uuid
 import os
 
-from access_control import role_required
+from access_control import role_required, login_required
 
 volunteer = Blueprint("volunteer", __name__, template_folder="templates")
 app_logger = logging.getLogger("app")
 
+
+@volunteer.before_request # access control for volunteer
+def check_is_admin():
+    if "user_id" not in session:
+        abort(401, description="You are not authenticated, please login")
+    elif session.get("role") != 2:
+        abort(403, description="You are not authorised to access this page")
+
+
 @volunteer.route('/dashboard/<int:group_id>')
-@role_required(2)
 def dashboard(group_id):
     user_id = session.get("user_id")
-    if not user_id:
-        abort(401, description="Unauthorized access to dashboard")
 
     group = db.get_group_by_id(group_id)
     if not group:
@@ -42,12 +48,9 @@ def dashboard(group_id):
     )
 
 @volunteer.route("/dashboard/<int:group_id>/approve_user/<int:user_id>", methods=["POST"])
-@role_required(2)
 @limiter.limit("20/hour;60/day")
 def approve_user(group_id, user_id):
     current_user_id = session.get("user_id")
-    if not current_user_id:
-        abort(401, description="Unauthorized access to approve user")
 
     group = db.get_group_by_id(group_id)
     if not group:
@@ -61,12 +64,9 @@ def approve_user(group_id, user_id):
     return redirect(url_for("volunteer.dashboard", group_id=group_id, view="users"))
 
 @volunteer.route("/dashboard/<int:group_id>/remove_user/<int:user_id>", methods=["POST"])
-@role_required(2)
 @limiter.limit("1/second;20/hour;60/day")
 def remove_user(group_id, user_id):
     current_user_id = session.get("user_id")
-    if not current_user_id:
-        abort(401, description="Unauthorized access to remove user")
 
     group = db.get_group_by_id(group_id)
     if not group:
@@ -80,11 +80,8 @@ def remove_user(group_id, user_id):
     return redirect(url_for("volunteer.dashboard", group_id=group_id, view="users"))
 
 @volunteer.route("/dashboard/<int:group_id>/remove_activity/<int:activity_id>", methods=["POST"])
-@role_required(2)
 def remove_activity(group_id, activity_id):
     user_id = session.get("user_id")
-    if not user_id:
-        abort(401, description="Unauthorized access to remove activity")
 
     group = db.get_group_by_id(group_id)
     if not group:
@@ -102,12 +99,9 @@ def remove_activity(group_id, activity_id):
     return redirect(url_for("volunteer.dashboard", group_id=group_id, view="activities"))
 
 @volunteer.route("/createInterestGroupProposal", methods=["GET", "POST"])
-@role_required(2)
 @limiter.limit("3/hour;7/day", methods=["POST"])
 def create_group_proposal():
     user_id = session.get("user_id")
-    if not user_id:
-        abort(401, description="Unauthorized access to create group proposal")
 
     proposal_form = InterestGroupProposalForm(request.form)
 
@@ -141,12 +135,9 @@ def create_group_proposal():
     return render_template("volunteer/create_interest_group_proposal.html", form=proposal_form)
 
 @volunteer.route("/createActivityProposal/<int:group_id>", methods=["GET", "POST"])
-@role_required(2)
 @limiter.limit("5/hour;10/day", methods=["POST"])
 def create_activity_proposal(group_id):
     user_id = session.get("user_id")
-    if not user_id:
-        abort(401, description="Unauthorized access to create activity proposal")
 
     group = db.get_group_by_id(group_id)
     if not group:
@@ -193,11 +184,8 @@ def create_activity_proposal(group_id):
     return render_template("volunteer/create_group_activity.html", form=proposal_form, group=group)
 
 @volunteer.route('/dashboard')
-@role_required(2)
 def volunteer_dashboard_groups():
     user_id = session.get('user_id')
-    if not user_id:
-        abort(401, description="Unauthorized access to volunteer dashboard")
 
     groups = db.get_groups_by_owner(user_id)
     if groups is None:
@@ -207,7 +195,6 @@ def volunteer_dashboard_groups():
     return render_template('volunteer/group_list_dashboard.html', groups=groups)
 
 @volunteer.route("/dashboard/<int:group_id>/reject_user/<int:user_id>", methods=["POST"])
-@role_required(2)
 def reject_user(group_id, user_id):
     user = session.get("user_id")
     group = db.get_group_by_id(group_id)
