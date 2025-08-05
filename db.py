@@ -301,6 +301,21 @@ def admin_update_activity_proposal(id, approved=False):
     connection.commit()
 
 
+def admin_get_flagged_activities():
+    connection = get_db()
+    cursor = connection.cursor(dictionary=True)
+    statement = """
+    SELECT fa.flag_id, fa.activity_id, ia.name activity_name, fa.reason, fa.user_id, u.email, fa.status_id, ig.name group_name
+    FROM flagged_activities fa
+    INNER JOIN interest_activity ia ON fa.activity_id = ia.activity_id
+    INNER JOIN interest_group ig ON ia.group_id = ig.group_id
+    INNER JOIN users u ON fa.user_id = u.user_id
+    """
+
+    cursor.execute(statement)
+    return cursor.fetchall()
+
+
 def admin_get_flagged_groups():
     connection = get_db()
     cursor = connection.cursor(dictionary=True)
