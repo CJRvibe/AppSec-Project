@@ -79,10 +79,12 @@
             <div class="activity-details">
                 <h5>Activity Details</h5>
                 <ul class="list-unstyled">
-                    <li><strong>Start Time:</strong> {{ activity.start_time }}</li>
-                    <li><strong>End Time:</strong> {{ activity.end_time }}</li>
-                    <li><strong>Location:</strong> {{ activity.location }}</li>
-                    <li><strong>Min Age:</strong> {{ activity.min_age }}</li>
+                    <li><strong>Start Time:</strong> {{ activity.start_datetime.strftime('%Y-%m-%d %H:%M') }}</li>
+                    <li><strong>End Time:</strong> {{ activity.end_datetime.strftime('%Y-%m-%d %H:%M') }}</li>
+                    <li><strong>Location Code:</strong> {{ activity.location_code }}</li>
+                    <li><strong>Max Participants:</strong> {{ activity.max_size }}</li>
+                    <li><strong>Funds Requested:</strong> ${{ activity.funds }}</li>
+                    <li><strong>Remarks:</strong> {{ activity.remarks or "None provided." }}</li>
                 </ul>
 
                 <!-- Buttons -->

@@ -265,9 +265,9 @@ def admin_get_group_activities(type="approved"):
 def check_user_joined_group(user_id, group_id):
     connection = get_db()
     cursor = connection.cursor()
-    statement = "SELECT * FROM user_interest_group WHERE user_id = %s AND group_id = %s"
+    statement = "SELECT * FROM user_interest_group WHERE user_id = %s AND group_id = %s AND status_id = 2"
     cursor.execute(statement, (user_id, group_id))
-    return cursor.fetchone() is not None
+    return bool(cursor.fetchone())
 
 def join_group(user_id, group_id):
     connection = get_db()

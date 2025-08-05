@@ -273,10 +273,16 @@ def view_group_activity(group_id, activity_id):
     if not group:
         abort(404, description="Group not found")
 
+    if group.get('status_id') != 2:
+        abort(403, description="You do not have permission to view this group")
+
     flag_form = FlagForm(request.form)
     activity = db.get_activity_by_id(activity_id)
     if not activity:
         abort(404, description="Activity not found")
+
+    if activity['status_id'] != 2:
+        abort(403, description="You do not have permission to view this activity")
 
     if activity['group_id'] != group_id:
         abort(403, description="You do not have permission to view this activity")
