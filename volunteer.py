@@ -205,3 +205,17 @@ def volunteer_dashboard_groups():
         groups = []
 
     return render_template('volunteer/group_list_dashboard.html', groups=groups)
+
+@volunteer.route("/dashboard/<int:group_id>/reject_user/<int:user_id>", methods=["POST"])
+@role_required(2)
+def reject_user(group_id, user_id):
+    user = session.get("user_id")
+    group = db.get_group_by_id(group_id)
+
+    if not group or group["owner"] != user:
+        abort(403, description="You do not have permission to reject users in this group")
+
+    db.reject_user(user_id, group_id)
+    flash("User join request has been rejected.", "warning")
+
+    return redirect(url_for("volunteer.dashboard", group_id=group_id, view="users"))

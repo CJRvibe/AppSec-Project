@@ -750,3 +750,13 @@ def disable_user_mfa(user_id):
     conn.commit()
     print(f"DEBUG - MFA disabled for user {user_id}")
     return True
+
+def reject_user(user_id, group_id):
+    connection = get_db()
+    cursor = connection.cursor()
+
+    cursor.execute(
+        "DELETE FROM user_interest_group WHERE user_id = %s AND group_id = %s AND status_id = 1",
+        (user_id, group_id)
+    )
+    connection.commit()
