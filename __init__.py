@@ -79,9 +79,10 @@ def user_profile():
             flash('Profile updated successfully!', 'success')
             # Refresh user info after update
             user = db.get_user_by_id(user_id)
+            app_logger.info("User %s updated their profile information", session["user_id"])
         else:
             flash('All fields are required.', 'danger')
-
+    app_logger.info("User %s accessed their profile page", session["user_id"])
     return render_template('user_profile.html', user=user, mfa_enabled=mfa_enabled)
 
 
@@ -163,7 +164,7 @@ def explore_groups():
         groups = db.get_all_groups()
 
     approved_groups = [g for g in groups if g.get('status_id') == 2]
-
+    app_logger.info("User %s accessed the explore groups page", session["user_id"])
     return render_template('explore_groups.html', groups=approved_groups, query=query)
 
 @app.route('/myGroups')
@@ -178,7 +179,7 @@ def my_groups():
         abort(500, description="Group fetch failed")
 
     approved_groups = [g for g in joined_groups if g.get('status_id') == 2]
-
+    app_logger.info("User %s accessed his own groups", session["user_id"])
     return render_template('my_groups.html', groups=approved_groups)
 
 @app.route('/groupHome/<int:group_id>')
@@ -201,7 +202,7 @@ def group_home(group_id):
     activities = db.get_activities_by_group_id(group_id) if group['is_public'] == 1 or has_joined else []
     member_count = db.get_group_member_count(group_id)
     owner = db.get_user_by_id(group["owner"])
-
+    app_logger.info("User %s accessed the group home of group %s", session["user_id"], group["name"])
     return render_template(
         "group_home.html",
         group=group,
@@ -227,7 +228,7 @@ def join_group(group_id):
 
     if group.get("status_id") != 2:
         flash("This group is not approved for joining.", "danger")
-        app_logger.info("User %s tried to join unapproved group ID %s", user_id, group_id)
+        app_logger.warning("User %s tried to join unapproved group ID %s", user_id, group_id)
         return redirect(url_for('explore_groups'))
 
     member_count = db.get_group_member_count(group_id)
@@ -239,7 +240,11 @@ def join_group(group_id):
         return redirect(url_for('group_home', group_id=group_id))
 
     db.join_group(user_id, group_id)
-    app_logger.info("User %s successfully joined group %s", user_id, group_id)
+
+    if not group["is_public"]:
+        app_logger.info("User %s has sent a request to join private group %s", session["user_id"], group["name"])
+    else:
+        app_logger.info("User %s successfully joined group %s", user_id, group_id)
     flash("You have successfully joined the group!", "success")
     return redirect(url_for('group_home', group_id=group_id))
 
@@ -289,7 +294,7 @@ def view_group_activity(group_id, activity_id):
 
     registration_count = db.get_activity_registration_count(activity_id)
     is_full = activity["max_size"] is not None and registration_count >= activity["max_size"]
-
+    app_logger.info("User %s accessed group activity %s from group %s", session["user_id"], activity["name"], group["name"])
     return render_template(
         'activity.html',
         activity=activity,
@@ -338,6 +343,8 @@ def register_activity(activity_id):
 
     db.register_user_for_activity(user_id, activity_id)
     flash("Successfully registered for the activity!", "success")
+    group = db.get_group_by_id(activity["group_id"])
+    app_logger.info("User %s registered for activity %s by group %s", session["user_id"], activity["name"], group["name"])
     return redirect(request.referrer or url_for('home'))
 
 @app.route("/test-discussion")

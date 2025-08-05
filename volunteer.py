@@ -38,6 +38,8 @@ def dashboard(group_id):
     pending_users = db.get_pending_users_by_group(group_id)
     joined_users = db.get_approved_users_by_group(group_id)
 
+    app_logger.info("User %s accessed the volunteer dashboard", session["user_id"])
+
     return render_template(
         "volunteer/dashboard.html",
         group=group,
@@ -61,6 +63,7 @@ def approve_user(group_id, user_id):
 
     db.approve_user(user_id, group_id)
     flash("User approved.", "success")
+    app_logger.info("User %s approved the join group request of User %s of group %s", session["user"], user_id, group["name"])
     return redirect(url_for("volunteer.dashboard", group_id=group_id, view="users"))
 
 @volunteer.route("/dashboard/<int:group_id>/remove_user/<int:user_id>", methods=["POST"])
@@ -77,6 +80,7 @@ def remove_user(group_id, user_id):
 
     db.remove_user_from_group(user_id, group_id)
     flash("User removed from group.", "warning")
+    app_logger.info("User %s removed User %s from group %s", session["user"], user_id, group["name"])
     return redirect(url_for("volunteer.dashboard", group_id=group_id, view="users"))
 
 @volunteer.route("/dashboard/<int:group_id>/remove_activity/<int:activity_id>", methods=["POST"])
@@ -129,7 +133,7 @@ def create_group_proposal():
             flash("Group proposal submitted successfully!", "success")
             return redirect(url_for("explore_groups"))
         else:
-            app_logger.warning("Validation failed for group proposal submitted by user %s: %s", user_id, proposal_form.errors)
+            app_logger.info("Validation failed for group proposal submitted by user %s: %s", user_id, proposal_form.errors)
             flash("There were errors in your submission. Please review and try again.", "danger")
 
     return render_template("volunteer/create_interest_group_proposal.html", form=proposal_form)
@@ -178,7 +182,7 @@ def create_activity_proposal(group_id):
             flash("Activity proposal submitted successfully.", "success")
             return redirect(url_for("volunteer.dashboard", group_id=group_id))
         else:
-            app_logger.warning("Validation errors for activity proposal: %s", proposal_form.errors)
+            app_logger.info("User %s had validation errors for activity proposal: %s", session["user_id"],  proposal_form.errors)
             flash("Please correct the errors in the form.", "danger")
 
     return render_template("volunteer/create_group_activity.html", form=proposal_form, group=group)
@@ -192,6 +196,7 @@ def volunteer_dashboard_groups():
         abort(404, description="No groups found for this user")
         groups = []
 
+    app_logger.info("User %s accessed groups owned by him", session["user_id"])
     return render_template('volunteer/group_list_dashboard.html', groups=groups)
 
 @volunteer.route("/dashboard/<int:group_id>/reject_user/<int:user_id>", methods=["POST"])
@@ -204,5 +209,5 @@ def reject_user(group_id, user_id):
 
     db.reject_user(user_id, group_id)
     flash("User join request has been rejected.", "warning")
-
+    app_logger.info("User %s rejected join request of User %s to group %s", session["user_id"], user["user_id"], group["name"])
     return redirect(url_for("volunteer.dashboard", group_id=group_id, view="users"))
