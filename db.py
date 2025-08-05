@@ -775,3 +775,28 @@ def reject_user(user_id, group_id):
         (user_id, group_id)
     )
     connection.commit()
+
+def get_activity_status(activity_id):
+    connection = get_db()
+    cursor = connection.cursor(dictionary=True)
+    
+    query = "SELECT status_id FROM interest_activity WHERE activity_id = %s"
+    cursor.execute(query, (activity_id,))
+    result = cursor.fetchone()
+    
+    return result['status_id'] if result else None
+
+def get_group_status(activity_id):
+    connection = get_db()
+    cursor = connection.cursor(dictionary=True)
+    
+    query = """
+        SELECT ig.status_id
+        FROM interest_activity ia
+        INNER JOIN interest_group ig ON ia.group_id = ig.group_id
+        WHERE ia.activity_id = %s
+    """
+    cursor.execute(query, (activity_id,))
+    result = cursor.fetchone()
+    
+    return result['status_id'] if result else None

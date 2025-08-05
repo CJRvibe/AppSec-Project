@@ -56,7 +56,7 @@ def validate_mfa_code():
         return {'success': False, 'message': 'Invalid code'}
 
 @auth.route('/signUp', methods=['GET', 'POST'])
-@limiter.limit("3/hour;7/day", methods=["POST"])
+@limiter.limit("3/minute;10/day", methods=["POST"])
 def sign_up():
     if request.method == 'GET':
         clear_flash_messages()  
@@ -109,21 +109,17 @@ def sign_up():
         }
         
         # Send verification email
-        try:
-            send_email.submit(
-                recipient=email,
-                subject="Social Sage - Email Verification",
-                body=f"Welcome to Social Sage!\n\nYour email verification code is: {verification_code}\n\nPlease enter this code to complete your registration.\n\nIf you did not create an account, please ignore this email."
-            )
-            clear_flash_messages()
-            user = db.get_user_by_email(email)
-            app_logger("A new account has been created with ID %s", user["user_id"])
-            flash('A verification code has been sent to your email. Please check your inbox.', 'info')
-            return redirect(url_for('.verify_email'))
-        except Exception as e:
-            clear_flash_messages()
-            flash('Error sending verification email. Please try again.', 'danger')
-            return render_template('sign_up.html', form=form)
+
+        send_email.submit(
+            recipient=email,
+            subject="Social Sage - Email Verification",
+            body=f"Welcome to Social Sage!\n\nYour email verification code is: {verification_code}\n\nPlease enter this code to complete your registration.\n\nIf you did not create an account, please ignore this email."
+        )
+        clear_flash_messages()
+        app_logger.info("A new account has been created and in the process of being verified")
+        flash('A verification code has been sent to your email. Please check your inbox.', 'info')
+        print("completed")
+        return redirect(url_for('.verify_email'))
         
     return render_template('sign_up.html', form=form)
 
@@ -162,6 +158,8 @@ def verify_email():
                 session.pop('pending_user', None)
                 clear_flash_messages()
                 flash('Account created successfully! Please log in.', 'success')
+                user = db.get_user_by_email(pending_user['email'])
+                app_logger.info("User %s has successfully created a new account", user["user_id"])
                 return redirect(url_for('.login'))
             else:
                 flash('Error creating account. Please try again.', 'danger')
@@ -318,7 +316,7 @@ def resend_pin():
     
     if 'reset_email' not in session:
         flash('Invalid session. Please restart the password reset process.', 'danger')
-        return redirect(url_for('forget_password'))
+        return redirect(url_for('.forget_password'))
     
     email = session['reset_email']
     pin = generate_pin()
@@ -336,7 +334,7 @@ def resend_pin():
         app_logger.exception(e)
         flash('Error sending email. Please try again.', 'danger')
     
-    return redirect(url_for('enter_pin'))
+    return redirect(url_for('.enter_pin'))
 
 @auth.route('/changePassword', methods=['GET', 'POST'])
 def change_password():
