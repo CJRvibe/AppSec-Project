@@ -92,8 +92,9 @@ def approve_group_proposal(id):
     else:
         db.admin_update_group_proposal(id, approved=True)
         app_logger.info("Admin %s approved proposal of group %s", session.get("user_id"), group.get("group_id"))
+        db.admin_join_group(group["owner"], group["group_id"])
+        
         user = db.get_user_by_id(group["owner"])
-
         if user["email_notif"]:
             send_email.submit(user["email"], f"Group {group['group_id']} Approved", f"Your pending proposal for group {group['name']} has successfully been approved")
             app_logger.info(f"Email successfully send to User {group['owner']} to notify of group approval")

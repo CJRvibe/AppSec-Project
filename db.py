@@ -285,6 +285,21 @@ def join_group(user_id, group_id):
     connection.commit()
 
 
+def admin_join_group(user_id, group_id):
+    connection = get_db()
+    cursor = connection.cursor()
+    
+    status_id = 2
+
+    statement = """
+        INSERT INTO user_interest_group (user_id, group_id, date_joined, status_id)
+        VALUES (%s, %s, NOW(), %s)
+        ON DUPLICATE KEY UPDATE status_id = VALUES(status_id)
+    """
+    cursor.execute(statement, (user_id, group_id, status_id))
+    connection.commit()
+
+
 
 def admin_update_activity_proposal(id, approved=False):
     connection = get_db()
