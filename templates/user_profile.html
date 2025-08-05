@@ -1,7 +1,13 @@
 {% extends "base.html" %}
 
 {% block navbar %}
-    {% include "includes/elderly_navbar.html" %}
+    {% if session["role"] == 1 %}
+        {% include "includes/elderly_navbar.html" %}
+    {% elif session["role"] == 2 %}
+        {% include "includes/volunteer_navbar.html" %}
+    {% else %}
+        {% include "includes/admin_navbar.html" %}
+    {% endif %}
 {% endblock %}
 
 {% block content %}
