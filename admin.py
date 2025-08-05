@@ -231,6 +231,13 @@ def manage_flagged_groups():
     app_logger.info("Admin %s accessed information for all flag group requests", session.get("user_id"))
     return render_template("admin/manage_flagged_groups.html", flagged_groups=flagged_groups)
 
+
+@admin.route("/interestActivities/flaggedRequests")
+def manage_flagged_activities():
+    flagged_activities = db.admin_get_flagged_activities()
+    app_logger.info("Admin %s accessed information for all flag activity requests", session.get("user_id"))
+    return render_template("admin/manage_flagged_activities.html", flagged_activities=flagged_activities)
+
 # NOT IMPLEMENTED YET
 @admin.route("/interestGroups/flaggedRequests/approve/<int:id>", methods=["POST"])
 def approve_group_flag(id: int):
