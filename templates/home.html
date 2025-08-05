@@ -62,7 +62,11 @@
         <div class="overlay">
             <h1 class="mb-4">Welcome to Social Sage</h1>
             {% if session.get('user_id') %}
-                <a href="{{ url_for('explore_groups') }}" class="btn btn-light btn-lg">Start Exploring Groups</a>
+                <a href="{% if session.get('role') == 3 %}{{ url_for('admin.home') }}
+                        {% else %}{{ url_for('explore_groups') }}{% endif %}" 
+                class="btn btn-primary">
+                Explore Now
+                </a>
             {% else %}
                 <a href="{{ url_for('auth.login') }}" class="btn btn-light btn-lg me-3">Login</a>
                 <a href="{{ url_for('auth.sign_up') }}" class="btn btn-outline-light btn-lg">Sign Up</a>
