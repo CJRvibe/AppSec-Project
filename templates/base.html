@@ -16,7 +16,11 @@
                 {% if messages %}
                     <div class="my-1">
                         {% for category, msg in messages %}
+                        {% if category %}
                             <div class="alert alert-{{category}} alert-dismissable">
+                        {% else %}
+                            <div class="alert alert-primary alert-dismissable">
+                        {% endif %}
                                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                                 {{ msg }}
                             </div>

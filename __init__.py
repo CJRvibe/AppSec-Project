@@ -377,7 +377,7 @@ def flag_group(id):
         abort(405, description="Method not allowed for this group")
 
     if db.count_flag_group_request(session["user_id"]) >= 3:
-        flash("You can only have 3 pending flag requests against interest group at any time")
+        flash("You can only have 3 pending flag requests against interest groups at any time", "danger")
     else:
         flag_form = FlagForm(request.form)
         if flag_form.validate():
@@ -403,7 +403,7 @@ def flag_activity(id):
         abort(405, description="Method not allowed for this activity")
 
     if db.count_flag_activity_request(session["user_id"]) >= 5:
-        flash("You can only have 5 pending flag requests against interest activities at any time")
+        flash("You can only have 5 pending flag requests against interest activities at any time", "danger")
     else:
         flag_form = FlagForm(request.form)
         if flag_form.validate() and request.method == "POST":
