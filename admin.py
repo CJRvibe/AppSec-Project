@@ -13,9 +13,9 @@ update_limit = limiter.shared_limit("20/hour;50/day", methods=["POST"], scope="g
 @admin.before_request # access control for admin
 def check_is_admin():
     if "user_id" not in session:
-        abort(401)
+        abort(401, description="You are not authenticated, please login")
     elif session.get("role") != 3:
-        abort(403)
+        abort(403, description="You are not authorised to access this page")
 
 @admin.route("/")
 def home():

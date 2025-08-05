@@ -469,14 +469,14 @@ def internal_error(error):
     app_logger.exception("An internal error occurred:\n %s", error)
     return render_template('error_page.html', main_message="Internal server error", description=None), 500
 
-# if __name__ == "__main__":
-#     app.run()
-
-
 if __name__ == "__main__":
-    app.run(
-        host="127.0.0.1",
-        port=5000,
-        ssl_context=('certs/127.0.0.1+1.pem', 'certs/127.0.0.1+1-key.pem'),
-        debug=True
-    )
+    app.run()
+
+
+# if __name__ == "__main__":
+#     app.run(
+#         host="127.0.0.1",
+#         port=5000,
+#         ssl_context=('certs/127.0.0.1+1.pem', 'certs/127.0.0.1+1-key.pem'),
+#         debug=True
+#     )
