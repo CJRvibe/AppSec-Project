@@ -267,7 +267,10 @@ def check_user_joined_group(user_id, group_id):
     cursor = connection.cursor()
     statement = "SELECT * FROM user_interest_group WHERE user_id = %s AND group_id = %s AND status_id = 2"
     cursor.execute(statement, (user_id, group_id))
-    return bool(cursor.fetchone())
+    if cursor.fetchone():
+        return True 
+    else:
+        return False
 
 def join_group(user_id, group_id):
     connection = get_db()
