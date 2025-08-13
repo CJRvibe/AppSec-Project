@@ -881,16 +881,16 @@ def get_group_status(activity_id):
     return result['status_id'] if result else None
 
 def is_root_admin(user_id):
-    """Check if user is the root admin (socialsage.@gmail.com)"""
+    """Check if user is the root admin (socialsage.management@gmail.com)"""
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
     cursor.execute("SELECT email FROM users WHERE user_id = %s", (user_id,))
     result = cursor.fetchone()
-    return result and result['email'] == 'socialsage.@gmail.com'
+    return result and result['email'] == 'socialsage.management@gmail.com'
 
 def is_root_admin_by_email(email):
     """Check if email is the root admin"""
-    return email == 'socialsage.@gmail.com'
+    return email == 'socialsage.management@gmail.com'
 
 def can_suspend_user(admin_user_id, target_user_id):
     """Check if admin can suspend the target user"""
@@ -908,8 +908,8 @@ def can_suspend_user(admin_user_id, target_user_id):
         return False
     
     # Root admin can suspend anyone except themselves
-    if admin['email'] == 'socialsage.@gmail.com':
-        return target['email'] != 'socialsage.@gmail.com'
+    if admin['email'] == 'socialsage.management@gmail.com':
+        return target['email'] != 'socialsage.management@gmail.com'
     
     # Regular admins can only suspend non-admin users (roles 1 and 2)
     if admin['user_role'] == 3:

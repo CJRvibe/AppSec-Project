@@ -403,7 +403,7 @@ def suspend_user(user_id):
                 send_email.submit(
                     recipient=user['email'],
                     subject="Social Sage - Account Suspended",
-                    body=f"Your account has been suspended. Please contact support at socialsage.@gmail.com for assistance."
+                    body=f"Your account has been suspended. Please contact support at socialsage.management@gmail.com for assistance."
                 )
             except Exception as e:
                 app_logger.error("Failed to send suspension email to %s: %s", user['email'], str(e))
