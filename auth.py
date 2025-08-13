@@ -34,6 +34,7 @@ def validate_mfa_setup(user_id):
 
 @auth.route('/validateMfaCode', methods=['POST'])
 @login_required
+@limiter.limit("3/minute", methods=["POST"])
 def validate_mfa_code():
     """
     AJAX endpoint to validate MFA code without enabling MFA
@@ -56,7 +57,7 @@ def validate_mfa_code():
         return {'success': False, 'message': 'Invalid code'}
 
 @auth.route('/signUp', methods=['GET', 'POST'])
-@limiter.limit("3/minute;10/day", methods=["POST"])
+@limiter.limit("3/minute;20/day", methods=["POST"])
 def sign_up():
     if request.method == 'GET':
         clear_flash_messages()  
@@ -124,7 +125,7 @@ def sign_up():
     return render_template('sign_up.html', form=form)
 
 @auth.route('/verifyEmail', methods=['GET', 'POST'])
-@limiter.limit("5/hour;10/day", methods=["POST"])
+@limiter.limit("5/minute;10/hour", methods=["POST"])
 def verify_email():
     if request.method == 'GET':
         clear_flash_messages()
@@ -171,7 +172,7 @@ def verify_email():
     return render_template('verify_email.html')
 
 @auth.route('/resendVerificationCode', methods=['POST'])
-@limiter.limit("3/hour", methods=["POST"])
+@limiter.limit("2/minute;10/day", methods=["POST"])
 def resend_verification_code():
     clear_flash_messages()
     
@@ -199,7 +200,7 @@ def login_success():
     return g.login_success
 
 @auth.route('/login', methods=['GET', 'POST'])
-@limiter.limit("5/hour;15/day", methods=["POST"], deduct_when=lambda response: login_success)
+@limiter.limit("3/minute;15/day", methods=["POST"], deduct_when=lambda response: login_success)
 def login():
     g.login_success = False
     if request.method == 'GET':
@@ -256,7 +257,7 @@ def logout():
     return redirect(url_for('.login'))
 
 @auth.route('/forgetPassword', methods=['GET', 'POST'])
-@limiter.limit("3/minute;10/day", methods=["POST"])
+@limiter.limit("5/minute;10/day", methods=["POST"])
 def forget_password():
     
     if request.method == 'POST':
@@ -283,7 +284,7 @@ def forget_password():
     return render_template('forget_password.html')
 
 @auth.route('/enterPin', methods=['GET', 'POST'])
-@limiter.limit("5/hour;10/day", methods=["POST"])
+@limiter.limit("4/minute;10/day", methods=["POST"])
 def enter_pin():
     if request.method == 'GET':
         clear_flash_messages()
@@ -337,6 +338,7 @@ def resend_pin():
     return redirect(url_for('.enter_pin'))
 
 @auth.route('/changePassword', methods=['GET', 'POST'])
+@limiter.limit("3/minute;10/day", methods=["POST"])
 def change_password():
     if request.method == 'GET':
         clear_flash_messages()
@@ -508,6 +510,7 @@ def login_mfa():
 
 @auth.route('/mfaQrCode')
 @login_required
+@limiter.limit("3/minute")
 def mfa_qr_code():
     user_id = session['user_id']
     user_email = session['email']
@@ -525,6 +528,7 @@ def mfa_qr_code():
 
 @auth.route('/setupMfa', methods=['GET', 'POST'])
 @login_required
+@limiter.limit("5/minute")
 def setup_mfa():
     user_id = session['user_id']
     user_email = session['email']
@@ -555,6 +559,7 @@ def setup_mfa():
 
 @auth.route('/toggleMfa', methods=['POST'])
 @login_required
+@limiter.limit("3/minute;10/day")
 def toggle_mfa():
     user_id = session['user_id']
     is_mfa_enabled = db.is_user_mfa_enabled(user_id)

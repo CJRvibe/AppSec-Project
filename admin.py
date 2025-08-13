@@ -241,6 +241,7 @@ def manage_flagged_activities():
 
 
 @admin.route("/interestGroups/flaggedRequests/approve/<int:flag_id>", methods=["POST"])
+@update_limit
 def approve_group_flag(flag_id: int):
     flag_group = db.admin_get_flagged_group(flag_id)
     if not flag_group:
@@ -261,6 +262,7 @@ def approve_group_flag(flag_id: int):
 
 
 @admin.route("/interestGroups/flaggedRequests/reject/<int:flag_id>", methods=["POST"])
+@update_limit
 def reject_group_flag(flag_id: int):
     flag_group = db.admin_get_flagged_group(flag_id)
     print(flag_group)
@@ -282,6 +284,7 @@ def reject_group_flag(flag_id: int):
     
 
 @admin.route("/interestActivities/flaggedRequests/approve/<int:flag_id>", methods=["POST"])
+@update_limit
 def approve_activity_flag(flag_id:int):
     flag_activity = db.admin_get_flagged_activity(flag_id)
     if not flag_activity:
@@ -302,6 +305,7 @@ def approve_activity_flag(flag_id:int):
     
 
 @admin.route("/interestActivities/flaggedRequests/reject/<int:flag_id>", methods=["POST"])
+@update_limit
 def reject_activity_flag(flag_id:int):
     flag_activity = db.admin_get_flagged_activity(flag_id)
     if not flag_activity:
@@ -322,7 +326,7 @@ def reject_activity_flag(flag_id:int):
 
 
 @admin.route('/users/<int:user_id>/suspend', methods=['POST'])
-@limiter.limit("20/hour;50/day")
+@limiter.limit("10/minute;20/hour;50/day")
 def suspend_user(user_id):
     current_user_id = session.get('user_id')
     

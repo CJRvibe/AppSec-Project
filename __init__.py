@@ -217,6 +217,7 @@ def group_home(group_id):
 
 @app.route('/join_group/<int:group_id>', methods=['POST'])
 @role_required(1, 2)
+@limiter.limit("10/minute;50/day", methods=["POST"])
 def join_group(group_id):
     user_id = session.get('user_id')
     if not user_id:
@@ -250,6 +251,7 @@ def join_group(group_id):
 
 @app.route('/leave_group/<int:group_id>', methods=['POST'])
 @role_required(1, 2)
+@limiter.limit("10/minute;50/day", methods=["POST"])
 def leave_group(group_id):
     user_id = session.get('user_id')
     if not user_id:
@@ -301,6 +303,7 @@ def view_group_activity(group_id, activity_id):
 
 @app.route('/register_activity/<int:activity_id>', methods=['POST'])
 @role_required(1, 2)
+@limiter.limit("10/minute;50/day", methods=["POST"])
 def register_activity(activity_id):
     user_id = session.get('user_id')
     if not user_id:
@@ -349,6 +352,7 @@ def discussion_forum():
 
 @app.route('/userProfile/upload', methods=['POST'])
 @login_required
+@limiter.limit("5/minute;20/day")
 def upload_file():
     user_id = session.get('user_id')
     if not user_id:
