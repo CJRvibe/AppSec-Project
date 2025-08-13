@@ -203,7 +203,7 @@ def login_success():
 
 @auth.route('/login', methods=['GET', 'POST'])
 @limiter.limit("3/minute;15/day", methods=["POST"], deduct_when=lambda response: login_success,
-               on_breach=lambda: app_logger.warning("A user has failed login multiple times and have been ratelimited"))
+               on_breach=lambda request_limit: app_logger.warning("A user has failed login multiple times and have been ratelimited"))
 def login():
     g.login_success = False
     if request.method == 'GET':
@@ -286,9 +286,13 @@ def forget_password():
     
     return render_template('forget_password.html')
 
+
+def pin_success():
+    return g.pin_success
+
 @auth.route('/enterPin', methods=['GET', 'POST'])
-@limiter.limit("4/minute;10/day", methods=["POST"], deduct_when=lambda: g.pin_success,
-               on_breach=lambda: app_logger.warning("Too many failed attempts at trying to reset a password"))
+@limiter.limit("4/minute;10/day", methods=["POST"], deduct_when=lambda response: pin_success,
+               on_breach=lambda request_limit: app_logger.warning("Too many failed attempts at trying to reset a password"))
 def enter_pin():
     if request.method == 'GET':
         clear_flash_messages()

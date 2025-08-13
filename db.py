@@ -86,6 +86,22 @@ def get_activities_by_group_id(group_id, search=None):
     
     return cursor.fetchall()
 
+def get_approved_activities_by_group_id(group_id, search=None):
+    connection = get_db()
+    cursor = connection.cursor(dictionary=True)
+    
+    if search:
+        statement = """
+            SELECT activity_id, name, description, start_datetime, end_datetime, max_size, funds, location_code, remarks, picture, status_id, group_id FROM interest_activity 
+            WHERE group_id = %s AND LOWER(name) LIKE %s and status_id = 2
+        """
+        cursor.execute(statement, (group_id, f"%{search.lower()}%"))
+    else:
+        statement = "SELECT activity_id, name, description, start_datetime, end_datetime, max_size, funds, location_code, remarks, picture, status_id, group_id FROM interest_activity WHERE group_id = %s and status_id = 2"
+        cursor.execute(statement, (group_id,))
+    
+    return cursor.fetchall()
+
 def get_activity_by_id(activity_id):
     connection = get_db()
     cursor = connection.cursor(dictionary=True)

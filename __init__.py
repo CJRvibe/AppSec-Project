@@ -251,7 +251,7 @@ def group_home(group_id):
     join_status_id = db.get_user_group_status_id(user_id, group_id) if user_id else None
     has_joined = join_status_id == 2
 
-    activities = db.get_activities_by_group_id(group_id) if group['is_public'] == 1 or has_joined else []
+    activities = db.get_approved_activities_by_group_id(group_id) if group['is_public'] == 1 or has_joined else []
     member_count = db.get_group_member_count(group_id)
     owner = db.get_user_by_id(group["owner"])
     app_logger.info("User %s accessed the group home of group %s", session["user_id"], group["name"])
@@ -312,6 +312,9 @@ def leave_group(group_id):
     group = db.get_group_by_id(group_id)
     if not group:
         abort(404, description="User attempted to leave a non-existent group.")
+
+    if user_id == group.get("owner"):
+        abort(403, description="You cannot leave a group you own.")
 
     status_id = db.get_user_group_status_id(user_id, group_id)
     if status_id != 2:
@@ -532,14 +535,14 @@ def internal_error(error):
     return render_template('error_page.html', main_message="Internal server error", description=None), 500
 
 
-if __name__ == "__main__":
-    app.run()
-
-
 # if __name__ == "__main__":
-#     app.run(
-#         host="127.0.0.1",
-#         port=5000,
-#         ssl_context=('certs/127.0.0.1+1.pem', 'certs/127.0.0.1+1-key.pem'),
-#         debug=True
-#     )
+#     app.run()
+
+
+if __name__ == "__main__":
+    app.run(
+        host="127.0.0.1",
+        port=5000,
+        ssl_context=('certs/127.0.0.1+1.pem', 'certs/127.0.0.1+1-key.pem'),
+        debug=True
+    )

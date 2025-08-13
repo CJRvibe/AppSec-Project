@@ -77,7 +77,7 @@ def approve_user(group_id, user_id):
 
     db.approve_user(user_id, group_id)
     flash("User approved.", "success")
-    app_logger.info("User %s approved the join group request of User %s of group %s", session["user"], user_id, group["name"])
+    app_logger.info("User %s approved the join group request of User %s of group %s", session["user_id"], user_id, group["name"])
     return redirect(url_for("volunteer.dashboard", group_id=group_id, view="users"))
 
 @volunteer.route("/dashboard/<int:group_id>/remove_user/<int:user_id>", methods=["POST"])
@@ -92,9 +92,12 @@ def remove_user(group_id, user_id):
     if group.get("owner") != current_user_id:
         abort(403, description="You do not have permission to remove users from this group")
 
+    if current_user_id == user_id:
+        abort(403, description="You cannot remove yourself from the group")
+
     db.remove_user_from_group(user_id, group_id)
     flash("User removed from group.", "warning")
-    app_logger.info("User %s removed User %s from group %s", session["user"], user_id, group["name"])
+    app_logger.info("User %s removed User %s from group %s", session["user_id"], user_id, group["name"])
     return redirect(url_for("volunteer.dashboard", group_id=group_id, view="users"))
 
 @volunteer.route("/dashboard/<int:group_id>/remove_activity/<int:activity_id>", methods=["POST"])
