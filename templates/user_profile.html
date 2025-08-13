@@ -184,25 +184,65 @@
 
                     <hr class="my-4">
 
-                    <!-- Additional Actions -->
-                    <div class="row g-3 mb-4">
-                        <div class="col-md-6">
-                            <form method="POST" action="{{ url_for('auth.toggle_mfa') }}">
-                                <button type="submit" class="btn btn-outline-primary w-100">
-                                    <i class="fas fa-shield-alt me-2"></i>
-                                    {% if mfa_enabled %}
-                                        Disable MFA
-                                    {% else %}
-                                        Enable MFA
-                                    {% endif %}
-                                </button>
-                            </form>
+                    <!-- User Preferences Section -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-secondary text-white">
+                            <h5 class="mb-0"><i class="fas fa-cogs me-2"></i>Preferences & Security</h5>
                         </div>
-                        <div class="col-md-6">
-                            <!-- Upload Profile Picture -->
-                            <button type="button" class="btn btn-outline-secondary w-100" data-bs-toggle="modal" data-bs-target="#uploadModal">
-                                <i class="fas fa-camera me-2"></i>Change Picture
-                            </button>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <!-- MFA Toggle -->
+                                <div class="col-md-4">
+                                    <form method="POST" action="{{ url_for('auth.toggle_mfa') }}">
+                                        <button type="submit" class="btn {% if mfa_enabled %}btn-outline-warning{% else %}btn-outline-primary{% endif %} w-100">
+                                            <i class="fas fa-shield-alt me-2"></i>
+                                            {% if mfa_enabled %}
+                                                Disable MFA
+                                            {% else %}
+                                                Enable MFA
+                                            {% endif %}
+                                        </button>
+                                    </form>
+                                    <small class="text-muted">
+                                        {% if mfa_enabled %}
+                                            <i class="fas fa-check-circle text-success me-1"></i>MFA is enabled
+                                        {% else %}
+                                            <i class="fas fa-times-circle text-warning me-1"></i>MFA is disabled
+                                        {% endif %}
+                                    </small>
+                                </div>
+
+                                <!-- Email Notifications Toggle - Using same logic as MFA -->
+                                <div class="col-md-4">
+                                    <form method="POST" action="{{ url_for('toggle_notifications') }}">
+                                        <button type="submit" class="btn {% if email_notif_enabled %}btn-outline-warning{% else %}btn-outline-success{% endif %} w-100">
+                                            <i class="fas fa-bell{% if not email_notif_enabled %}-slash{% endif %} me-2"></i>
+                                            {% if email_notif_enabled %}
+                                                Disable Notifications
+                                            {% else %}
+                                                Enable Notifications
+                                            {% endif %}
+                                        </button>
+                                    </form>
+                                    <small class="text-muted">
+                                        {% if email_notif_enabled %}
+                                            <i class="fas fa-check-circle text-success me-1"></i>Email notifications enabled
+                                        {% else %}
+                                            <i class="fas fa-times-circle text-warning me-1"></i>Email notifications disabled
+                                        {% endif %}
+                                    </small>
+                                </div>
+
+                                <!-- Change Profile Picture -->
+                                <div class="col-md-4">
+                                    <button type="button" class="btn btn-outline-secondary w-100" data-bs-toggle="modal" data-bs-target="#uploadModal">
+                                        <i class="fas fa-camera me-2"></i>Change Picture
+                                    </button>
+                                    <small class="text-muted">
+                                        <i class="fas fa-info-circle me-1"></i>Upload profile photo
+                                    </small>
+                                </div>
+                            </div>
                         </div>
                     </div>
 

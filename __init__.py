@@ -66,32 +66,40 @@ def user_profile():
     if not user_id:
         flash('Please log in first.', 'danger')
         return redirect(url_for('auth.login'))
-    
+
+    # Get fresh user data from database
     user = db.get_user_by_id(user_id)
     if not user:
         flash('User not found.', 'danger')
         return redirect(url_for('auth.login'))
 
+    # Create form and populate with current user data
     if request.method == 'GET':
         form = UserProfileForm()
         form.first_name.data = user['first_name']
         form.last_name.data = user['last_name']
         form.email.data = user['email']
+
     else:
         form = UserProfileForm(request.form)
 
+    # Get user preferences - using the same pattern as MFA
     mfa_enabled = db.is_user_mfa_enabled(user_id)
+    email_notif_enabled = db.is_user_email_notif_enabled(user_id)
 
     if request.method == 'POST':
         if form.validate():
             success = True
             password_changed = False
             
+            # Check if email already exists for another user
             if db.check_email_exists_for_other_user(form.email.data, user_id):
                 flash('Email already exists. Please use a different email.', 'danger')
                 success = False
             
+            # Handle password change if provided
             if form.current_password.data:
+                # Verify current password
                 if not db.verify_user_password(user_id, form.current_password.data):
                     flash('Current password is incorrect.', 'danger')
                     success = False
@@ -99,7 +107,7 @@ def user_profile():
                     flash('New password must be different from current password.', 'danger')
                     success = False
                 elif success:
-                   
+                    # Update password
                     new_hashed_password = db.hashed_pw(form.new_password.data)
                     if db.update_user_password_by_id(user_id, new_hashed_password):
                         password_changed = True
@@ -107,26 +115,66 @@ def user_profile():
                         flash('Error updating password. Please try again.', 'danger')
                         success = False
             
+            # Update basic profile information
             if success:
-                if db.update_user_info(user_id, form.first_name.data, form.last_name.data, form.email.data):
-                    session['email'] = form.email.data  
+                
+                try:
+                    update_result = db.update_user_info(user_id, form.first_name.data, form.last_name.data, form.email.data)
                     
-                    if password_changed:
-                        flash('Profile and password updated successfully!', 'success')
+                    if update_result:
+                        session['email'] = form.email.data  # Update session if email changes
+                        
+                        # Show appropriate success message
+                        if password_changed:
+                            flash('Profile and password updated successfully!', 'success')
+                        else:
+                            flash('Profile updated successfully!', 'success')
+                        
+                        
+                        # Redirect to prevent form resubmission
+                        return redirect(url_for('user_profile'))
                     else:
-                        flash('Profile updated successfully!', 'success')
-                    
-                    return redirect(url_for('user_profile'))
-                else:
+                        flash('Error updating profile. Please try again.', 'danger')
+                except Exception as e:
                     flash('Error updating profile. Please try again.', 'danger')
         else:
+            # Display form validation errors
+            print(f"DEBUG - Form validation errors: {form.errors}")
             for field, errors in form.errors.items():
                 for error in errors:
                     flash(f"{field.replace('_', ' ').title()}: {error}", 'danger')
 
-    app_logger.info("User %s accessed their profile page", session["user_id"])
-    return render_template('user_profile.html', user=user, mfa_enabled=mfa_enabled, form=form)
-   
+    return render_template('user_profile.html', user=user, mfa_enabled=mfa_enabled, 
+                         email_notif_enabled=email_notif_enabled, form=form)
+
+@app.route('/userProfile/toggleNotifications', methods=['POST'])
+@login_required
+def toggle_notifications():
+    user_id = session.get('user_id')
+    if not user_id:
+        flash('Please log in first.', 'danger')
+        return redirect(url_for('auth.login'))
+
+    try:
+        current_status = db.get_user_notification_status(user_id)
+        
+        # Toggle the status: if currently 1 (enabled), make it 0 (disabled), and vice versa
+        new_status_enabled = (current_status == 0)  # If current is 0, new should be enabled (True)
+        new_status_value = 1 if new_status_enabled else 0
+        
+        # Update the status
+        if db.update_user_notification_status(user_id, new_status_enabled):
+            if new_status_enabled:
+                flash('Email notifications have been enabled.', 'success')
+            else:
+                flash('Email notifications have been disabled.', 'success')
+        else:
+            flash('Error updating notification settings. Please try again.', 'danger')
+            
+    except Exception as e:
+        flash('Error updating notification settings. Please try again.', 'danger')
+    
+    return redirect(url_for('user_profile'))
 
 @app.route('/exploreGroups')
 @login_required
