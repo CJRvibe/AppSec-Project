@@ -84,6 +84,17 @@
             {% endcall %}
         </form>
     </div>
+    {% elif activity.get('status') == 'approved' %}
+    <div class="col justify-content-end d-flex">
+        <form method="POST">
+            <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#suspend">Suspend</button>
+
+            {% call create_modal("suspend", "Confirm Suspension", "Are you sure you want to suspend this activtity?") %}
+                <button type="submit" data-bs-dismiss="modal" class="btn btn-danger" formaction="{{url_for('admin.suspend_activity', id=activity.get('activity_id'))}}">Suspend</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            {% endcall %}
+        </form>
+    </div>
     {% endif %}
 </div>
 {% endblock %}

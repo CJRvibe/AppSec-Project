@@ -16,6 +16,9 @@
     <li class="nav-item">
         <a class="nav-link {%if type == 'rejected'%}active disabled{%endif%}" href="{{url_for('admin.manage_rejected_activities')}}">Rejected Activities</a>
     </li>
+    <li class="nav-item">
+        <a class="nav-link {%if type == 'suspended'%}active disabled{%endif%}" href="{{url_for('admin.manage_suspended_activities')}}">Suspended Activities</a>
+    </li>
 </ul>
 
 <table class="table table-hover table-striped text-center table-bordered mt-4">
