@@ -1,7 +1,5 @@
 from flask import Flask, render_template, redirect, url_for, request, abort, session, Blueprint, flash
-from access_control import login_required, role_required
 from utils import mail, limiter, send_email
-from access_control import role_required
 import logging
 import db
 

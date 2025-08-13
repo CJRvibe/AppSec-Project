@@ -52,6 +52,7 @@ def validate_mfa_code():
     
     totp = pyotp.TOTP(secret)
     if totp.verify(code):
+        app_logger.info("User %s has successfully validated their MFA code", session["user_id"])
         return {'success': True, 'message': 'Code is valid'}
     else:
         return {'success': False, 'message': 'Invalid code'}
@@ -83,6 +84,7 @@ def sign_up():
         if existing_user:
             clear_flash_messages()
             flash('An account with this email already exists.', 'danger')
+            app_logger.info("A user tried to sign up with an email that already exist in the database")
             return render_template('sign_up.html', form=form)
 
         hashed_password = db.hashed_pw(password)
@@ -192,7 +194,7 @@ def resend_verification_code():
         body=f"Your new email verification code is: {new_code}\n\nPlease enter this code to complete your registration.\n\nIf you did not create an account, please ignore this email."
     )
     flash('A new verification code has been sent to your email.', 'success')
-    
+    app_logger.info("A verification code has been sent to user %s to verify their email", session["user_id"])
     return redirect(url_for('.verify_email'))
 
 
@@ -200,7 +202,8 @@ def login_success():
     return g.login_success
 
 @auth.route('/login', methods=['GET', 'POST'])
-@limiter.limit("3/minute;15/day", methods=["POST"], deduct_when=lambda response: login_success)
+@limiter.limit("3/minute;15/day", methods=["POST"], deduct_when=lambda response: login_success,
+               on_breach=lambda: app_logger.warning("A user has failed login multiple times and have been ratelimited"))
 def login():
     g.login_success = False
     if request.method == 'GET':
@@ -284,13 +287,15 @@ def forget_password():
     return render_template('forget_password.html')
 
 @auth.route('/enterPin', methods=['GET', 'POST'])
-@limiter.limit("4/minute;10/day", methods=["POST"])
+@limiter.limit("4/minute;10/day", methods=["POST"], deduct_when=lambda: g.pin_success,
+               on_breach=lambda: app_logger.warning("Too many failed attempts at trying to reset a password"))
 def enter_pin():
     if request.method == 'GET':
         clear_flash_messages()
         pass
     
     if request.method == 'POST':
+        g.pin_success = False
         clear_flash_messages()
         entered_pin = request.form.get('pin')
         
@@ -299,6 +304,7 @@ def enter_pin():
             return render_template('enter_pin.html')
         
         if entered_pin == session.get('reset_pin') and "reset_email" in session:
+            g.pin_success = True
             flash('PIN verified. Please enter a new password.', 'success')
             user = db.get_user_by_email(session["reset_email"])
             app_logger.info("User %s has entered the correct pin to reset his password, and been redirected to password change page", user["user_id"])
@@ -316,6 +322,7 @@ def resend_pin():
     clear_flash_messages()
     
     if 'reset_email' not in session:
+        app_logger.warning("A user tried to change an account password with an invalid session")
         flash('Invalid session. Please restart the password reset process.', 'danger')
         return redirect(url_for('.forget_password'))
     
@@ -345,6 +352,7 @@ def change_password():
     
     if 'reset_email' not in session or 'reset_pin' not in session:
         clear_flash_messages()
+        app_logger.warning("A user tried to change an account password with an invalid session")
         flash('Invalid session. Please restart the password reset process.', 'danger')
         return redirect(url_for('.forget_password'))
     
@@ -462,7 +470,6 @@ def choose_role():
             flash('Invalid role selected.', 'danger')
             return render_template('choose_role.html')
         
-        print(f"DEBUG - Attempting to update role for user {user_id} to {role}")
         
         if db.update_user_role(user_id, role):
             session['role'] = int(role)
@@ -495,6 +502,7 @@ def login_mfa():
         
         secret = db.get_user_mfa_secret(user_id)
         if not secret:
+            app_logger.warning("User %s tried to authenticate via MFA but MFA is not properly configured", user_id)
             flash('MFA not properly configured. Please contact support.', 'danger')
             return redirect(url_for('.login'))
         
@@ -552,6 +560,7 @@ def setup_mfa():
             app_logger.info("User %s successfully setup MFA on their account", session["user_id"])
             return redirect(url_for('user_profile'))
         else:
+            app_logger.warning("User %s has entered an invalid code when setting up MFA", user_id)
             flash('Invalid code. Please check your authenticator app and try again.', 'danger')
             return render_template('verify_mfa.html')
 
@@ -566,6 +575,7 @@ def toggle_mfa():
     
     if is_mfa_enabled:
         db.disable_user_mfa(user_id)
+        app_logger.info("User %s has disabled MFA on their account", session["user_id"])
         flash('MFA disabled.', 'info')
     else:
         app_logger.info("User %s is attempting to setup MFA", session["user_id"])
