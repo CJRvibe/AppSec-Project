@@ -17,6 +17,7 @@ flask-limiter = "*"
 email-validator = "*"
 flask-executor = "*"
 flask-wtf = "*"
+pillow = "*"
 
 [dev-packages]
 
