@@ -8,14 +8,27 @@ import logging
 import db
 import uuid
 import os
+from PIL import Image
 
 from access_control import role_required, login_required
+
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
 volunteer = Blueprint("volunteer", __name__, template_folder="templates")
 app_logger = logging.getLogger("app")
 
 update_limit = limiter.shared_limit("10/minute;50/day", scope="update limit for volunteer functions")
 
+update_limit = limiter.shared_limit("10/minute;50/day", scope="update limit for volunteer functions")
+
+def is_valid_image(file_stream):
+    try:
+        img = Image.open(file_stream)
+        img.verify()  # Checks file integrity
+        file_stream.seek(0)  # Reset pointer for further use
+        return True
+    except Exception:
+        return False
 
 @volunteer.before_request # access control for volunteer
 def check_is_volunteer():
@@ -118,7 +131,7 @@ def create_group_proposal():
             file = request.files.get("picture")
             filename = None
 
-            if file and file.filename:
+            if file and file.filename and is_valid_image(file.stream):
                 filename = secure_filename(file.filename)
                 file.save(os.path.join(app.config["UPLOAD_FOLDER_GROUPS"], filename))
 
@@ -166,7 +179,7 @@ def create_activity_proposal(group_id):
             tags = [tag.get("value") for tag in decoded_tags if "value" in tag]
             file = request.files.get("picture")
             filename = None
-            if file and file.filename:
+            if file and file.filename and is_valid_image(file.stream):
                 filename = secure_filename(file.filename)
                 file.save(os.path.join(app.config["UPLOAD_FOLDER_ACTIVITIES"], filename))
             db.add_activity_proposal(
