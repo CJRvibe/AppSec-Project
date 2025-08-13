@@ -34,7 +34,6 @@ app.config["SEMATEXT_PASSWORD"] = os.environ["SEMATEXT_PASSWORD"]
 app.config["GOOGLE_CLIENT_SECRET"] = os.environ["GOOGLE_CLIENT_SECRET"]
 app.config["UPLOAD_FOLDER_GROUPS"] = UPLOAD_FOLDER_GROUPS
 app.config["UPLOAD_FOLDER_ACTIVITIES"] = UPLOAD_FOLDER_ACTIVITIES
-app.config['MAX_CONTENT_LENGTH'] = 2 * 1024 * 1024  # 2MB
 
 os.makedirs(UPLOAD_FOLDER_GROUPS, exist_ok=True)
 os.makedirs(UPLOAD_FOLDER_ACTIVITIES, exist_ok=True)
@@ -532,9 +531,13 @@ def internal_error(error):
     app_logger.exception("An internal error occurred:\n %s", error)
     return render_template('error_page.html', main_message="Internal server error", description=None), 500
 
+# if __name__ == "__main__":
+#     app_logger.info("New application process started")
+#     app.run()
 
 
 if __name__ == "__main__":
+    app_logger.info("New application process started")
     app.run()
 
 

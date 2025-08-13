@@ -11,6 +11,8 @@ class Config:
     GOOGLE_DISCOVERY_URL = "https://accounts.google.com/.well-known/openid-configuration"
     EXECUTOR_TYPE = "thread"
     EXECUTOR_MAX_WORKERS = 5
+    MAX_FORM_MEMORY_SIZE = 1 * 1024 * 1024  # 1 MB
+    MAX_CONTENT_LENGTH = 2 * 1024 * 1024  # 2MB
 
 
 class DevelopmentConfig(Config):
