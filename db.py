@@ -439,10 +439,8 @@ def update_user_profile_pic(user_id, profile_pic):
     )
     conn.commit()
     if cursor.rowcount > 0:
-        print(f"DEBUG - Profile pic updated successfully for user {user_id}")
         return True
     else:
-        print(f"DEBUG - No rows affected when updating profile pic for user {user_id}")
         return False
 
 def get_user_by_email(email):
@@ -480,7 +478,6 @@ def update_user_info(user_id, first_name, last_name, email):
     current_user = cursor.fetchone()
     
     if not current_user:
-        print(f"ERROR - User {user_id} not found")
         return False
     
     # Check if any data has actually changed
@@ -846,7 +843,6 @@ def disable_user_mfa(user_id):
     cursor = conn.cursor()
     cursor.execute("UPDATE users SET mfa_enabled = 0, mfa_secret = NULL WHERE user_id = %s", (user_id,))
     conn.commit()
-    print(f"DEBUG - MFA disabled for user {user_id}")
     return True
 
 def reject_user(user_id, group_id):
@@ -940,7 +936,6 @@ def update_user_password_by_id(user_id, new_hashed_password):
         (new_hashed_password, user_id)
     )
     conn.commit()
-    print(f"DEBUG - Password updated successfully for user {user_id}")
     return cursor.rowcount > 0
 
 
@@ -951,3 +946,49 @@ def check_email_exists_for_other_user(email, user_id):
     cursor.execute("SELECT user_id FROM users WHERE email = %s AND user_id != %s", (email, user_id))
     result = cursor.fetchone()
     return result is not None
+
+def enable_user_email_notif(user_id):
+    """Enable email notifications for user"""
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("UPDATE users SET email_notif = 1 WHERE user_id = %s", (user_id,))
+    conn.commit()
+
+def disable_user_email_notif(user_id):
+    """Disable email notifications for user"""
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("UPDATE users SET email_notif = 0 WHERE user_id = %s", (user_id,))
+    conn.commit()
+
+def is_user_email_notif_enabled(user_id):
+    """Check if user has email notifications enabled"""
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT email_notif FROM users WHERE user_id = %s", (user_id,))
+    result = cursor.fetchone()
+    is_enabled = bool(result[0]) if result else True  # Default to enabled
+    return is_enabled
+
+def get_user_notification_status(user_id):
+    """Get user's email notification preference (returns 1 for enabled, 0 for disabled)"""
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT email_notif FROM users WHERE user_id = %s", (user_id,))
+    result = cursor.fetchone()
+    notification_status = result[0] if result else 1  # Default to enabled (1) if not found
+    return notification_status
+
+def update_user_notification_status(user_id, enabled):
+    """Update user's email notification preference (enabled=True sets to 1, enabled=False sets to 0)"""
+    conn = get_db()
+    cursor = conn.cursor()
+    new_value = 1 if enabled else 0
+    
+    cursor.execute(
+        "UPDATE users SET email_notif = %s WHERE user_id = %s",
+        (new_value, user_id)
+    )
+    conn.commit()
+    
+    return True  # Always return True if no exception occurred
