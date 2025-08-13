@@ -194,6 +194,7 @@ def group_home(group_id):
 
     group = db.get_group_by_id(group_id)
     if not group:
+        app_logger.warning("User %s attempted to find an invalid group of ID %s", session["user_id"], group_id)
         abort(404, description="Unable to find group.")
 
     join_status_id = db.get_user_group_status_id(user_id, group_id) if user_id else None
@@ -217,6 +218,7 @@ def group_home(group_id):
 
 @app.route('/join_group/<int:group_id>', methods=['POST'])
 @role_required(1, 2)
+@limiter.limit("10/minute;50/day", methods=["POST"])
 def join_group(group_id):
     user_id = session.get('user_id')
     if not user_id:
@@ -250,6 +252,7 @@ def join_group(group_id):
 
 @app.route('/leave_group/<int:group_id>', methods=['POST'])
 @role_required(1, 2)
+@limiter.limit("10/minute;50/day", methods=["POST"])
 def leave_group(group_id):
     user_id = session.get('user_id')
     if not user_id:
@@ -261,7 +264,7 @@ def leave_group(group_id):
 
     status_id = db.get_user_group_status_id(user_id, group_id)
     if status_id != 2:
-        app_logger.info("User %s attempted to leave group %s without being a full member", user_id, group_id)
+        app_logger.warning("User %s attempted to leave group %s without being a full member", user_id, group_id)
         flash("You are not an approved member of this group.", "warning")
         return redirect(url_for('my_groups'))
 
@@ -305,6 +308,7 @@ def view_group_activity(group_id, activity_id):
 
 @app.route('/register_activity/<int:activity_id>', methods=['POST'])
 @role_required(1, 2)
+@limiter.limit("10/minute;50/day", methods=["POST"])
 def register_activity(activity_id):
     user_id = session.get('user_id')
     if not user_id:
@@ -346,13 +350,14 @@ def register_activity(activity_id):
     app_logger.info("User %s registered for activity %s by group %s", session["user_id"], activity["name"], group["name"])
     return redirect(request.referrer or url_for('home'))
 
-@app.route("/test-discussion")
-def discussion_forum():
-    return render_template("group_discussion.html")
+# @app.route("/test-discussion")
+# def discussion_forum():
+#     return render_template("group_discussion.html")
 
 
 @app.route('/userProfile/upload', methods=['POST'])
 @login_required
+@limiter.limit("5/minute;20/day")
 def upload_file():
     user_id = session.get('user_id')
     if not user_id:
@@ -371,7 +376,7 @@ def upload_file():
         file.save(save_path)
 
         db.update_user_profile_pic(user_id, filename)
-
+        app_logger.info("User %s uploaded a user profile of with filename %s", session["user_id"], filename)
         return redirect(url_for('user_profile'))
 
     return 'Invalid file', 400
@@ -475,14 +480,15 @@ def internal_error(error):
     app_logger.exception("An internal error occurred:\n %s", error)
     return render_template('error_page.html', main_message="Internal server error", description=None), 500
 
-# if __name__ == "__main__":
-#     app.run()
-
-
 if __name__ == "__main__":
-    app.run(
-        host="127.0.0.1",
-        port=5000,
-        ssl_context=('certs/127.0.0.1+1.pem', 'certs/127.0.0.1+1-key.pem'),
-        debug=True
-    )
+    app_logger.info("New application process started")
+    app.run()
+
+
+# if __name__ == "__main__":
+#     app.run(
+#         host="127.0.0.1",
+#         port=5000,
+#         ssl_context=('certs/127.0.0.1+1.pem', 'certs/127.0.0.1+1-key.pem'),
+#         debug=True
+#     )

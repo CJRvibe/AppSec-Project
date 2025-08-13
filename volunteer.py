@@ -14,9 +14,11 @@ from access_control import role_required, login_required
 volunteer = Blueprint("volunteer", __name__, template_folder="templates")
 app_logger = logging.getLogger("app")
 
+update_limit = limiter.shared_limit("10/minute;50/day")
+
 
 @volunteer.before_request # access control for volunteer
-def check_is_admin():
+def check_is_volunteer():
     if "user_id" not in session:
         abort(401, description="You are not authenticated, please login")
     elif session.get("role") != 2:
@@ -24,6 +26,7 @@ def check_is_admin():
 
 
 @volunteer.route('/dashboard/<int:group_id>')
+@limiter.limit("20/minute")
 def dashboard(group_id):
     user_id = session.get("user_id")
 
@@ -50,7 +53,7 @@ def dashboard(group_id):
     )
 
 @volunteer.route("/dashboard/<int:group_id>/approve_user/<int:user_id>", methods=["POST"])
-@limiter.limit("20/hour;60/day")
+@update_limit
 def approve_user(group_id, user_id):
     current_user_id = session.get("user_id")
 
@@ -67,7 +70,7 @@ def approve_user(group_id, user_id):
     return redirect(url_for("volunteer.dashboard", group_id=group_id, view="users"))
 
 @volunteer.route("/dashboard/<int:group_id>/remove_user/<int:user_id>", methods=["POST"])
-@limiter.limit("1/second;20/hour;60/day")
+@update_limit
 def remove_user(group_id, user_id):
     current_user_id = session.get("user_id")
 
@@ -84,6 +87,7 @@ def remove_user(group_id, user_id):
     return redirect(url_for("volunteer.dashboard", group_id=group_id, view="users"))
 
 @volunteer.route("/dashboard/<int:group_id>/remove_activity/<int:activity_id>", methods=["POST"])
+@update_limit
 def remove_activity(group_id, activity_id):
     user_id = session.get("user_id")
 
@@ -103,7 +107,7 @@ def remove_activity(group_id, activity_id):
     return redirect(url_for("volunteer.dashboard", group_id=group_id, view="activities"))
 
 @volunteer.route("/createInterestGroupProposal", methods=["GET", "POST"])
-@limiter.limit("3/hour;7/day", methods=["POST"])
+@limiter.limit("10/hour;20/day", methods=["POST"])
 def create_group_proposal():
     user_id = session.get("user_id")
 
@@ -139,7 +143,7 @@ def create_group_proposal():
     return render_template("volunteer/create_interest_group_proposal.html", form=proposal_form)
 
 @volunteer.route("/createActivityProposal/<int:group_id>", methods=["GET", "POST"])
-@limiter.limit("5/hour;10/day", methods=["POST"])
+@limiter.limit("15/hour;30/day", methods=["POST"])
 def create_activity_proposal(group_id):
     user_id = session.get("user_id")
 
@@ -200,6 +204,7 @@ def volunteer_dashboard_groups():
     return render_template('volunteer/group_list_dashboard.html', groups=groups)
 
 @volunteer.route("/dashboard/<int:group_id>/reject_user/<int:user_id>", methods=["POST"])
+@update_limit
 def reject_user(group_id, user_id):
     user = session.get("user_id")
     group = db.get_group_by_id(group_id)
