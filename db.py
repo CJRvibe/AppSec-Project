@@ -262,7 +262,10 @@ def check_user_joined_group(user_id, group_id):
     cursor = connection.cursor()
     statement = "SELECT * FROM user_interest_group WHERE user_id = %s AND group_id = %s AND status_id = 2"
     cursor.execute(statement, (user_id, group_id))
-    return bool(cursor.fetchone())
+    if cursor.fetchone():
+        return True 
+    else:
+        return False
 
 def join_group(user_id, group_id):
     connection = get_db()
@@ -342,21 +345,35 @@ def admin_get_flagged_groups():
 
 def admin_get_flagged_group(id):
     connection = get_db()
-    cursor = connection.cursor()
+    cursor = connection.cursor(dictionary=True)
     statement = """
-    SELECT fg.flag_id, fg.status_id, fg.user_id
+    SELECT fg.flag_id, fg.group_id, fg.status_id, fg.user_id
     FROM flagged_groups fg
-    INNER JOIN users u ON u.user_id = fg.flag_id
+    INNER JOIN users u ON u.user_id = fg.user_id
     WHERE flag_id = %s
     """
 
-    cursor.execute(statement)
+    cursor.execute(statement, (id, ))
+    return cursor.fetchone()
+
+
+def admin_get_flagged_activity(id):
+    connection = get_db()
+    cursor = connection.cursor(dictionary=True)
+    statement = """
+    SELECT fa.flag_id, fa.activity_id, fa.status_id, fa.user_id
+    FROM flagged_activities fa
+    INNER JOIN users u ON u.user_id = fa.user_id
+    WHERE flag_id = %s
+    """
+
+    cursor.execute(statement, (id, ))
     return cursor.fetchone()
 
 
 def admin_update_group_flag_request(id, approved=False):
     connection = get_db()
-    cursor = connection.cursor()
+    cursor = connection.cursor(dictionary=True)
     status = 2 if approved else 3
     statement = """
     UPDATE flagged_groups
@@ -365,6 +382,21 @@ def admin_update_group_flag_request(id, approved=False):
     """
 
     cursor.execute(statement, (status, id))
+    connection.commit()
+
+
+def admin_update_activity_flag_request(id, approved=False):
+    connection = get_db()
+    cursor = connection.cursor(dictionary=True)
+    status = 2 if approved else 3
+    statement = """
+    UPDATE flagged_activities
+    SET status_id = %s
+    WHERE flag_id = %s
+    """
+
+    cursor.execute(statement, (status, id))
+    connection.commit()
 
 def get_user_profile_pic(user_id):
     """Get user profile picture filename"""
