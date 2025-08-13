@@ -144,11 +144,18 @@ def manage_pending_activities():
     return render_template("admin/manage_activities.html", activities=activities, type="pending")
 
 
-@admin.route("/gropupActivities/rejectedActivities")
+@admin.route("/groupActivities/rejectedActivities")
 def manage_rejected_activities():
     activities = db.admin_get_group_activities(type="rejected")
     app_logger.info("Admin %s accessed rejected activities", session.get("user_id"))
     return render_template("admin/manage_activities.html", activities=activities, type="rejected")
+
+
+@admin.route("/groupActivities/suspendedActivities")
+def manage_suspended_activities():
+    activities = db.admin_get_group_activities(type="suspended")
+    app_logger.info("Admin %s accessed suspended activities", session.get("user_id"))
+    return render_template("admin/manage_activities.html", activities=activities, type="suspended")
 
 
 @admin.route("/groupActivities/<int:id>")
@@ -347,7 +354,7 @@ def suspend_group(id):
         abort(405, description="Method not allowed for this group")
     else:
         db.admin_suspend_group(id)
-        app_logger.info("Admin %s suspended group %s", session.get("user_id"), group.get("group_id"))
+        app_logger.info("Admin %s suspended group %s and all its activities", session.get("user_id"), group.get("group_id"))
         
         user = db.get_user_by_id(group["owner"])
         if user["email_notif"]:
@@ -355,6 +362,27 @@ def suspend_group(id):
             app_logger.info(f"Email successfully send to User {group['owner']} to notify of group suspension")
 
         return redirect(url_for(".manage_suspended_groups"))
+
+
+@admin.route("groupActivities/suspend/<int:id>", methods=["POST"])
+def suspend_activity(id):
+    activity = db.admin_get_group_activity(id)
+
+    if not activity:
+        abort(404, description="Activity not found")
+    elif activity and activity.get("status") != "approved":
+        abort(405, description="Method not allowed for this act")
+    else:
+        db.admin_suspend_activity(id)
+        app_logger.info("Admin %s suspended activity %s", session.get("user_id"), activity.get("group_id"))
+        
+        group = db.admin_get_group_by_id(activity["group_id"])
+        user = db.get_user_by_id(group["owner"])
+        if user["email_notif"]:
+            send_email.submit(user["email"], f"Activity {activity['activity_id']} Suspended", f"Your activity {activity['name']} has been suspended. This was a decision made by the admins. If you have any queries, please contact us.")
+            app_logger.info(f"Email successfully send to User {group['owner']} to notify of activity suspension")
+
+        return redirect(url_for(".manage_suspended_activities"))
 
 
 @admin.route('/users/<int:user_id>/suspend', methods=['POST'])
