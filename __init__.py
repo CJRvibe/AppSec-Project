@@ -12,9 +12,11 @@ import db
 import config
 import admin
 import volunteer
+from safe_requests import is_url_safe, safe_fetch
 from werkzeug.utils import secure_filename
 from access_control import login_required, role_required, group_member_required
 import auth
+from PIL import Image
 
 dotenv.load_dotenv()
 
@@ -54,6 +56,28 @@ def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+def is_valid_image(file_stream):
+    try:
+        img = Image.open(file_stream)
+        img.verify()  # Checks file integrity
+        file_stream.seek(0)  # Reset pointer for further use
+        return True
+    except Exception:
+        return False
+
+@app.before_request
+def ssrf_guard():
+    # Check query params and form data
+    for param, value in {**request.args, **request.form}.items():
+        if value.startswith("http://") or value.startswith("https://"):
+            ok, error = is_url_safe(value)
+            if not ok:
+                abort(400, f"SSRF Blocked: {error}")
+
+# [FOR ALL] If you are letting user input urls, use safe_fetch as shown below:
+#   url = request.args.get("url")
+#   resp = safe_fetch(url)
+#   return resp.content
 
 @app.route('/')
 def index():
@@ -347,7 +371,7 @@ def upload_file():
         return 'No file uploaded', 400
 
     file = request.files['file']
-    if file and allowed_file(file.filename):
+    if file and allowed_file(file.filename) and is_valid_image(file.stream):
         filename = secure_filename(file.filename)
 
         filename = f"user_{user_id}_" + filename
