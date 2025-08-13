@@ -531,13 +531,8 @@ def internal_error(error):
     app_logger.exception("An internal error occurred:\n %s", error)
     return render_template('error_page.html', main_message="Internal server error", description=None), 500
 
-# if __name__ == "__main__":
-#     app_logger.info("New application process started")
-#     app.run()
-
 
 if __name__ == "__main__":
-    app_logger.info("New application process started")
     app.run()
 
 
