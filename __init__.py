@@ -463,7 +463,6 @@ def internal_error(error):
 
 
 if __name__ == "__main__":
-    app_logger.info("New application process started")
     app.run()
 
 

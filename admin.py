@@ -69,6 +69,13 @@ def manage_reject_groups():
     return render_template("admin/manage_groups.html", groups=groups, type="rejected")
 
 
+@admin.route("/interestGroups/suspendedGroups")
+def manage_suspended_groups():
+    groups = db.admin_get_groups(type="suspended")
+    app_logger.info("Admin %s accessed suspended groups", session.get("user_id"))
+    return render_template("admin/manage_groups.html", groups=groups, type="suspended")
+
+
 @admin.route("/interestGroups/<int:id>")
 def view_group(id):
     group = db.admin_get_group_by_id(id)
@@ -328,6 +335,26 @@ def reject_activity_flag(flag_id:int):
             app_logger.info(f"Email successfully send to User {group['owner']} to notify of flag group rejection")
 
         return redirect(url_for(".manage_flagged_activities"))
+    
+
+@admin.route("interestGroups/suspend/<int:id>", methods=["POST"])
+def suspend_group(id):
+    group = db.admin_get_group_by_id(id)
+
+    if not group:
+        abort(404, description="Group not found")
+    elif group and group.get("status") != "approved":
+        abort(405, description="Method not allowed for this group")
+    else:
+        db.admin_suspend_group(id)
+        app_logger.info("Admin %s suspended group %s", session.get("user_id"), group.get("group_id"))
+        
+        user = db.get_user_by_id(group["owner"])
+        if user["email_notif"]:
+            send_email.submit(user["email"], f"Group {group['group_id']} Suspended", f"Your active group {group['name']} has been approved suspended. This was a decision made by the admins. If you have any queries, please contact us.")
+            app_logger.info(f"Email successfully send to User {group['owner']} to notify of group suspension")
+
+        return redirect(url_for(".manage_suspended_groups"))
 
 
 @admin.route('/users/<int:user_id>/suspend', methods=['POST'])

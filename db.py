@@ -39,7 +39,7 @@ def insert_user(first_name, last_name, email, password, user_role):
     )
     conn.commit()
     return True
-\
+
 
 def verify_user(email, password):
     conn = get_db()
@@ -205,6 +205,7 @@ def admin_get_groups(type="approved"):
     if type == "pending": status_id = 1
     elif type == "approved": status_id = 2
     elif type == "rejected": status_id = 3
+    elif type == "suspended": status_id = 6
 
     statement = """
     SELECT ig.group_id, ig.name, ig.topic, ig.max_size, ig.is_public, ig.owner, ac.title occurence
@@ -396,6 +397,25 @@ def admin_update_activity_flag_request(id, approved=False):
     """
 
     cursor.execute(statement, (status, id))
+    connection.commit()
+
+def admin_suspend_group(id):
+    connection = get_db()
+    cursor = connection.cursor()
+    statement_1 = """
+    UPDATE interest_group
+    SET status_id = 6
+    WHERE group_id = %s
+    """
+    
+    statement_2 = """
+    UPDATE interest_activity
+    SET status_id = 6
+    WHERE group_id = %s;
+    """
+
+    cursor.execute(statement_1, (id, ))
+    cursor.execute(statement_2, (id, ))
     connection.commit()
 
 def get_user_profile_pic(user_id):
