@@ -19,8 +19,6 @@ app_logger = logging.getLogger("app")
 
 update_limit = limiter.shared_limit("10/minute;50/day", scope="update limit for volunteer functions")
 
-update_limit = limiter.shared_limit("10/minute;50/day", scope="update limit for volunteer functions")
-
 def is_valid_image(file_stream):
     try:
         img = Image.open(file_stream)
