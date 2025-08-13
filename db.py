@@ -815,3 +815,53 @@ def get_group_status(activity_id):
     result = cursor.fetchone()
     
     return result['status_id'] if result else None
+
+def is_root_admin(user_id):
+    """Check if user is the root admin (admin@gmail.com)"""
+    conn = get_db()
+    cursor = conn.cursor(dictionary=True)
+    try:
+        cursor.execute("SELECT email FROM users WHERE user_id = %s", (user_id,))
+        result = cursor.fetchone()
+        return result and result['email'] == 'admin@gmail.com'
+    except Exception as e:
+        print(f"Error checking root admin status: {e}")
+        return False
+    finally:
+        cursor.close()
+
+def is_root_admin_by_email(email):
+    """Check if email is the root admin"""
+    return email == 'admin@gmail.com'
+
+def can_suspend_user(admin_user_id, target_user_id):
+    """Check if admin can suspend the target user"""
+    conn = get_db()
+    cursor = conn.cursor(dictionary=True)
+    try:
+        # Get admin info
+        cursor.execute("SELECT email, user_role FROM users WHERE user_id = %s", (admin_user_id,))
+        admin = cursor.fetchone()
+        
+        # Get target user info
+        cursor.execute("SELECT email, user_role FROM users WHERE user_id = %s", (target_user_id,))
+        target = cursor.fetchone()
+        
+        if not admin or not target:
+            return False
+        
+        # Root admin can suspend anyone except themselves
+        if admin['email'] == 'admin@gmail.com':
+            return target['email'] != 'admin@gmail.com'
+        
+        # Regular admins can only suspend non-admin users (roles 1 and 2)
+        if admin['user_role'] == 3:
+            return target['user_role'] in [1, 2]
+        
+        return False
+        
+    except Exception as e:
+        print(f"Error checking suspension permissions: {e}")
+        return False
+    finally:
+        cursor.close()

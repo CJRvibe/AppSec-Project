@@ -211,13 +211,19 @@ def admin_view_users():
     ]
 
     selected_role = request.args.get('role', '')
+    current_user_id = session.get('user_id')
 
     if selected_role != '':
         users = db.get_users_by_role(int(selected_role))
-        app_logger.info("Admin %s accessed information of all users", session.get("user_id"))
+        app_logger.info("Admin %s accessed information of all %s role users", current_user_id, selected_role)
     else:
         users = db.get_all_users()
-        app_logger.info("Admin %s accessed information of all %s users", session.get("user_id"), selected_role)
+        app_logger.info("Admin %s accessed information of all users", current_user_id)
+
+    # Add current user email to session for template access
+    current_user = db.get_user_by_id(current_user_id)
+    if current_user:
+        session['email'] = current_user['email']
 
     return render_template(
         "admin/manage_users.html",
@@ -286,8 +292,20 @@ def reject_group_flag(id: int):
 def suspend_user(user_id):
     current_user_id = session.get('user_id')
     
+    # Prevent self-suspension
     if user_id == current_user_id:
         flash('You cannot suspend your own account.', 'danger')
+        app_logger.warning("Admin %s attempted to suspend their own account", current_user_id)
+        return redirect(url_for('admin.admin_view_users'))
+    
+    # Check if current user can suspend the target user
+    if not db.can_suspend_user(current_user_id, user_id):
+        user = db.get_user_by_id(user_id)
+        if user and user.get('user_role') == 3:
+            flash('You do not have permission to suspend other administrators.', 'danger')
+        else:
+            flash('You do not have permission to perform this action.', 'danger')
+        app_logger.warning("Admin %s attempted to suspend user %s without permission", current_user_id, user_id)
         return redirect(url_for('admin.admin_view_users'))
     
     user = db.get_user_by_id(user_id)
@@ -295,28 +313,64 @@ def suspend_user(user_id):
         flash('User not found.', 'danger')
         return redirect(url_for('admin.admin_view_users'))
     
-    if user.get('user_role') == 3:
-        flash('Cannot suspend other administrators.', 'danger')
+    # Root admin cannot be suspended
+    if db.is_root_admin_by_email(user['email']):
+        flash('The root administrator cannot be suspended.', 'danger')
+        app_logger.warning("Admin %s attempted to suspend root admin", current_user_id)
         return redirect(url_for('admin.admin_view_users'))
     
     current_status = db.get_user_suspension_status(user_id)
     new_status = 0 if current_status == 1 else 1  
     
-    
     if db.update_user_suspension_status(user_id, new_status):
         action = "suspended" if new_status == 1 else "activated"
         flash(f'User {user["first_name"]} {user["last_name"]} has been {action}.', 'success')
+        app_logger.info("Admin %s %s user %s (%s)", current_user_id, action, user_id, user['email'])
+        
+        # Send email notification if user has email notifications enabled
+        if user.get('email_notif') and new_status == 1:  # Only notify on suspension
+            try:
+                send_email.submit(
+                    recipient=user['email'],
+                    subject="Social Sage - Account Suspended",
+                    body=f"Your account has been suspended. Please contact support at admin@gmail.com for assistance."
+                )
+            except Exception as e:
+                app_logger.error("Failed to send suspension email to %s: %s", user['email'], str(e))
+    else:
+        app_logger.error("Failed to update suspension status for user %s", user_id)
 
-    
     return redirect(url_for('admin.admin_view_users'))
 
+def root_admin_required(f):
+    """Decorator to ensure only root admin can access certain routes"""
+    from functools import wraps
+    
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        current_user_id = session.get('user_id')
+        if not db.is_root_admin(current_user_id):
+            flash('Access denied. Root administrator privileges required.', 'danger')
+            app_logger.warning("Non-root admin %s attempted to access root-only function: %s", 
+                             current_user_id, f.__name__)
+            return redirect(url_for('.admin_view_users'))
+        return f(*args, **kwargs)
+    return decorated_function
+
 @admin.route('/users/create', methods=['GET', 'POST'])
+@root_admin_required
 def create_admin_user():
+    current_user_id = session.get('user_id')
+    
+    if not db.is_root_admin(current_user_id):
+        flash('Only the root administrator can create admin users.', 'danger')
+        app_logger.warning("Non-root admin %s attempted to access admin creation page", current_user_id)
+        return redirect(url_for('.admin_view_users'))
+    
     form = CreateAdminForm(request.form)
     
     if request.method == 'POST':
         if form.validate():
-
             hashed_password = db.hashed_pw(form.password.data)
             
             success = db.insert_user(
@@ -329,11 +383,13 @@ def create_admin_user():
             
             if success:
                 flash('Admin user created successfully!', 'success')
-                app_logger.info("Admin %s created new admin user with email %s", 
-                               session.get("user_id"), form.email.data)
+                app_logger.info("Root admin %s created new admin user with email %s", 
+                               current_user_id, form.email.data)
                 return redirect(url_for('.admin_view_users'))
             else:
                 flash('Error creating admin user. Please try again.', 'danger')
                 app_logger.error("Failed to create admin user with email %s", form.email.data)
+        else:
+            app_logger.warning("Root admin %s submitted invalid admin creation form", current_user_id)
     
     return render_template('admin/create_admin_user.html', form=form)

@@ -10,7 +10,9 @@
         <div class="card-body">
 
             <div class="d-flex justify-content-between align-items-center mb-4">
-                <h3 class="mb-0 fw-bold text-primary">Users Management</h3>                
+                <h3 class="mb-0 fw-bold text-primary">Users Management</h3>
+                <!-- Show Create Admin Button only for root admin -->
+
             </div>
             
             <!-- Filter Form -->
@@ -31,10 +33,13 @@
                     <div class="col-md-auto">
                         <button type="submit" class="btn btn-outline-primary">Apply Filter</button>
                     </div>
-                    <div class="col-md-auto text-end">
+                    
+                    <div class="col-md-auto">
+                        {% if session.get('email') == 'admin@gmail.com' %}
                         <a href="{{ url_for('admin.create_admin_user') }}" class="btn btn-success">
                             <i class="fas fa-plus me-2"></i>Create Admin User
                         </a>
+                    {% endif %}
                     </div>
                 </div>
             </form>
@@ -55,31 +60,50 @@
                     <tbody>
                         {% for user in users %}
                             {% set is_suspended = (user.is_suspended == 1) %}
-                            <tr class="{% if is_suspended %}table-warning{% endif %}">
+                            {% set is_root_admin = (user.email == 'admin@gmail.com') %}
+                            {% set current_user_is_root = (session.get('email') == 'admin@gmail.com') %}
+                            {% set can_suspend = (current_user_is_root and not is_root_admin) or (not current_user_is_root and user.user_role in [1, 2]) %}
+                            
+                            <tr class="{% if is_suspended %}table-warning{% endif %} {% if is_root_admin %}table-info{% endif %}">
                                 <td>{{ user.user_id }}</td>
                                 <td>{{ user.first_name }}</td>
                                 <td>{{ user.last_name }}</td>
-                                <td>{{ user.email }}</td>
+                                <td>
+                                    {{ user.email }}
+                                    {% if is_root_admin %}
+                                        <br><small class="badge bg-warning text-dark">ROOT ADMIN</small>
+                                    {% endif %}
+                                </td>
                                 <td>
                                     {% if user.user_role == 1 %}
                                         <span class="badge bg-success">Elderly</span>
                                     {% elif user.user_role == 2 %}
                                         <span class="badge bg-info text-dark">Volunteer</span>
                                     {% elif user.user_role == 3 %}
-                                        <span class="badge bg-danger">Admin</span>
+                                        {% if is_root_admin %}
+                                            <span class="badge bg-warning text-dark">Root Admin</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">Admin</span>
+                                        {% endif %}
                                     {% else %}
                                         <span class="badge bg-secondary">Unknown</span>
                                     {% endif %}
                                 </td>
                                 <td>
-                                    {% if user.user_id != session.user_id and user.user_role != 3 %}
-                                        <div class="d-flex flex-column align-items-center gap-2">
-                                            {% if is_suspended %}
-                                                <span class="badge bg-warning text-dark">Suspended</span>
-                                            {% else %}
-                                                <span class="badge bg-success">Active</span>
-                                            {% endif %}
-                                            
+                                    <div class="d-flex flex-column align-items-center gap-2">
+                                        <!-- Status Badge -->
+                                        {% if is_suspended %}
+                                            <span class="badge bg-warning text-dark">Suspended</span>
+                                        {% else %}
+                                            <span class="badge bg-success">Active</span>
+                                        {% endif %}
+                                        
+                                        <!-- Action Button or Status Text -->
+                                        {% if user.user_id == session.user_id %}
+                                            <span class="text-muted small">(You)</span>
+                                        {% elif is_root_admin %}
+                                            <span class="text-muted small">(Root Admin)</span>
+                                        {% elif can_suspend %}
                                             <form action="{{ url_for('admin.suspend_user', user_id=user.user_id) }}" 
                                                   method="post" class="d-inline">
                                                 {% if is_suspended %}
@@ -96,26 +120,16 @@
                                                     </button>
                                                 {% endif %}
                                             </form>
-                                        </div>
-                                    {% else %}
-                                        <div class="d-flex flex-column align-items-center gap-2">
-                                            {% if is_suspended %}
-                                                <span class="badge bg-warning text-dark">Suspended</span>
-                                            {% else %}
-                                                <span class="badge bg-success">Active</span>
-                                            {% endif %}
-                                            
+                                        {% else %}
                                             <span class="text-muted small">
-                                                {% if user.user_id == session.user_id %}
-                                                    (You)
-                                                {% elif user.user_role == 3 %}
-                                                    (Admin)
+                                                {% if user.user_role == 3 %}
+                                                    (Protected Admin)
                                                 {% else %}
-                                                    N/A
+                                                    (No Permission)
                                                 {% endif %}
                                             </span>
-                                        </div>
-                                    {% endif %}
+                                        {% endif %}
+                                    </div>
                                 </td>
                             </tr>
                         {% endfor %}
@@ -128,7 +142,7 @@
                     </div>
                 {% endif %}
             </div>
-
+            
         </div>
     </div>
 </div>
