@@ -85,69 +85,6 @@ def user_profile():
     app_logger.info("User %s accessed their profile page", session["user_id"])
     return render_template('user_profile.html', user=user, mfa_enabled=mfa_enabled)
 
-
-@app.route('/calendar')
-def calendar():
-    start_hour = 8
-    end_hour = 20
-    days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
-    timeslots = [f"{h:02d}:00" for h in range(start_hour, end_hour)]
-    
-    activities = {
-        #sample activities waiting for integation with database from lucas
-        (0, "08:00"): "Morning Walk",
-        (1, "09:00"): "Yoga Class",        
-        (2, "14:00"): "Medical Checkup",
-        (3, "11:00"): "Gardening Club", 
-        (3, "15:00"): "Book Reading",
-        (4, "18:00"): "Cooking Workshop",  
-        (5, "10:00"): "Art Therapy",    
-        (6, "19:00"): "Movie Night",
-    }
-    
-    week_grid = []
-    for hour in timeslots:
-        row = []
-        for day_index in range(7):
-            activity = activities.get((day_index, hour), "")
-            row.append(activity)
-        week_grid.append(row)
-    
-    return render_template(
-        'calendar.html',
-        week_grid=week_grid,
-        timeslots=timeslots,
-        days=days,
-        month_name="July",
-        year=2025,
-    )
-
-
-
-groups = [
-    {
-        "id": 1,
-        "category": "Handicraft",
-        "name": "Knitters",
-        "description": "Welcome to the knitting club, where we are all knitters",
-        "image": "img/elderly.jpg",
-        "activities": [
-            {"id": 1, "category": "Knitting", "name": "Elephant Knit", "image": "img/elderly.jpg", "min age": 60},
-            {"id": 2, "category": "Knitting", "name": "Knit Balls", "image": "img/elderly.jpg"},
-        ]
-    }, 
-    {
-        "id": 2,
-        "category": "Music & Vocal",
-        "name": "Karaoke",
-        "image": "img/karaoke.jpg",
-        "desc": "Sing your heart out in a private karaoke room!",
-        "timings": "Fridays 7PM - 9PM",
-        "min_age": 16,
-        "requirements": "Must love music and have noise tolerance. No prior singing experience required!",
-    }
-]
-
 @app.route('/exploreGroups')
 @login_required
 @role_required(1, 2)
