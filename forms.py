@@ -188,3 +188,30 @@ class SignUpForm(BaseForm):
     role = SelectField("Role", [
         validators.DataRequired(message="Role is required.")
     ], choices=[('volunteer', 'Volunteer'), ('elderly', 'Elderly')], default="")
+
+class CreateAdminForm(BaseForm):
+    first_name = StringField("First Name", [
+        validators.DataRequired(message="First name is required."),
+        validators.Length(min=2, max=50, message="First name must be between 2 and 50 characters."),
+        validate_name
+    ])
+    last_name = StringField("Last Name", [
+        validators.DataRequired(message="Last name is required."),
+        validators.Length(min=2, max=50, message="Last name must be between 2 and 50 characters."),
+        validate_name
+    ])
+    email = StringField("Email", [
+        validators.DataRequired(message="Email is required."),
+        validators.Email(message="Please enter a valid email address."),
+        validators.Length(max=120, message="Email is too long."),
+        validate_email_not_exists
+    ])
+    password = PasswordField("Password", [
+        validators.DataRequired(message="Password is required."),
+        validators.Length(min=8, max=128, message="Password must be between 8 and 128 characters."),
+        validate_password_strength
+    ])
+    confirm_password = PasswordField("Confirm Password", [
+        validators.DataRequired(message="Please confirm your password."),
+        validators.EqualTo('password', message="Passwords must match.")
+    ])

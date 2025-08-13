@@ -4,6 +4,7 @@ from utils import mail, limiter, send_email
 from access_control import role_required
 import logging
 import db
+from forms import CreateAdminForm
 
 admin = Blueprint("admin", __name__, template_folder="templates")
 app_logger = logging.getLogger("app")
@@ -308,3 +309,31 @@ def suspend_user(user_id):
 
     
     return redirect(url_for('admin.admin_view_users'))
+
+@admin.route('/users/create', methods=['GET', 'POST'])
+def create_admin_user():
+    form = CreateAdminForm(request.form)
+    
+    if request.method == 'POST':
+        if form.validate():
+
+            hashed_password = db.hashed_pw(form.password.data)
+            
+            success = db.insert_user(
+                form.first_name.data,
+                form.last_name.data,
+                form.email.data,
+                hashed_password,
+                3  
+            )
+            
+            if success:
+                flash('Admin user created successfully!', 'success')
+                app_logger.info("Admin %s created new admin user with email %s", 
+                               session.get("user_id"), form.email.data)
+                return redirect(url_for('.admin_view_users'))
+            else:
+                flash('Error creating admin user. Please try again.', 'danger')
+                app_logger.error("Failed to create admin user with email %s", form.email.data)
+    
+    return render_template('admin/create_admin_user.html', form=form)
