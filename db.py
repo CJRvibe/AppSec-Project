@@ -354,7 +354,21 @@ def admin_get_flagged_group(id):
     statement = """
     SELECT fg.flag_id, fg.group_id, fg.status_id, fg.user_id
     FROM flagged_groups fg
-    INNER JOIN users u ON u.user_id = fg.flag_id
+    INNER JOIN users u ON u.user_id = fg.user_id
+    WHERE flag_id = %s
+    """
+
+    cursor.execute(statement, (id, ))
+    return cursor.fetchone()
+
+
+def admin_get_flagged_activity(id):
+    connection = get_db()
+    cursor = connection.cursor(dictionary=True)
+    statement = """
+    SELECT fa.flag_id, fa.activity_id, fa.status_id, fa.user_id
+    FROM flagged_activities fa
+    INNER JOIN users u ON u.user_id = fa.user_id
     WHERE flag_id = %s
     """
 
@@ -368,6 +382,20 @@ def admin_update_group_flag_request(id, approved=False):
     status = 2 if approved else 3
     statement = """
     UPDATE flagged_groups
+    SET status_id = %s
+    WHERE flag_id = %s
+    """
+
+    cursor.execute(statement, (status, id))
+    connection.commit()
+
+
+def admin_update_activity_flag_request(id, approved=False):
+    connection = get_db()
+    cursor = connection.cursor(dictionary=True)
+    status = 2 if approved else 3
+    statement = """
+    UPDATE flagged_activities
     SET status_id = %s
     WHERE flag_id = %s
     """
