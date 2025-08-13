@@ -567,3 +567,4 @@ def toggle_mfa():
         return redirect(url_for('.setup_mfa'))
     
     return redirect(url_for('user_profile'))
+

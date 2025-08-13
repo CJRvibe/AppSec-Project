@@ -59,31 +59,74 @@ def allowed_file(filename):
 def index():
     return render_template("home.html")
 
-
 @app.route('/userProfile', methods=['GET', 'POST'])
+@login_required
 def user_profile():
     user_id = session.get('user_id')
-    mfa_enabled = db.is_user_mfa_enabled(user_id)
     if not user_id:
-        return redirect(url_for('login'))
-
+        flash('Please log in first.', 'danger')
+        return redirect(url_for('auth.login'))
+    
     user = db.get_user_by_id(user_id)
+    if not user:
+        flash('User not found.', 'danger')
+        return redirect(url_for('auth.login'))
+
+    if request.method == 'GET':
+        form = UserProfileForm()
+        form.first_name.data = user['first_name']
+        form.last_name.data = user['last_name']
+        form.email.data = user['email']
+    else:
+        form = UserProfileForm(request.form)
+
+    mfa_enabled = db.is_user_mfa_enabled(user_id)
 
     if request.method == 'POST':
-        first_name = request.form.get('first_name')
-        last_name = request.form.get('last_name')
-        email = request.form.get('email')
-        if first_name and last_name and email:
-            db.update_user_info(user_id, first_name, last_name, email)
-            session['email'] = email  # Update session if email changes
-            flash('Profile updated successfully!', 'success')
-            # Refresh user info after update
-            user = db.get_user_by_id(user_id)
-            app_logger.info("User %s updated their profile information", session["user_id"])
+        if form.validate():
+            success = True
+            password_changed = False
+            
+            if db.check_email_exists_for_other_user(form.email.data, user_id):
+                flash('Email already exists. Please use a different email.', 'danger')
+                success = False
+            
+            if form.current_password.data:
+                if not db.verify_user_password(user_id, form.current_password.data):
+                    flash('Current password is incorrect.', 'danger')
+                    success = False
+                elif form.current_password.data == form.new_password.data:
+                    flash('New password must be different from current password.', 'danger')
+                    success = False
+                elif success:
+                   
+                    new_hashed_password = db.hashed_pw(form.new_password.data)
+                    if db.update_user_password_by_id(user_id, new_hashed_password):
+                        password_changed = True
+                    else:
+                        flash('Error updating password. Please try again.', 'danger')
+                        success = False
+            
+            if success:
+                if db.update_user_info(user_id, form.first_name.data, form.last_name.data, form.email.data):
+                    session['email'] = form.email.data  
+                    
+                    if password_changed:
+                        flash('Profile and password updated successfully!', 'success')
+                    else:
+                        flash('Profile updated successfully!', 'success')
+                    
+                    return redirect(url_for('user_profile'))
+                else:
+                    flash('Error updating profile. Please try again.', 'danger')
         else:
-            flash('All fields are required.', 'danger')
+            for field, errors in form.errors.items():
+                for error in errors:
+                    flash(f"{field.replace('_', ' ').title()}: {error}", 'danger')
+
     app_logger.info("User %s accessed their profile page", session["user_id"])
-    return render_template('user_profile.html', user=user, mfa_enabled=mfa_enabled)
+    return render_template('user_profile.html', user=user, mfa_enabled=mfa_enabled, form=form)
+   
 
 @app.route('/exploreGroups')
 @login_required
@@ -412,6 +455,8 @@ def too_many_requests_error(error):
 def internal_error(error):
     app_logger.exception("An internal error occurred:\n %s", error)
     return render_template('error_page.html', main_message="Internal server error", description=None), 500
+
+
 
 if __name__ == "__main__":
     app.run()

@@ -215,3 +215,44 @@ class CreateAdminForm(BaseForm):
         validators.DataRequired(message="Please confirm your password."),
         validators.EqualTo('password', message="Passwords must match.")
     ])
+
+class UserProfileForm(BaseForm):
+    first_name = StringField("First Name", [
+        validators.DataRequired(message="First name is required."),
+        validators.Length(min=2, max=50, message="First name must be between 2 and 50 characters."),
+        validate_name
+    ])
+    last_name = StringField("Last Name", [
+        validators.DataRequired(message="Last name is required."),
+        validators.Length(min=2, max=50, message="Last name must be between 2 and 50 characters."),
+        validate_name
+    ])
+    email = StringField("Email", [
+        validators.DataRequired(message="Email is required."),
+        validators.Email(message="Please enter a valid email address."),
+        validators.Length(max=120, message="Email is too long.")
+    ])
+    current_password = PasswordField("Current Password", [
+        validators.Optional(),
+        validators.Length(min=1, max=128, message="Password is invalid.")
+    ])
+    new_password = PasswordField("New Password", [
+        validators.Optional(),
+        validators.Length(min=8, max=128, message="New password must be between 8 and 128 characters."),
+        validate_password_strength
+    ])
+    confirm_new_password = PasswordField("Confirm New Password", [
+        validators.Optional(),
+        validators.EqualTo('new_password', message="New passwords must match.")
+    ])
+    
+    def validate_new_password(self, field):
+        """Custom validation for password change"""
+        if field.data or self.current_password.data or self.confirm_new_password.data:
+            # If any password field is filled, all must be filled
+            if not self.current_password.data:
+                raise validators.ValidationError("Current password is required to change password.")
+            if not field.data:
+                raise validators.ValidationError("New password is required.")
+            if not self.confirm_new_password.data:
+                raise validators.ValidationError("Please confirm your new password.")

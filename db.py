@@ -32,19 +32,14 @@ def insert_user(first_name, last_name, email, password, user_role):
     """Insert a new user without status_id"""
     conn = get_db()
     cursor = conn.cursor()
-    try:
-        cursor.execute(
-            """INSERT INTO users (first_name, last_name, email, password, user_role, is_suspended) 
-               VALUES (%s, %s, %s, %s, %s, %s)""",
-            (first_name, last_name, email, password, user_role, 0)
-        )
-        conn.commit()
-        return True
-    except Exception as e:
-        conn.rollback()
-        return False
-    finally:
-        cursor.close()
+    cursor.execute(
+        """INSERT INTO users (first_name, last_name, email, password, user_role, is_suspended) 
+            VALUES (%s, %s, %s, %s, %s, %s)""",
+        (first_name, last_name, email, password, user_role, 0)
+    )
+    conn.commit()
+    return True
+\
 
 def verify_user(email, password):
     conn = get_db()
@@ -416,26 +411,47 @@ def update_user_role(user_id, role):
     """Update user role and return success status"""
     conn = get_db()
     cursor = conn.cursor()
-    try:
-        cursor.execute("UPDATE users SET user_role = %s WHERE user_id = %s", (role, user_id))
-        conn.commit()
-        return cursor.rowcount > 0
+    cursor.execute("UPDATE users SET user_role = %s WHERE user_id = %s", (role, user_id))
+    conn.commit()
+    return cursor.rowcount > 0
         
-    except Exception as e:
-        conn.rollback()
-        return False
-    finally:
-        cursor.close()
 
 
 def update_user_info(user_id, first_name, last_name, email):
+    """Update user basic information"""
     conn = get_db()
-    cursor = conn.cursor()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute(
+        "SELECT first_name, last_name, email FROM users WHERE user_id = %s",
+        (user_id,)
+    )
+    current_user = cursor.fetchone()
+    
+    if not current_user:
+        print(f"ERROR - User {user_id} not found")
+        return False
+    
+    # Check if any data has actually changed
+    data_changed = (
+        current_user['first_name'] != first_name or
+        current_user['last_name'] != last_name or
+        current_user['email'] != email
+    )
+    
+    if not data_changed:
+        return True
+    
     cursor.execute(
         "UPDATE users SET first_name = %s, last_name = %s, email = %s WHERE user_id = %s",
         (first_name, last_name, email, user_id)
     )
     conn.commit()
+    
+    if cursor.rowcount > 0:
+        return True
+    else:
+        return False
+
 
 
 def get_all_users():
@@ -852,3 +868,34 @@ def can_suspend_user(admin_user_id, target_user_id):
         return target['user_role'] in [1, 2]
     
     return False
+
+def verify_user_password(user_id, password):
+    """Verify if the provided password matches the user's current password"""
+    conn = get_db()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT password FROM users WHERE user_id = %s", (user_id,))
+    user = cursor.fetchone()
+    if user and check_password_hash(user['password'], password):
+        return True
+    return False
+
+def update_user_password_by_id(user_id, new_hashed_password):
+    """Update user password by user ID"""
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute(
+        "UPDATE users SET password = %s WHERE user_id = %s",
+        (new_hashed_password, user_id)
+    )
+    conn.commit()
+    print(f"DEBUG - Password updated successfully for user {user_id}")
+    return cursor.rowcount > 0
+
+
+def check_email_exists_for_other_user(email, user_id):
+    """Check if email exists for a different user"""
+    conn = get_db()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT user_id FROM users WHERE email = %s AND user_id != %s", (email, user_id))
+    result = cursor.fetchone()
+    return result is not None
