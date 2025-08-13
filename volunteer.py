@@ -14,7 +14,7 @@ from access_control import role_required, login_required
 volunteer = Blueprint("volunteer", __name__, template_folder="templates")
 app_logger = logging.getLogger("app")
 
-update_limit = limiter.shared_limit("10/minute;50/day")
+update_limit = limiter.shared_limit("10/minute;50/day", scope="update limit for volunteer functions")
 
 
 @volunteer.before_request # access control for volunteer
