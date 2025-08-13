@@ -244,6 +244,7 @@ def admin_get_group_activities(type="approved"):
     if type == "pending": status_id = 1
     elif type == "approved": status_id = 2
     elif type == "rejected": status_id = 3
+    elif type == "suspended": status_id = 6
 
     statement = """
     SELECT ia.activity_id, ig.name group_name, ia.name, ia.start_datetime, ia.end_datetime, 
@@ -417,6 +418,20 @@ def admin_suspend_group(id):
     cursor.execute(statement_1, (id, ))
     cursor.execute(statement_2, (id, ))
     connection.commit()
+
+
+def admin_suspend_activity(id):
+    connection = get_db()
+    cursor = connection.cursor()
+    statement = """
+    UPDATE interest_activity
+    SET status_id = 6
+    WHERE activity_id = %s;
+    """
+
+    cursor.execute(statement, (id, ))
+    connection.commit()
+    
 
 def get_user_profile_pic(user_id):
     """Get user profile picture filename"""
