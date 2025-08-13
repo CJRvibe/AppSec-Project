@@ -239,16 +239,16 @@ def manage_flagged_activities():
     app_logger.info("Admin %s accessed information for all flag activity requests", session.get("user_id"))
     return render_template("admin/manage_flagged_activities.html", flagged_activities=flagged_activities)
 
-# NOT IMPLEMENTED YET
-@admin.route("/interestGroups/flaggedRequests/approve/<int:id>", methods=["POST"])
-def approve_group_flag(id: int):
-    flag_group = db.admin_get_flagged_group(id)
+
+@admin.route("/interestGroups/flaggedRequests/approve/<int:flag_id>", methods=["POST"])
+def approve_group_flag(flag_id: int):
+    flag_group = db.admin_get_flagged_group(flag_id)
     if not flag_group:
         abort(404, description="Flagged request not found")
     elif flag_group and flag_group["status_id"] != 1:
         abort(405, description="Method not allowed for this flag request")
     else:
-        db.admin_update_group_flag_request(id, approved=True)
+        db.admin_update_group_flag_request(flag_id, approved=True)
         app_logger.info("Admin %s approved flag request %s from user %s", session.get("user_id"), flag_group.get("flag_id"), flag_group.get("user_id"))
 
         user = db.get_user_by_id(flag_group["user_id"])
@@ -259,16 +259,17 @@ def approve_group_flag(id: int):
 
         return redirect(url_for(".manage_flagged_groups"))
 
-# NOT IMPLEMENTED YET
-@admin.route("/interestGroups/flaggedRequests/reject/<int:id>", methods=["POST"])
-def reject_group_flag(id: int):
-    flag_group = db.admin_get_flagged_group(id)
+
+@admin.route("/interestGroups/flaggedRequests/reject/<int:flag_id>", methods=["POST"])
+def reject_group_flag(flag_id: int):
+    flag_group = db.admin_get_flagged_group(flag_id)
+    print(flag_group)
     if not flag_group:
         abort(404, description="Flagged request not found")
     elif flag_group and flag_group["status_id"] != 1:
         abort(405, description="Method not allowed for this flag request")
     else:
-        db.admin_update_group_flag_request(id, approved=False)
+        db.admin_update_group_flag_request(flag_id, approved=False)
         app_logger.info("Admin %s rejected flag request %s from user %s", session.get("user_id"), flag_group.get("flag_id"), flag_group.get("user_id"))
 
         user = db.get_user_by_id(flag_group["user_id"])

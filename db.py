@@ -350,21 +350,21 @@ def admin_get_flagged_groups():
 
 def admin_get_flagged_group(id):
     connection = get_db()
-    cursor = connection.cursor()
+    cursor = connection.cursor(dictionary=True)
     statement = """
-    SELECT fg.flag_id, fg.status_id, fg.user_id
+    SELECT fg.flag_id, fg.group_id, fg.status_id, fg.user_id
     FROM flagged_groups fg
     INNER JOIN users u ON u.user_id = fg.flag_id
     WHERE flag_id = %s
     """
 
-    cursor.execute(statement)
+    cursor.execute(statement, (id, ))
     return cursor.fetchone()
 
 
 def admin_update_group_flag_request(id, approved=False):
     connection = get_db()
-    cursor = connection.cursor()
+    cursor = connection.cursor(dictionary=True)
     status = 2 if approved else 3
     statement = """
     UPDATE flagged_groups
@@ -373,6 +373,7 @@ def admin_update_group_flag_request(id, approved=False):
     """
 
     cursor.execute(statement, (status, id))
+    connection.commit()
 
 def get_user_profile_pic(user_id):
     """Get user profile picture filename"""
