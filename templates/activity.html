@@ -37,7 +37,7 @@
     <!-- Hero Banner -->
     <div class="activity-hero text-center mb-5"
         style="background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), 
-                url('{{ url_for('static', filename='uploads/activities/' ~ activity.picture) }}') center/cover no-repeat;
+                url('{{ url_for('static', filename=('uploads/activities/' ~ group.activities) if group.activities else 'img/default_activity.jpg') }}') center/cover no-repeat;
                 color: white;
                 padding: 4rem 2rem;
                 border-radius: 0.5rem;">
