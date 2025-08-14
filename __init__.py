@@ -353,6 +353,9 @@ def view_group_activity(group_id, activity_id):
 
     registration_count = db.get_activity_registration_count(activity_id)
     is_full = activity["max_size"] is not None and registration_count >= activity["max_size"]
+    already_registered = False
+    if "user_id" in session:
+        already_registered = db.is_user_registered_for_activity(session["user_id"], activity_id)
     app_logger.info("User %s accessed group activity %s from group %s", session["user_id"], activity["name"], group["name"])
     return render_template(
         'activity.html',
@@ -360,6 +363,7 @@ def view_group_activity(group_id, activity_id):
         group=group,
         registration_count=registration_count,
         is_full=is_full, 
+        already_registered=already_registered,
         flag_form=flag_form
     )
 
