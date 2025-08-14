@@ -198,14 +198,11 @@ def resend_verification_code():
     return redirect(url_for('.verify_email'))
 
 
-def login_success():
-    return g.login_success
-
 @auth.route('/login', methods=['GET', 'POST'])
-@limiter.limit("3/minute;15/day", methods=["POST"], deduct_when=lambda response: login_success,
+@limiter.limit("3/minute;15/day", methods=["POST"], deduct_when=lambda response: getattr(request, "login_success", True),
                on_breach=lambda request_limit: app_logger.warning("A user has failed login multiple times and have been ratelimited"))
 def login():
-    g.login_success = False
+    request.login_failed = True
     if request.method == 'GET':
         clear_flash_messages()  
     
@@ -235,7 +232,7 @@ def login():
         session['user_id'] = user['user_id']
         session['email'] = user['email']
         session['role'] = user['user_role']
-        g.login_success = True
+        request.login_failed = False
         
         if user.get('mfa_enabled'):
             app_logger.info("User %s successfully cleared first login and have been redirected to MFA", user["user_id"])
@@ -287,11 +284,8 @@ def forget_password():
     return render_template('forget_password.html')
 
 
-def pin_success():
-    return g.pin_success
-
 @auth.route('/enterPin', methods=['GET', 'POST'])
-@limiter.limit("4/minute;10/day", methods=["POST"], deduct_when=lambda response: pin_success,
+@limiter.limit("4/minute;10/day", methods=["POST"], deduct_when=lambda response: getattr(request, "incorrect_pin", True),
                on_breach=lambda request_limit: app_logger.warning("Too many failed attempts at trying to reset a password"))
 def enter_pin():
     if request.method == 'GET':
@@ -299,7 +293,7 @@ def enter_pin():
         pass
     
     if request.method == 'POST':
-        g.pin_success = False
+        request.incorrect_pin = True
         clear_flash_messages()
         entered_pin = request.form.get('pin')
         
@@ -308,7 +302,7 @@ def enter_pin():
             return render_template('enter_pin.html')
         
         if entered_pin == session.get('reset_pin') and "reset_email" in session:
-            g.pin_success = True
+            request.incorrect_pin = False
             flash('PIN verified. Please enter a new password.', 'success')
             user = db.get_user_by_email(session["reset_email"])
             app_logger.info("User %s has entered the correct pin to reset his password, and been redirected to password change page", user["user_id"])

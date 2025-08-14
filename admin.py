@@ -104,7 +104,7 @@ def approve_group_proposal(id):
         if user["email_notif"]:
             send_email.submit(user["email"], f"Group {group['group_id']} Approved", f"Your pending proposal for group {group['name']} has successfully been approved")
             app_logger.info(f"Email successfully send to User {group['owner']} to notify of group approval")
-
+        flash(f"Successfully approved group {group["name"]}", "success")
         return redirect(url_for(".manage_active_groups"))
 
 
@@ -126,7 +126,7 @@ def reject_group_proposal(id):
         if user["email_notif"]:
             send_email.submit(user["email"], f"Group {group['group_id']} Rejected", f"Your pending proposal for group {group['name']} has been rejected. Please try again and ensure all information is as accurate as possible.")
             app_logger.info(f"Email successfully send to User {group['owner']} to notify of group rejection")
-
+        flash(f"Successfully rejected group {group["name"]}", "primary")
         return redirect(url_for(".manage_reject_groups"))
 
 
@@ -187,7 +187,7 @@ def approve_activity(id):
         if user["email_notif"]:
             send_email.submit(user["email"], f"Activity {activity['activity_id']} Approved", f"Your pending proposal for group {activity['name']} has successfully been approved")
             app_logger.info(f"Email successfully send to User {group['owner']} to notify of activity approval")
-            
+        flash(f"Successfully approve activity {activity["name"]}", "succcess")
         return redirect(url_for(".manage_approved_activities"))
 
 
@@ -210,7 +210,7 @@ def reject_activity(id):
         if user["email_notif"]:
             send_email.submit(user["email"], f"Activity {activity['activity_id']} Rejected", f"Your pending proposal for group {activity['name']} has been rejected. Please try again and ensure all information is as accurate as possible.")
             app_logger.info(f"Email successfully send to User {group['owner']} to notify of activity rejection")
-        
+        flash(f"Successfully rejected activity {activity["name"]}", "primary")
         return redirect(url_for(".manage_rejected_activities"))
 
 @admin.route('/users', methods=['GET'])
@@ -276,7 +276,7 @@ def approve_group_flag(flag_id: int):
             group = db.admin_get_group_by_id(flag_group["group_id"])
             send_email.submit(user["email"], f"Group Flag Request {flag_group['flag_id']} Approved", f"Your pending flag request against the group {group['name']} has successfully been approved")
             app_logger.info(f"Email successfully send to User {group['owner']} to notify of flag group approval")
-
+        flash(f"Successfully acknowledged group flag {flag_group["flag_id"]}", "success")
         return redirect(url_for(".manage_flagged_groups"))
 
 
@@ -298,7 +298,7 @@ def reject_group_flag(flag_id: int):
             group = db.admin_get_group_by_id(flag_group["group_id"])
             send_email.submit(user["email"], f"Group Flag Request {flag_group['flag_id']} Rejected", f"Your pending flag request against the group {group['name']} has been rejected.")
             app_logger.info(f"Email successfully send to User {group['owner']} to notify of flag group rejection")
-
+        flash(f"Successfully denied group flag {flag_group["flag_id"]}", "primary")
         return redirect(url_for(".manage_flagged_groups"))
     
 
@@ -319,7 +319,7 @@ def approve_activity_flag(flag_id:int):
             group = db.admin_get_group_by_id(flag_activity["activity_id"])
             send_email.submit(user["email"], f"Activity Flag Request {flag_activity['flag_id']} Approved", f"Your pending flag request against the activity {group['name']} has successfully been approved")
             app_logger.info(f"Email successfully send to User {group['owner']} to notify of flag group approval")
-
+        flash(f"Successfully acknowledged activity flag {flag_activity["flag_id"]}", "success")
         return redirect(url_for(".manage_flagged_activities"))
     
 
@@ -340,7 +340,7 @@ def reject_activity_flag(flag_id:int):
             group = db.admin_get_group_by_id(flag_activity["activity_id"])
             send_email.submit(user["email"], f"Activity Flag Request {flag_activity['flag_id']} Rejected", f"Your pending flag request against the activity {group['name']} has been rejected.")
             app_logger.info(f"Email successfully send to User {group['owner']} to notify of flag group rejection")
-
+        flash(f"Successfully denied activity flag {flag_activity["flag_id"]}", "primary")
         return redirect(url_for(".manage_flagged_activities"))
     
 
@@ -360,7 +360,7 @@ def suspend_group(id):
         if user["email_notif"]:
             send_email.submit(user["email"], f"Group {group['group_id']} Suspended", f"Your active group {group['name']} has been approved suspended. This was a decision made by the admins. If you have any queries, please contact us.")
             app_logger.info(f"Email successfully send to User {group['owner']} to notify of group suspension")
-
+        flash(f"Successfully suspended group {group["name"]}", "primary")
         return redirect(url_for(".manage_suspended_groups"))
 
 
@@ -381,7 +381,7 @@ def suspend_activity(id):
         if user["email_notif"]:
             send_email.submit(user["email"], f"Activity {activity['activity_id']} Suspended", f"Your activity {activity['name']} has been suspended. This was a decision made by the admins. If you have any queries, please contact us.")
             app_logger.info(f"Email successfully send to User {group['owner']} to notify of activity suspension")
-
+        flash(f"Successfully suspended activity {activity["name"]}", "primary")
         return redirect(url_for(".manage_suspended_activities"))
 
 
