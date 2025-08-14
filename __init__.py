@@ -284,6 +284,9 @@ def join_group(group_id):
         app_logger.warning("User %s tried to join unapproved group ID %s", user_id, group_id)
         return redirect(url_for('explore_groups'))
 
+    if group.get("owner") == user_id:
+        abort(403, description="You cannot join a group you own")
+
     member_count = db.get_group_member_count(group_id)
     max_size = group.get("max_size")
 
@@ -299,7 +302,7 @@ def join_group(group_id):
     else:
         app_logger.info("User %s successfully joined group %s", user_id, group_id)
     flash("You have successfully joined the group!", "success")
-    return redirect(url_for('group_home', group_id=group_id))
+    return redirect(url_for('group_home', group_id=group_id, group=group))
 
 @app.route('/leave_group/<int:group_id>', methods=['POST'])
 @role_required(1, 2)

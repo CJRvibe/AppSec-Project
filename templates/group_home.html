@@ -2,6 +2,10 @@
 
 {% block title %}{{ group.name }}{% endblock %}
 
+{% block links %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/group_home.css') }}">
+{% endblock %}
+
 {% block navbar %}
     {% if session["role"] == 2 %}
         {% include "includes/volunteer_navbar.html" %}
@@ -57,7 +61,11 @@
 
     <div class="d-flex justify-content-end mb-3">
         {% if session.user_id %}
-            {% if join_status_id == 2 %}
+            {% if session.user_id == group.owner %}
+                <!-- Owner: Cannot leave -->
+                <button type="button" class="btn btn-secondary mt-3 disabled" disabled>You are the Owner</button>
+
+            {% elif join_status_id == 2 %}
                 <!-- Approved and Joined: Show Leave -->
                 <form method="POST" action="{{ url_for('leave_group', group_id=group.group_id) }}">
                     <button type="submit" class="btn btn-danger mt-3" onclick="return confirm('Are you sure you want to leave this group?')">
@@ -116,8 +124,7 @@
             <div class="col">
                 <a href="{{ url_for('view_group_activity', group_id=group.group_id, activity_id=activity.activity_id) }}" class="text-decoration-none text-dark">
                     <div class="card h-100 shadow">
-                        <img src="{{ url_for('static', filename='uploads/activities/' ~ activity.picture or 'img/default_activity.jpg') }}"
-                            class="card-img-top" alt="{{ activity.name }}">
+                        <img src="{{ url_for('static', filename='uploads/activities/' ~ (activity.picture or 'img/default_activity.jpg')) }}" class="card-img-top activity-img" alt="{{ activity.name }}">
                         <div class="card-body">
                             <small class="text-muted">{{ activity["category"] }}</small>
                             <h5 class="card-title">{{ activity["name"] }}</h5>

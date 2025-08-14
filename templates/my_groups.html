@@ -35,11 +35,18 @@
                     <h5 class="mb-0">{{ group.name }}</h5>
                 </div>
             </a>
-            <form method="POST" action="{{ url_for('leave_group', group_id=group.group_id) }}"
-                class="position-absolute top-0 end-0 m-2">
-                <button type="submit" class="btn btn-sm btn-outline-danger"
-                        onclick="return confirm('Are you sure you want to leave this group?')">Leave</button>
-            </form>
+
+            {% if session.user_id == group.owner %}
+                <!-- Owner: Cannot leave -->
+                <button type="button" class="btn btn-sm btn-secondary position-absolute top-0 end-0 m-2 disabled" disabled>Owner</button>
+            {% else %}
+                <!-- Not owner: Show Leave -->
+                <form method="POST" action="{{ url_for('leave_group', group_id=group.group_id) }}"
+                    class="position-absolute top-0 end-0 m-2">
+                    <button type="submit" class="btn btn-sm btn-outline-danger"
+                            onclick="return confirm('Are you sure you want to leave this group?')">Leave</button>
+                </form>
+            {% endif %}
         </div>
     </div>
     {% endfor %}
