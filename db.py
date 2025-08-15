@@ -1048,3 +1048,16 @@ def search_approved_activities_by_group_id(group_id, search=None):
     results = cursor.fetchall()
     cursor.close()
     return results
+
+def get_registered_activities_by_user(user_id):
+    connection = get_db()
+    cursor = connection.cursor(dictionary=True)
+    statement = """
+       SELECT ia.activity_id, ia.name, ia.group_id, ia.start_datetime, ia.end_datetime, ia.picture, ig.name AS group_name
+       FROM interest_activity ia
+       INNER JOIN user_interest_activity uia ON ia.activity_id = uia.activity_id
+       INNER JOIN interest_group ig ON ia.group_id = ig.group_id
+       WHERE uia.user_id = %s AND ia.status_id = 2
+    """
+    cursor.execute(statement, (user_id,))
+    return cursor.fetchall()

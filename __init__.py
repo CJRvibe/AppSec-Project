@@ -421,6 +421,18 @@ def register_activity(activity_id):
     app_logger.info("User %s registered for activity %s by group %s", session["user_id"], activity["name"], group["name"])
     return redirect(request.referrer or url_for('home'))
 
+@app.route('/myActivities')
+@role_required(1, 2)
+def my_activities():
+    user_id = session.get('user_id')
+    if not user_id:
+        return redirect(url_for('login'))
+
+    activities = db.get_registered_activities_by_user(user_id)
+    if activities is None:
+        abort(500, description="Failed to fetch registered activities")
+    return render_template("registered_activities.html", activities=activities)
+
 # @app.route("/test-discussion")
 # def discussion_forum():
 #     return render_template("group_discussion.html")

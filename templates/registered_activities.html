@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}My Registered Activities{% endblock %}
+
+{% block navbar %}
+    {% if session["role"] == 2 %}
+        {% include "includes/volunteer_navbar.html" %}
+    {% else %}
+        {% include "includes/elderly_navbar.html" %}
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">Activities You Have Registered For</h2>
+
+    {% if activities %}
+    <div class="row row-cols-1 row-cols-md-3 g-4">
+        {% for activity in activities %}
+        <div class="col">
+            <div class="card h-100 shadow">
+                <img src="{{ url_for('static', filename=( 'uploads/activities/' ~ activity.picture ) if activity.picture else 'img/default_activity.jpg') }}"
+                     class="card-img-top activity-img" alt="{{ activity.name }}">
+
+                <div class="card-body">
+                    <small class="text-muted">{{ activity.group_name }}</small>
+                    <h5 class="card-title">{{ activity.name }}</h5>
+                    <p class="card-text"><strong>{{ activity.start_datetime.strftime('%d %b %Y, %H:%M') }}</strong></p>
+                </div>
+
+                <div class="card-footer bg-light text-center">
+                    <a href="{{ url_for('view_group_activity', group_id=activity.group_id, activity_id=activity.activity_id) }}" class="btn btn-sm btn-primary">
+                        View Activity
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p class="text-muted">You haven't registered for any activities yet.</p>
+    {% endif %}
+</div>
+{% endblock %}
