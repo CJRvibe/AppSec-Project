@@ -240,6 +240,8 @@ def group_home(group_id):
     if view not in ['activities', 'forum']:
         view = 'activities'
 
+    search_query = request.args.get('search', '').strip()
+
     user_id = session.get('user_id')
     flag_form = FlagForm(request.form)
 
@@ -251,10 +253,16 @@ def group_home(group_id):
     join_status_id = db.get_user_group_status_id(user_id, group_id) if user_id else None
     has_joined = join_status_id == 2
 
-    activities = db.get_approved_activities_by_group_id(group_id) if group['is_public'] == 1 or has_joined else []
+    if group['is_public'] == 1 or has_joined:
+        activities = db.search_approved_activities_by_group_id(group_id, search_query or None)
+    else:
+        activities = []
+
     member_count = db.get_group_member_count(group_id)
     owner = db.get_user_by_id(group["owner"])
+
     app_logger.info("User %s accessed the group home of group %s", session["user_id"], group["name"])
+
     return render_template(
         "group_home.html",
         group=group,
@@ -264,8 +272,10 @@ def group_home(group_id):
         join_status_id=join_status_id,
         flag_form=flag_form,
         member_count=member_count,
-        owner = owner,
+        owner=owner,
+        search_query=search_query
     )
+
 
 @app.route('/join_group/<int:group_id>', methods=['POST'])
 @role_required(1, 2)

@@ -1023,3 +1023,28 @@ def update_user_notification_status(user_id, enabled):
     conn.commit()
     
     return True  # Always return True if no exception occurred
+
+def search_approved_activities_by_group_id(group_id, search=None):
+    conn = get_db()
+    cursor = conn.cursor(dictionary=True)
+
+    sql = """
+        SELECT activity_id, name, description, start_datetime, end_datetime,
+               max_size, funds, location_code, remarks, picture, status_id, group_id
+        FROM interest_activity
+        WHERE group_id = %s
+          AND status_id = 2
+    """
+    params = [group_id]
+
+    if search:
+        sql += " AND (name LIKE %s OR description LIKE %s)"
+        like = f"%{search}%"
+        params.extend([like, like])
+
+    sql += " ORDER BY start_datetime DESC"
+
+    cursor.execute(sql, tuple(params))
+    results = cursor.fetchall()
+    cursor.close()
+    return results
