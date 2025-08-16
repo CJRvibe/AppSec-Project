@@ -84,6 +84,7 @@ def index():
 
 @app.route('/userProfile', methods=['GET', 'POST'])
 @login_required
+@limiter.limit("5/minute", methods=["POST"])
 def user_profile():
     user_id = session.get('user_id')
     if not user_id:
@@ -172,6 +173,7 @@ def user_profile():
 
 @app.route('/userProfile/toggleNotifications', methods=['POST'])
 @login_required
+@limiter.limit("5/minute", methods=["POST"])
 def toggle_notifications():
     user_id = session.get('user_id')
     if not user_id:
@@ -449,7 +451,7 @@ def inject_profile_pic():
 @app.route("/flagGroup/<int:id>", methods=["POST"])
 @login_required
 @role_required(1, 2)
-@limiter.limit("5/hour;15/day", methods=["POST"])
+@limiter.limit("10/hour;30/day", methods=["POST"])
 def flag_group(id):
     group = db.get_group_by_id(id)
     if not group:
@@ -475,7 +477,7 @@ def flag_group(id):
 @app.route("/flagActivity/<int:id>", methods=["POST"])
 @login_required
 @role_required(1, 2)
-@limiter.limit("5/hour;15/day", methods=["POST"])
+@limiter.limit("10/hour;30/day", methods=["POST"])
 def flag_activity(id):
     activity = db.get_activity_by_id(id)
     if not activity:
@@ -523,6 +525,12 @@ def not_found_error(error):
 def method_not_allowed_error(error):
     app_logger.warning("User %s attempted an invalid %s method", session.get("user_id"), request.method)
     return render_template('error_page.html', main_message="Method not allowed", description=error.description), 405
+
+
+@app.errorhandler(413)
+def entity_too_large(error):
+    app_logger.warning("User %s attempted to uplooad data that exceeds the maximum limit.", session.get("user_id"))
+    return render_template('error_page.html', main_message="Request entity too large", description=error.description), 405
 
 @app.errorhandler(429)
 def too_many_requests_error(error):
