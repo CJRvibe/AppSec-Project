@@ -12,8 +12,11 @@ class Config:
     EXECUTOR_TYPE = "thread"
     EXECUTOR_MAX_WORKERS = 5
     MAX_FORM_MEMORY_SIZE = 1 * 1024 * 1024  # 1 MB
-    MAX_CONTENT_LENGTH = 2 * 1024 * 1024  # 2MB
-
+    MAX_CONTENT_LENGTH = 4 * 1024 * 1024  # 4MB
+    SESSION_COOKIE_SECURE = True
+    SESSION_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SAMESITE = "Lax"
+    PERMANENT_SESSION_LIFETIME = 60 * 60 * 24 * 7  # 1 week, default is one month
 
 class DevelopmentConfig(Config):
     TEMPLATES_AUTO_RELOAD = True
