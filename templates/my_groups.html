@@ -43,6 +43,7 @@
                 <!-- Not owner: Show Leave -->
                 <form method="POST" action="{{ url_for('leave_group', group_id=group.group_id) }}"
                     class="position-absolute top-0 end-0 m-2">
+                    {{ form.csrf_token }}
                     <button type="submit" class="btn btn-sm btn-outline-danger"
                             onclick="return confirm('Are you sure you want to leave this group?')">Leave</button>
                 </form>

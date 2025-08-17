@@ -234,6 +234,7 @@ def explore_groups():
 @app.route('/myGroups')
 @role_required(1, 2)
 def my_groups():
+    form = CSRFProtectedForm()
     user_id = session.get('user_id')
     if not user_id:
         abort(401, description="Access attempt without user session")
@@ -244,11 +245,12 @@ def my_groups():
 
     approved_groups = [g for g in joined_groups if g.get('status_id') == 2]
     app_logger.info("User %s accessed his own groups", session["user_id"])
-    return render_template('my_groups.html', groups=approved_groups)
+    return render_template('my_groups.html', groups=approved_groups, form=form)
 
 @app.route('/groupHome/<int:group_id>')
 @role_required(1, 2, 3)
 def group_home(group_id):
+    join_leave_form = CSRFProtectedForm(request.form)
     view = request.args.get('view', 'activities')
     if view not in ['activities', 'forum']:
         view = 'activities'
@@ -284,6 +286,7 @@ def group_home(group_id):
         has_joined=has_joined,
         join_status_id=join_status_id,
         flag_form=flag_form,
+        join_leave_form=join_leave_form,
         member_count=member_count,
         owner=owner,
         search_query=search_query
@@ -365,6 +368,7 @@ def leave_group(group_id):
 @role_required(1, 2, 3)
 @group_member_required(param='group_id')
 def view_group_activity(group_id, activity_id):
+    form = CSRFProtectedForm()
     group = db.get_group_by_id(group_id)
     if not group:
         abort(404, description="Group not found")
@@ -395,7 +399,8 @@ def view_group_activity(group_id, activity_id):
         registration_count=registration_count,
         is_full=is_full, 
         already_registered=already_registered,
-        flag_form=flag_form
+        flag_form=flag_form,
+        form=form
     )
 
 @app.route('/register_activity/<int:activity_id>', methods=['POST'])
@@ -517,6 +522,8 @@ def flag_group(id):
 
     if db.count_flag_group_request(session["user_id"]) >= 3:
         flash("You can only have 3 pending flag requests against interest groups at any time", "danger")
+    elif group["owner"] == session.get("user_id"):
+        flash("You cannot flag a group that you own", "warning")
     else:
         flag_form = FlagForm(request.form)
         if flag_form.validate():
@@ -541,8 +548,12 @@ def flag_activity(id):
     if activity.get("status_id") != 2:
         abort(405, description="Method not allowed for this activity")
 
+    group = db.get_group_by_id(activity["activity_id"])
+
     if db.count_flag_activity_request(session["user_id"]) >= 5:
         flash("You can only have 5 pending flag requests against interest activities at any time", "danger")
+    elif group["owner"] == session.get("user_id"):
+        flash("You cannot flag an activity that you own", "warning")
     else:
         flag_form = FlagForm(request.form)
         if flag_form.validate() and request.method == "POST":
