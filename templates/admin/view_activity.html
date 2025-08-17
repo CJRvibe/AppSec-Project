@@ -70,6 +70,7 @@
     {% if activity.get("status") == "pending" %}
     <div class="col justify-content-end d-flex">
         <form method="POST">
+            {{ form.csrf_token}}
             <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#approve">Approve</button>
             <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#reject">Reject</button>
 
@@ -87,6 +88,7 @@
     {% elif activity.get('status') == 'approved' %}
     <div class="col justify-content-end d-flex">
         <form method="POST">
+            {{ form.csrf_token }}
             <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#suspend">Suspend</button>
 
             {% call create_modal("suspend", "Confirm Suspension", "Are you sure you want to suspend this activtity?") %}

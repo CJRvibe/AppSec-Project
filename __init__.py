@@ -86,6 +86,12 @@ def index():
 @login_required
 @limiter.limit("5/minute", methods=["POST"])
 def user_profile():
+
+    # jian rong added csrf forms
+    mfa_form = CSRFProtectedForm()
+    email_notif_form = CSRFProtectedForm()
+    upload_file_form = CSRFProtectedForm()
+
     user_id = session.get('user_id')
     if not user_id:
         flash('Please log in first.', 'danger')
@@ -169,12 +175,17 @@ def user_profile():
                     flash(f"{field.replace('_', ' ').title()}: {error}", 'danger')
 
     return render_template('user_profile.html', user=user, mfa_enabled=mfa_enabled, 
-                         email_notif_enabled=email_notif_enabled, form=form)
+                            email_notif_enabled=email_notif_enabled, form=form, mfa_form=mfa_form,
+                            email_notif_form=email_notif_form, upload_file_form=upload_file_form)
 
 @app.route('/userProfile/toggleNotifications', methods=['POST'])
 @login_required
 @limiter.limit("5/minute", methods=["POST"])
 def toggle_notifications():
+    email_notif_form = CSRFProtectedForm(request.form)
+    if not email_notif_form.validate():
+        abort(400, description="Missing CSRF token or invalid form submission")
+
     user_id = session.get('user_id')
     if not user_id:
         flash('Please log in first.', 'danger')
@@ -283,6 +294,10 @@ def group_home(group_id):
 @role_required(1, 2)
 @limiter.limit("10/minute;50/day", methods=["POST"])
 def join_group(group_id):
+    form = CSRFProtectedForm(request.form)
+    if not form.validate():
+        abort(400, description="Missing CSRF token or invalid form submission")
+
     user_id = session.get('user_id')
     if not user_id:
         abort(401, description="Join attempt without login")
@@ -320,6 +335,10 @@ def join_group(group_id):
 @role_required(1, 2)
 @limiter.limit("10/minute;50/day", methods=["POST"])
 def leave_group(group_id):
+    form = CSRFProtectedForm(request.form)
+    if not form.validate():
+        abort(400, description="Missing CSRF token or invalid form submission")
+
     user_id = session.get('user_id')
     if not user_id:
         abort(401, description="Unauthenticated leave attempt.")
@@ -383,6 +402,10 @@ def view_group_activity(group_id, activity_id):
 @role_required(1, 2)
 @limiter.limit("10/minute;50/day", methods=["POST"])
 def register_activity(activity_id):
+    form = CSRFProtectedForm(request.form)
+    if not form.validate():
+        abort(400, description="Missing CSRF token or invalid form submission")
+
     user_id = session.get('user_id')
     if not user_id:
         flash("You must be logged in to register.", "warning")
@@ -450,6 +473,10 @@ def upload_file():
 
     if 'file' not in request.files:
         return 'No file uploaded', 400
+    
+    upload_file_form = CSRFProtectedForm(request.form)
+    if not upload_file_form.validate():
+        abort(400, description="Missing CSRF token or invalid form submission")
 
     file = request.files['file']
     if file and allowed_file(file.filename) and is_valid_image(file.stream):
@@ -531,7 +558,7 @@ def flag_activity(id):
 @app.errorhandler(400)
 def bad_request_error(error):
     app_logger.warning("User %s attempted to send a bad request", session.get("user_id"))
-    return render_template('error_page.html', main_message="Bad request"), 400
+    return render_template('error_page.html', main_message="Bad request", description=error.description), 400
 
 
 @app.errorhandler(401)

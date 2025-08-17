@@ -256,3 +256,7 @@ class UserProfileForm(BaseForm):
                 raise validators.ValidationError("New password is required.")
             if not self.confirm_new_password.data:
                 raise validators.ValidationError("Please confirm your new password.")
+            
+
+class CSRFProtectedForm(BaseForm):
+    pass

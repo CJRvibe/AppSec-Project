@@ -41,6 +41,7 @@
             <td>
                 
                 <form method="POST">
+                    {{ form.csrf_token}}
                     <div class="btn-group btn-group-sm">
                         <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#approve">Acknowledge</button>
                         <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#reject">Reject</button>
