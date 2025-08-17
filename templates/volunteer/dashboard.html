@@ -36,7 +36,9 @@
                 class="btn btn-success {% if group.status_id != 2 %}disabled{% endif %}">
                     Add Activity
                 </a>
-                {% if group.status_id != 2 %}
+                {% if group.status_id == 6 %}
+                <small class="text-muted">Group was suspended by an administrator.</small>
+                {% elif group.status_id != 2 %}
                 <small class="text-muted">Group must be approved before adding activities.</small>
                 {% endif %}
             </div>
