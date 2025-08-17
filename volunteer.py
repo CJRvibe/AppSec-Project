@@ -40,6 +40,7 @@ def check_is_volunteer():
 @limiter.limit("20/minute")
 def dashboard(group_id):
     user_id = session.get("user_id")
+    form = CSRFProtectedForm(request.form)
 
     group = db.get_group_by_id(group_id)
     if not group:
@@ -60,13 +61,18 @@ def dashboard(group_id):
         group_id=group["group_id"],
         activities=activities,
         pending_users=pending_users,
-        joined_users=joined_users
+        joined_users=joined_users,
+        form=form
     )
 
 @volunteer.route("/dashboard/<int:group_id>/approve_user/<int:user_id>", methods=["POST"])
 @update_limit
 def approve_user(group_id, user_id):
     current_user_id = session.get("user_id")
+    form = CSRFProtectedForm(request.form)
+
+    if not form.validate():
+        abort(400, description="Missing CSRF token or invalid form submission")
 
     group = db.get_group_by_id(group_id)
     if not group:
@@ -84,6 +90,10 @@ def approve_user(group_id, user_id):
 @update_limit
 def remove_user(group_id, user_id):
     current_user_id = session.get("user_id")
+    form = CSRFProtectedForm(request.form)
+
+    if not form.validate():
+        abort(400, description="Missing CSRF token or invalid form submission")
 
     group = db.get_group_by_id(group_id)
     if not group:
@@ -104,6 +114,10 @@ def remove_user(group_id, user_id):
 @update_limit
 def remove_activity(group_id, activity_id):
     user_id = session.get("user_id")
+    form = CSRFProtectedForm(request.form)
+
+    if not form.validate():
+        abort(400, description="Missing CSRF token or invalid form submission")
 
     group = db.get_group_by_id(group_id)
     if not group:
@@ -222,6 +236,10 @@ def volunteer_dashboard_groups():
 def reject_user(group_id, user_id):
     user = session.get("user_id")
     group = db.get_group_by_id(group_id)
+    form = CSRFProtectedForm(request.form)
+
+    if not form.validate():
+        abort(400, description="Missing CSRF token or invalid form submission")
 
     if not group or group["owner"] != user:
         abort(403, description="You do not have permission to reject users in this group")
