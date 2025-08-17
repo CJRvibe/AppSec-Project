@@ -198,7 +198,7 @@ def approve_activity(id):
         if user["email_notif"]:
             send_email.submit(user["email"], f"Activity {activity['activity_id']} Approved", f"Your pending proposal for group {activity['name']} has successfully been approved")
             app_logger.info(f"Email successfully send to User {group['owner']} to notify of activity approval")
-        flash(f"Successfully approve activity {activity['name']}", "succcess")
+        flash(f"Successfully approve activity {activity['name']}", "success")
         return redirect(url_for(".manage_approved_activities"))
 
 

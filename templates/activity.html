@@ -91,6 +91,7 @@
                 <div class="d-flex justify-content-between mt-4">
                     <a href="{{ url_for('group_home', group_id=activity.group_id) }}" class="btn btn-secondary">← Back to Group</a>
                     <form action="{{ url_for('register_activity', activity_id=activity.activity_id) }}" method="POST">
+                        {{ form.csrf_token }}
                         <button type="submit" class="btn btn-primary"
                                 {% if already_registered or is_full %}disabled{% endif %}>
                             {% if already_registered %}
