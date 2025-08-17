@@ -106,6 +106,7 @@
                                         {% elif can_suspend %}
                                             <form action="{{ url_for('admin.suspend_user', user_id=user.user_id) }}" 
                                                   method="post" class="d-inline">
+                                                {{ form.csrf_token }}
                                                 {% if is_suspended %}
                                                     <button type="submit" 
                                                             class="btn btn-sm btn-outline-success" 

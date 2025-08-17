@@ -2,7 +2,7 @@ from flask import Flask, render_template, redirect, url_for, request, abort, ses
 from utils import mail, limiter, send_email
 import logging
 import db
-from forms import CreateAdminForm
+from forms import CreateAdminForm, CSRFProtectedForm
 
 admin = Blueprint("admin", __name__, template_folder="templates")
 app_logger = logging.getLogger("app")
@@ -79,9 +79,10 @@ def manage_suspended_groups():
 @admin.route("/interestGroups/<int:id>")
 def view_group(id):
     group = db.admin_get_group_by_id(id)
+    form = CSRFProtectedForm()
     if group:
         app_logger.info("Admin %s accessed group %s information", session.get("user_id"), group.get("group_id"))
-        return render_template("admin/view_group.html", group=group)
+        return render_template("admin/view_group.html", group=group, form=form)
     else:
         abort(404, description="Group not found")
 
@@ -90,11 +91,14 @@ def view_group(id):
 @update_limit
 def approve_group_proposal(id):
     group = db.admin_get_group_by_id(id)
+    form = CSRFProtectedForm(request.form)
 
     if not group:
         abort(404, description="Group not found")
     elif group and group.get("status") != "pending":
         abort(405, description="Method not allowed for this group")
+    elif not form.validate():
+        abort(400, description="Missing CSRF token or invalid form submission")
     else:
         db.admin_update_group_proposal(id, approved=True)
         app_logger.info("Admin %s approved proposal of group %s", session.get("user_id"), group.get("group_id"))
@@ -112,11 +116,14 @@ def approve_group_proposal(id):
 @update_limit
 def reject_group_proposal(id):
     group = db.admin_get_group_by_id(id)
+    form = CSRFProtectedForm(request.form)
 
     if not group:
         abort(404, description="Group not found")
     elif group and group.get("status") != "pending":
         abort(405, description="Method not allowed for this group")
+    elif not form.validate():
+        abort(400, description="Missing CSRF token or invalid form submission")
     else:
         db.admin_update_group_proposal(id, approved=False)
         app_logger.info("Admin %s rejected proposal of group %s", session.get("user_id"), group.get("group_id"))
@@ -161,10 +168,11 @@ def manage_suspended_activities():
 @admin.route("/groupActivities/<int:id>")
 def view_activity(id):
     activity = db.admin_get_group_activity(id)
+    form = CSRFProtectedForm()
 
     if activity:
         app_logger.info("Admin %s accessed activity %s information", session.get("user_id"), activity.get("activity_id"))
-        return render_template("admin/view_activity.html", activity=activity)
+        return render_template("admin/view_activity.html", activity=activity, form=form)
     else: abort(404, description="Activity not found")
 
 
@@ -172,11 +180,14 @@ def view_activity(id):
 @update_limit
 def approve_activity(id):
     activity = db.admin_get_group_activity(id)
+    form = CSRFProtectedForm(request.form)
 
     if not activity:
         abort(404, description="Activity not found")
     elif activity and activity.get("status") != "pending":
         abort(405, description="Method not allowed for this activity")
+    elif not form.validate():
+        abort(400, description="Missing CSRF token or invalid form submission")
     else:
         db.admin_update_activity_proposal(id, approved=True)
         app_logger.info("Admin %s approved activity %s", session.get("user_id"), activity.get("activity_id"))
@@ -195,11 +206,14 @@ def approve_activity(id):
 @update_limit
 def reject_activity(id):
     activity = db.admin_get_group_activity(id)
+    form = CSRFProtectedForm(request.form)
 
     if not activity:
         abort(404, description="Activity not found")
     elif activity and activity.get("status") != "pending":
         abort(405, description="Method not allowed for this activity")
+    elif not form.validate():
+        abort(400, description="Missing CSRF token or invalid form submission")
     else:
         db.admin_update_activity_proposal(id, approved=False)
         app_logger.info("Admin %s rejected %s", session.get("user_id"), activity.get("activity_id"))
@@ -247,26 +261,32 @@ def admin_view_users():
 
 @admin.route("/interestGroups/flaggedRequests")
 def manage_flagged_groups():
+    form = CSRFProtectedForm()
     flagged_groups = db.admin_get_flagged_groups()
     app_logger.info("Admin %s accessed information for all flag group requests", session.get("user_id"))
-    return render_template("admin/manage_flagged_groups.html", flagged_groups=flagged_groups)
+    return render_template("admin/manage_flagged_groups.html", flagged_groups=flagged_groups, form=form)
 
 
 @admin.route("/interestActivities/flaggedRequests")
 def manage_flagged_activities():
+    form = CSRFProtectedForm()
     flagged_activities = db.admin_get_flagged_activities()
     app_logger.info("Admin %s accessed information for all flag activity requests", session.get("user_id"))
-    return render_template("admin/manage_flagged_activities.html", flagged_activities=flagged_activities)
+    return render_template("admin/manage_flagged_activities.html", flagged_activities=flagged_activities, form=form)
 
 
 @admin.route("/interestGroups/flaggedRequests/approve/<int:flag_id>", methods=["POST"])
 @update_limit
 def approve_group_flag(flag_id: int):
     flag_group = db.admin_get_flagged_group(flag_id)
+    form = CSRFProtectedForm(request.form)
+
     if not flag_group:
         abort(404, description="Flagged request not found")
     elif flag_group and flag_group["status_id"] != 1:
         abort(405, description="Method not allowed for this flag request")
+    elif not form.validate():
+        abort(400, description="Missing CSRF token or invalid form submission")
     else:
         db.admin_update_group_flag_request(flag_id, approved=True)
         app_logger.info("Admin %s approved group flag request %s from user %s", session.get("user_id"), flag_group.get("flag_id"), flag_group.get("user_id"))
@@ -284,11 +304,14 @@ def approve_group_flag(flag_id: int):
 @update_limit
 def reject_group_flag(flag_id: int):
     flag_group = db.admin_get_flagged_group(flag_id)
-    print(flag_group)
+    form = CSRFProtectedForm(request.form)
+
     if not flag_group:
         abort(404, description="Flagged request not found")
     elif flag_group and flag_group["status_id"] != 1:
         abort(405, description="Method not allowed for this flag request")
+    elif not form.validate():
+        abort(400, description="Missing CSRF token or invalid form submission")
     else:
         db.admin_update_group_flag_request(flag_id, approved=False)
         app_logger.info("Admin %s rejected group flag request %s from user %s", session.get("user_id"), flag_group.get("flag_id"), flag_group.get("user_id"))
@@ -306,10 +329,14 @@ def reject_group_flag(flag_id: int):
 @update_limit
 def approve_activity_flag(flag_id:int):
     flag_activity = db.admin_get_flagged_activity(flag_id)
+    form = CSRFProtectedForm(request.form)
+
     if not flag_activity:
         abort(404, description="Flagged request not found")
     elif flag_activity and flag_activity["status_id"] != 1:
         abort(405, description="Method not allowed for this flag request")
+    elif not form.validate():
+        abort(400, description="Missing CSRF token or invalid form submission")
     else:
         db.admin_update_activity_flag_request(flag_id, approved=True)
         app_logger.info("Admin %s approved activity flag request %s from user %s", session.get("user_id"), flag_activity.get("flag_id"), flag_activity.get("user_id"))
@@ -327,10 +354,14 @@ def approve_activity_flag(flag_id:int):
 @update_limit
 def reject_activity_flag(flag_id:int):
     flag_activity = db.admin_get_flagged_activity(flag_id)
+    form = CSRFProtectedForm(request.form)
+
     if not flag_activity:
         abort(404, description="Flagged request not found")
     elif flag_activity and flag_activity["status_id"] != 1:
         abort(405, description="Method not allowed for this flag request")
+    elif not form.validate():
+        abort(400, description="Missing CSRF token or invalid form submission")
     else:
         db.admin_update_activity_flag_request(flag_id, approved=False)
         app_logger.info("Admin %s rejected activity flag request %s from user %s", session.get("user_id"), flag_activity.get("flag_id"), flag_activity.get("user_id"))
@@ -347,11 +378,14 @@ def reject_activity_flag(flag_id:int):
 @admin.route("interestGroups/suspend/<int:id>", methods=["POST"])
 def suspend_group(id):
     group = db.admin_get_group_by_id(id)
+    form = CSRFProtectedForm(request.form)
 
     if not group:
         abort(404, description="Group not found")
     elif group and group.get("status") != "approved":
         abort(405, description="Method not allowed for this group")
+    elif not form.validate():
+        abort(400, description="Missing CSRF token or invalid form submission")
     else:
         db.admin_suspend_group(id)
         app_logger.info("Admin %s suspended group %s and all its activities", session.get("user_id"), group.get("group_id"))
@@ -367,11 +401,14 @@ def suspend_group(id):
 @admin.route("groupActivities/suspend/<int:id>", methods=["POST"])
 def suspend_activity(id):
     activity = db.admin_get_group_activity(id)
+    form = CSRFProtectedForm(request.form)
 
     if not activity:
         abort(404, description="Activity not found")
     elif activity and activity.get("status") != "approved":
         abort(405, description="Method not allowed for this act")
+    elif not form.validate():
+        abort(400, description="Missing CSRF token or invalid form submission")
     else:
         db.admin_suspend_activity(id)
         app_logger.info("Admin %s suspended activity %s", session.get("user_id"), activity.get("group_id"))
@@ -389,6 +426,10 @@ def suspend_activity(id):
 @limiter.limit("10/minute;20/hour;50/day")
 def suspend_user(user_id):
     current_user_id = session.get('user_id')
+    form = CSRFProtectedForm(request.form)
+
+    if not form.validate():
+        abort(400, description="Missing CSRF token or invalid form submission")
     
     # Prevent self-suspension
     if user_id == current_user_id:

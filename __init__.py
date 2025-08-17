@@ -531,7 +531,7 @@ def flag_activity(id):
 @app.errorhandler(400)
 def bad_request_error(error):
     app_logger.warning("User %s attempted to send a bad request", session.get("user_id"))
-    return render_template('error_page.html', main_message="Bad request"), 400
+    return render_template('error_page.html', main_message="Bad request", description=error.description), 400
 
 
 @app.errorhandler(401)

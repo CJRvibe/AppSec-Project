@@ -436,16 +436,9 @@ def admin_suspend_group(id):
     WHERE group_id = %s
     """
 
-    statement_4 = """
-    UPDATE interest_activity
-    SET status_id = 6
-    WHERE group_id = %s
-    """
-
     cursor.execute(statement_1, (id, ))
     cursor.execute(statement_2, (id, ))
     cursor.execute(statement_3, (id, ))
-    cursor.execute(statement_4, (id, ))
     connection.commit()
 
 
