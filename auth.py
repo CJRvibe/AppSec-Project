@@ -7,7 +7,7 @@ import pyotp
 import qrcode
 import io
 from flask import Blueprint, render_template, redirect, url_for, request, session, g, flash, send_file, abort
-from forms import LoginForm, SignUpForm
+from forms import LoginForm, SignUpForm, CSRFProtectedForm
 from access_control import login_required
 from authlib.integrations.flask_client import OAuth
 import db
@@ -568,6 +568,10 @@ def setup_mfa():
 @login_required
 @limiter.limit("3/minute;10/day")
 def toggle_mfa():
+    mfa_form = CSRFProtectedForm(request.form)
+    if not mfa_form.validate():
+        abort(400, description="Missing CSRF token or invalid form submission")
+        
     user_id = session['user_id']
     is_mfa_enabled = db.is_user_mfa_enabled(user_id)
     
