@@ -234,6 +234,7 @@ def explore_groups():
 @app.route('/myGroups')
 @role_required(1, 2)
 def my_groups():
+    form = CSRFProtectedForm()
     user_id = session.get('user_id')
     if not user_id:
         abort(401, description="Access attempt without user session")
@@ -244,7 +245,7 @@ def my_groups():
 
     approved_groups = [g for g in joined_groups if g.get('status_id') == 2]
     app_logger.info("User %s accessed his own groups", session["user_id"])
-    return render_template('my_groups.html', groups=approved_groups)
+    return render_template('my_groups.html', groups=approved_groups, form=form)
 
 @app.route('/groupHome/<int:group_id>')
 @role_required(1, 2, 3)
