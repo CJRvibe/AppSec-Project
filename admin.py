@@ -235,6 +235,7 @@ def admin_view_users():
         {"label": "Volunteer", "value": 2},
         {"label": "Admin", "value": 3}
     ]
+    form = CSRFProtectedForm()
 
     selected_role = request.args.get('role', '')
     current_user_id = session.get('user_id')
@@ -255,7 +256,8 @@ def admin_view_users():
         "admin/manage_users.html",
         users=users,
         roles=roles,
-        selected_role=selected_role
+        selected_role=selected_role,
+        form=form
     )
 
 
