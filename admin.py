@@ -394,7 +394,7 @@ def suspend_group(id):
         
         user = db.get_user_by_id(group["owner"])
         if user["email_notif"]:
-            send_email.submit(user["email"], f"Group {group['group_id']} Suspended", f"Your active group {group['name']} has been approved suspended. This was a decision made by the admins. If you have any queries, please contact us.")
+            send_email.submit(user["email"], f"Group {group['group_id']} Suspended", f"Your active group {group['name']} has been suspended. This was a decision made by the admins. If you have any queries, please contact us.")
             app_logger.info(f"Email successfully send to User {group['owner']} to notify of group suspension")
         flash(f"Successfully suspended group {group['name']}", "primary")
         return redirect(url_for(".manage_suspended_groups"))

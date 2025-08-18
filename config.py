@@ -15,7 +15,7 @@ class Config:
     MAX_CONTENT_LENGTH = 4 * 1024 * 1024  # 4MB
     SESSION_COOKIE_SECURE = True
     SESSION_COOKIE_HTTPONLY = True
-    SESSION_COOKIE_SAMESITE = "Lax"
+    SESSION_COOKIE_SAMESITE = "Lax" # Restrict how cookies are sent from external sites, default None
     PERMANENT_SESSION_LIFETIME = 60 * 60 * 24 * 7  # 1 week, default is one month
 
 class DevelopmentConfig(Config):

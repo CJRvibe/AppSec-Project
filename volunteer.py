@@ -246,5 +246,5 @@ def reject_user(group_id, user_id):
 
     db.reject_user(user_id, group_id)
     flash("User join request has been rejected.", "warning")
-    app_logger.info("User %s rejected join request of User %s to group %s", session["user_id"], user["user_id"], group["name"])
+    app_logger.info("User %s rejected join request of User %s to group %s", session["user_id"], user_id, group["name"])
     return redirect(url_for("volunteer.dashboard", group_id=group_id, view="users"))

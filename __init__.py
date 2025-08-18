@@ -618,6 +618,5 @@ if __name__ == "__main__":
     app.run(
         host="127.0.0.1",
         port=5000,
-        ssl_context=('certs/127.0.0.1+1.pem', 'certs/127.0.0.1+1-key.pem'),
-        debug=True
+        ssl_context=('certs/127.0.0.1+1.pem', 'certs/127.0.0.1+1-key.pem')
     )
